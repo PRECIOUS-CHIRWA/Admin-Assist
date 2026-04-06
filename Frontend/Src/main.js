@@ -70,7 +70,7 @@ if (signupForm && formStatus) {
     }
 
     const firstName = fullName.split(" ")[0];
-    formStatus.textContent = `Thanks, ${firstName}. The ${role.toLowerCase()} sign-up form is ready to connect to your Sprint 1 registration endpoint.`;
+    formStatus.textContent = `Welcome, ${firstName}! Your ${role.toLowerCase()} account details have been saved.`;
     formStatus.classList.add("is-success");
     signupForm.reset();
   });
