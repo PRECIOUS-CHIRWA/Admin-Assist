@@ -1,19 +1,18 @@
 :root {
-  --sand: #f4ecdc;
-  --sand-light: #fbf7ef;
-  --paper: rgba(255, 252, 246, 0.84);
-  --ink: #1c2b21;
-  --muted: #57675d;
-  --primary: #1b5b45;
-  --primary-strong: #113a2c;
-  --accent: #cb9d45;
-  --accent-soft: #ecd8ab;
-  --line: rgba(28, 43, 33, 0.12);
-  --shadow: 0 18px 45px rgba(24, 38, 29, 0.12);
-  --display-font: "Garamond", "Palatino Linotype", "Book Antiqua", serif;
-  --body-font: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande", sans-serif;
-  --radius-large: 32px;
-  --radius-medium: 22px;
+  --primary: #0f5f4f;
+  --primary-strong: #0a3d2e;
+  --accent: #2b84d9;
+  --accent-soft: #b3d9f2;
+  --ink: #1a1a1a;
+  --muted: #666666;
+  --line: rgba(26, 26, 26, 0.08);
+  --shadow: 0 12px 32px rgba(15, 95, 79, 0.08);
+  --surface: #ffffff;
+  --surface-secondary: #f8f9fa;
+  --display-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --radius-large: 28px;
+  --radius-medium: 20px;
 }
 
 * {
@@ -28,10 +27,7 @@ body {
   margin: 0;
   color: var(--ink);
   font-family: var(--body-font);
-  background:
-    radial-gradient(circle at top left, rgba(203, 157, 69, 0.2), transparent 32%),
-    radial-gradient(circle at right 18%, rgba(27, 91, 69, 0.12), transparent 24%),
-    linear-gradient(180deg, #fdfaf3 0%, #f4ecdc 55%, #f9f6ef 100%);
+  background: linear-gradient(135deg, #f5faf8 0%, #f0f5f3 50%, #eef8f6 100%);
   line-height: 1.6;
 }
 
@@ -40,10 +36,10 @@ body::before {
   inset: 0;
   content: "";
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.32) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.32) 1px, transparent 1px);
-  background-size: 72px 72px;
-  opacity: 0.25;
+    linear-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.4) 1px, transparent 1px);
+  background-size: 80px 80px;
+  opacity: 0.15;
   pointer-events: none;
 }
 
@@ -110,11 +106,12 @@ main,
   place-items: center;
   width: 3rem;
   height: 3rem;
-  border-radius: 18px;
-  background: linear-gradient(145deg, var(--accent) 0%, #e9c67a 100%);
-  color: var(--primary-strong);
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  color: white;
   font-weight: 800;
   letter-spacing: 0.08em;
+  font-size: 0.9rem;
 }
 
 .brand-kicker,
@@ -200,8 +197,8 @@ main,
   width: fit-content;
   padding: 0.4rem 0.8rem;
   border-radius: 999px;
-  background: rgba(203, 157, 69, 0.16);
-  color: var(--primary-strong);
+  background: rgba(43, 132, 217, 0.12);
+  color: var(--primary);
   font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -349,9 +346,9 @@ main,
   grid-template-columns: 190px minmax(0, 1fr);
   gap: 1rem;
   padding: 1rem;
-  border-radius: 26px;
-  background: linear-gradient(160deg, #173528 0%, #214b39 100%);
-  color: #edf6f0;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #0f5f4f 0%, #1a7560 100%);
+  color: #ecf5f2;
 }
 
 .window-sidebar {
@@ -483,13 +480,7 @@ main,
   background: rgba(255, 255, 255, 0.6);
 }
 
-.feature-state {
-  background: rgba(27, 91, 69, 0.08);
-}
 
-.feature-state-now {
-  background: rgba(203, 157, 69, 0.18);
-}
 
 .feature-card h3,
 .step-card h3,
