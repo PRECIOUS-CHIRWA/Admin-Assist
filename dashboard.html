@@ -13,8 +13,36 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f5faf8;
+      background: #f0f4f8;
       color: #1a1a1a;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1a3a52 0%, #0f2d42 100%);
+      border-bottom: 3px solid #d4af37;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .logo {
+      font-size: 20px;
+      font-weight: 700;
+      color: #d4af37;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #d4af37 0%, #f0c674 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #1a3a52;
+      font-weight: 600;
     }
 
     header {
@@ -60,8 +88,34 @@
     .dashboard-title {
       font-size: 32px;
       font-weight: 600;
-      color: #0f3a5c;
+      color: #1a3a52;
       margin-bottom: 40px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 28px;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s;
+      border-top: 4px solid transparent;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-card.blue {
+      border-top-color: #2b84d9;
+    }
+
+    .stat-card.gold {
+      border-top-color: #d4af37;
+    }
+
+    .stat-card.orange {
+      border-top-color: #f59e0b;
     }
 
     .stats-grid {
@@ -133,7 +187,7 @@
     .stat-value {
       font-size: 36px;
       font-weight: 700;
-      color: #0f3a5c;
+      color: #1a3a52;
     }
 
     .stat-bar {
