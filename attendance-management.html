@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance Management - Admin Assist</title>
+  <link rel="stylesheet" href="admin-pages.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="logo-group">
+      <div class="logo-mark">AA</div>
+      <div class="logo-copy">
+        <div class="logo">Admin Assist</div>
+        <span>School administration workspace</span>
+      </div>
+    </div>
+    <div class="user-profile">
+      <div class="user-meta">
+        <strong>Admin User</strong>
+        <span>Attendance Desk</span>
+      </div>
+      <div class="user-avatar">A</div>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <div class="breadcrumb">
+      <a href="dashboard.html">Dashboard</a> / <span>Attendance Management</span>
+    </div>
+
+    <section class="page-intro">
+      <div>
+        <h1 class="page-title">Attendance Management</h1>
+        <p class="page-subtitle">Monitor daily attendance, flag follow-ups quickly, and keep the homeroom register current without leaving the admin workspace.</p>
+      </div>
+      <div class="page-actions">
+        <a class="ghost-btn" href="dashboard.html">Back to Dashboard</a>
+        <button type="button" class="secondary-btn" id="markAllPresentBtn">Mark All Present</button>
+      </div>
+    </section>
+
+    <section class="stats-grid">
+      <article class="stat-card blue">
+        <div class="stat-head">
+          <div>
+            <div class="stat-label">Total Learners</div>
+            <div class="stat-value" id="totalStudents">8</div>
+          </div>
+          <div class="stat-icon">👥</div>
+        </div>
+        <div class="progress-track"><div class="progress-fill blue" style="width: 100%;"></div></div>
+        <p class="stat-footnote">Current register loaded for Grade 10 Blue.</p>
+      </article>
+
+      <article class="stat-card teal">
+        <div class="stat-head">
+          <div>
+            <div class="stat-label">Present</div>
+            <div class="stat-value" id="presentCount">5</div>
+          </div>
+          <div class="stat-icon">✅</div>
+        </div>
+        <div class="progress-track"><div class="progress-fill teal" id="presentBar" style="width: 62.5%;"></div></div>
+        <p class="stat-footnote">Learners available for the morning session.</p>
+      </article>
+
+      <article class="stat-card gold">
+        <div class="stat-head">
+          <div>
+            <div class="stat-label">Late Arrivals</div>
+            <div class="stat-value" id="lateCount">2</div>
+          </div>
+          <div class="stat-icon">⏰</div>
+        </div>
+        <div class="progress-track"><div class="progress-fill gold" id="lateBar" style="width: 25%;"></div></div>
+        <p class="stat-footnote">Uniform and transport follow-up may be needed.</p>
+      </article>
+
+      <article class="stat-card orange">
+        <div class="stat-head">
+          <div>
+            <div class="stat-label">Absent or Excused</div>
+            <div class="stat-value" id="absentCount">1</div>
+          </div>
+          <div class="stat-icon">📌</div>
+        </div>
+        <div class="progress-track"><div class="progress-fill orange" id="absentBar" style="width: 12.5%;"></div></div>
+        <p class="stat-footnote">Needs guardian confirmation before noon.</p>
+      </article>
+    </section>
+
+    <section class="content-grid">
+      <div class="stack">
+        <section class="panel highlight">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Daily Register Filters</h2>
+              <p class="panel-subtitle">Choose the class, session, and attendance date before updating the register.</p>
+            </div>
+            <div class="eyebrow">Live session: Morning</div>
+          </div>
+
+          <form id="attendanceFilterForm">
+            <div class="control-grid">
+              <div class="field">
+                <label for="attendanceGrade">Grade</label>
+                <select id="attendanceGrade" name="attendanceGrade">
+                  <option>Grade 8</option>
+                  <option>Grade 9</option>
+                  <option selected>Grade 10</option>
+                  <option>Grade 11</option>
+                  <option>Grade 12</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="attendanceStream">Stream</label>
+                <select id="attendanceStream" name="attendanceStream">
+                  <option>Red</option>
+                  <option selected>Blue</option>
+                  <option>Gold</option>
+                  <option>Green</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="attendanceDate">Date</label>
+                <input type="date" id="attendanceDate" name="attendanceDate" value="2026-04-26">
+              </div>
+              <div class="field">
+                <label for="attendanceSession">Session</label>
+                <select id="attendanceSession" name="attendanceSession">
+                  <option selected>Morning</option>
+                  <option>Afternoon</option>
+                  <option>Full Day</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="toolbar-actions">
+              <p class="inline-note">Tip: keep brief notes for late or absent learners so follow-up calls are faster.</p>
+              <button type="submit" class="primary-btn">Load Register</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Class Register</h2>
+              <p class="panel-subtitle">Update each learner status and save the register once the roll call is complete.</p>
+            </div>
+            <div class="chip-row">
+              <span class="chip">Homeroom: Mrs. Chileshe</span>
+              <span class="chip teal">Room 14</span>
+            </div>
+          </div>
+
+          <form id="attendanceRegisterForm">
+            <div class="data-table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Admission No.</th>
+                    <th>Learner</th>
+                    <th>Status</th>
+                    <th>Note</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>AA-1001</td>
+                    <td>
+                      <div class="student-name">Natasha Banda</div>
+                      <div class="student-meta">Guardian: M. Banda</div>
+                    </td>
+                    <td>
+                      <select class="attendance-status" name="status-1">
+                        <option selected>Present</option>
+                        <option>Late</option>
+                        <option>Absent</option>
+                        <option>Excused</option>
+                      </select>
+                    </td>
+                    <td><input class="attendance-status note-input" type="text" value="On time" aria-label="Attendance note for Natasha Banda"></td>
+                  </tr>
+                  <tr>
+                    <td>AA-1002</td>
+                    <td>
+                      <div class="student-name">Luyando Phiri</div>
+                      <div class="student-meta">Guardian: T. Phiri</div>
+                    </td>
+                    <td>
+                      <select class="attendance-status" name="status-2">
+                        <option>Present</option>
+                        <option selected>Late</option>
+                        <option>Absent</option>
+                        <option>Excused</option>
+                      </select>
+                    </td>
+                    <td><input class="attendance-status note-input" type="text" value="Arrived after assembly" aria-label="Attendance note for Luyando Phiri"></td>
+                  </tr>
+                  <tr>
+                    <td>AA-1003</td>
+                    <td>
+                      <div class="student-name">Mwaka Tembo</div>
+                      <div class="student-meta">Guardian: J. Tembo</div>
+                    </td>
+                    <td>
+                      <select class="attendance-status" name="status-3">
+                        <option selected>Present</option>
+                        <option>Late</option>
+                        <option>Absent</option>
+                        <option>Excused</option>
+                      </select>
+                    </td>
+                    <td><input class="attendance-status note-input" type="text" value="Participating in science fair prep" aria-label="Attendance note for Mwaka Tembo"></td>
+                  </tr>
+                  <tr>
+                    <td>AA-1004</td>
+                    <td>
+                      <div class="student-name">Chanda Mwila</div>
+                      <div class="student-meta">Guardian: P. Mwila</div>
+                    </td>
+                    <td>
+                      <select class="attendance-status" name="status-4">
+                        <option>Present</option>
+                        <option>Late</option>
+                        <option selected>Absent</option>
+                        <option>Excused</option>
+                      </select>
+                    </td>
+                    <td><input class="attendance-status note-input" type="text" value="Call pending" aria-label="Attendance note for Chanda Mwila"></td>
+                  </tr>
+                  <tr>
+                    <td>AA-1005</td>
+                    <td>
+                      <div class="student-name">Taonga Zulu</div>
+                      <div class="student-meta">Guardian: A. Zulu</div>
+                    </td>
+                    <td>
+                      <select class="attendance-status" name="status-5">
+                        <option selected>Present</option>
+                        <option>Late</option>
+                        <option>Absent</option>
+                        <option>Excused</option>
+                      </select>
+                    </td>
+                    <td><input class="attendance-status note-input" type="text" value="On time" aria-label="Attendance note for Taonga Zulu"></td>
+                  </tr>
+                  <tr>
+                    <td>AA-1006</td>
+                    <td>
+                      <div class="student-name">Mubanga Lungu</div>
+                      <div class="student-meta">Guardian: R. Lungu</div>
+                    </td>
+                    <td>
+                      <select class="attendance-status" name="status-6">
+                        <option>Present</option>
+                        <option selected>Late</option>
+                        <option>Absent</option>
+                        <option>Excused</option>
+                      </select>
+                    </td>
+                    <td><input class="attendance-status note-input" type="text" value="School bus delay" aria-label="Attendance note for Mubanga Lungu"></td>
+                  </tr>
+                  <tr>
+                    <td>AA-1007</td>
+                    <td>
+                      <div class="student-name">Lusekelo Sinyangwe</div>
+                      <div class="student-meta">Guardian: C. Sinyangwe</div>
+                    </td>
+                    <td>
+                      <select class="attendance-status" name="status-7">
+                        <option selected>Present</option>
+                        <option>Late</option>
+                        <option>Absent</option>
+                        <option>Excused</option>
+                      </select>
+                    </td>
+                    <td><input class="attendance-status note-input" type="text" value="Library prefect" aria-label="Attendance note for Lusekelo Sinyangwe"></td>
+                  </tr>
+                  <tr>
+                    <td>AA-1008</td>
+                    <td>
+                      <div class="student-name">Misozi Nawa</div>
+                      <div class="student-meta">Guardian: F. Nawa</div>
+                    </td>
+                    <td>
+                      <select class="attendance-status" name="status-8">
+                        <option selected>Present</option>
+                        <option>Late</option>
+                        <option>Absent</option>
+                        <option>Excused</option>
+                      </select>
+                    </td>
+                    <td><input class="attendance-status note-input" type="text" value="On time" aria-label="Attendance note for Misozi Nawa"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="action-row">
+              <p class="inline-note">Saving keeps the register in draft mode until the final attendance submission is confirmed.</p>
+              <div class="page-actions">
+                <button type="button" class="ghost-btn" id="saveDraftAttendance">Save Draft</button>
+                <button type="submit" class="primary-btn">Submit Attendance</button>
+              </div>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <aside class="sidebar-stack">
+        <section class="sidebar-card gradient">
+          <h2 class="sidebar-title">Today's Workflow</h2>
+          <div class="steps-list">
+            <div class="step-item">
+              <div class="step-badge">1</div>
+              <div class="step-copy">
+                <strong>Load the active register</strong>
+                <span>Pick the class, stream, and session before starting roll call.</span>
+              </div>
+            </div>
+            <div class="step-item">
+              <div class="step-badge">2</div>
+              <div class="step-copy">
+                <strong>Record exceptions</strong>
+                <span>Late arrivals and absences should carry short context notes.</span>
+              </div>
+            </div>
+            <div class="step-item">
+              <div class="step-badge">3</div>
+              <div class="step-copy">
+                <strong>Submit for follow-up</strong>
+                <span>Final attendance updates can trigger guardian or admin review.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="sidebar-card">
+          <h2 class="sidebar-title">Attendance Insight</h2>
+          <div class="insight-block">
+            <div class="insight-row">
+              <strong>Morning attendance rate</strong>
+              <div class="insight-track"><div class="insight-fill teal" style="width: 92%;"></div></div>
+              <span class="muted">92% of learners checked in before first period.</span>
+            </div>
+            <div class="insight-row">
+              <strong>Last 7 school days</strong>
+              <div class="insight-track"><div class="insight-fill blue" style="width: 88%;"></div></div>
+              <span class="muted">Average attendance has stayed above the target band.</span>
+            </div>
+            <div class="insight-row">
+              <strong>Guardian follow-ups</strong>
+              <div class="insight-track"><div class="insight-fill gold" style="width: 34%;"></div></div>
+              <span class="muted">2 learners need a same-day call before dismissal.</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="sidebar-card">
+          <h2 class="sidebar-title">Recent Notes</h2>
+          <div class="simple-list">
+            <div class="simple-item">
+              <div class="simple-copy">
+                <strong>Luyando Phiri</strong>
+                <span>Transport delay reported by guardian at 07:54.</span>
+              </div>
+            </div>
+            <div class="simple-item">
+              <div class="simple-copy">
+                <strong>Chanda Mwila</strong>
+                <span>No morning check-in recorded yet. Office call still pending.</span>
+              </div>
+            </div>
+            <div class="simple-item">
+              <div class="simple-copy">
+                <strong>Mubanga Lungu</strong>
+                <span>Late twice this week. Route timing review recommended.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const attendanceSelects = Array.from(document.querySelectorAll("select.attendance-status"));
+    const totalStudents = attendanceSelects.length;
+    const presentCountEl = document.getElementById("presentCount");
+    const lateCountEl = document.getElementById("lateCount");
+    const absentCountEl = document.getElementById("absentCount");
+    const presentBarEl = document.getElementById("presentBar");
+    const lateBarEl = document.getElementById("lateBar");
+    const absentBarEl = document.getElementById("absentBar");
+    const markAllPresentBtn = document.getElementById("markAllPresentBtn");
+
+    function setBarWidth(element, value) {
+      element.style.width = totalStudents ? (value / totalStudents) * 100 + "%" : "0%";
+    }
+
+    function syncAttendanceStats() {
+      let present = 0;
+      let late = 0;
+      let absent = 0;
+
+      attendanceSelects.forEach((select) => {
+        const status = select.value;
+
+        if (status === "Present") {
+          present += 1;
+        } else if (status === "Late") {
+          late += 1;
+        } else {
+          absent += 1;
+        }
+      });
+
+      presentCountEl.textContent = String(present);
+      lateCountEl.textContent = String(late);
+      absentCountEl.textContent = String(absent);
+
+      setBarWidth(presentBarEl, present);
+      setBarWidth(lateBarEl, late);
+      setBarWidth(absentBarEl, absent);
+    }
+
+    attendanceSelects.forEach((select) => {
+      select.addEventListener("change", syncAttendanceStats);
+    });
+
+    markAllPresentBtn.addEventListener("click", () => {
+      attendanceSelects.forEach((select) => {
+        select.value = "Present";
+      });
+      syncAttendanceStats();
+    });
+
+    document.getElementById("attendanceFilterForm").addEventListener("submit", (event) => {
+      event.preventDefault();
+      alert("Register refreshed for the selected class and attendance date.");
+    });
+
+    document.getElementById("saveDraftAttendance").addEventListener("click", () => {
+      syncAttendanceStats();
+      alert("Attendance draft saved locally. Backend submission can be connected next.");
+    });
+
+    document.getElementById("attendanceRegisterForm").addEventListener("submit", (event) => {
+      event.preventDefault();
+      syncAttendanceStats();
+      alert("Attendance submitted successfully. This action is ready to connect to your backend workflow.");
+    });
+
+    syncAttendanceStats();
+  </script>
+</body>
+</html>

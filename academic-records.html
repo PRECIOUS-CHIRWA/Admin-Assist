@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Academic Records - Admin Assist</title>
+  <link rel="stylesheet" href="admin-pages.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="logo-group">
+      <div class="logo-mark">AA</div>
+      <div class="logo-copy">
+        <div class="logo">Admin Assist</div>
+        <span>School administration workspace</span>
+      </div>
+    </div>
+    <div class="user-profile">
+      <div class="user-meta">
+        <strong>Admin User</strong>
+        <span>Academic Records Desk</span>
+      </div>
+      <div class="user-avatar">A</div>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <div class="breadcrumb">
+      <a href="dashboard.html">Dashboard</a> / <span>Academic Records</span>
+    </div>
+
+    <section class="page-intro">
+      <div>
+        <h1 class="page-title">Academic Records</h1>
+        <p class="page-subtitle">Maintain subject marks, calculate totals automatically, and prepare the term record book with a cleaner grading workflow.</p>
+      </div>
+      <div class="page-actions">
+        <a class="ghost-btn" href="dashboard.html">Back to Dashboard</a>
+        <button type="button" class="secondary-btn" id="publishResultsBtn">Publish Results</button>
+      </div>
+    </section>
+
+    <section class="stats-grid">
+      <article class="stat-card blue">
+        <div class="stat-head">
+          <div>
+            <div class="stat-label">Students Graded</div>
+            <div class="stat-value" id="gradedCount">6</div>
+          </div>
+          <div class="stat-icon">📘</div>
+        </div>
+        <div class="progress-track"><div class="progress-fill blue" id="gradedBar" style="width: 100%;"></div></div>
+        <p class="stat-footnote">Records captured for the active Mathematics assessment.</p>
+      </article>
+
+      <article class="stat-card teal">
+        <div class="stat-head">
+          <div>
+            <div class="stat-label">Term Average</div>
+            <div class="stat-value" id="averageScore">74%</div>
+          </div>
+          <div class="stat-icon">📈</div>
+        </div>
+        <div class="progress-track"><div class="progress-fill teal" id="averageBar" style="width: 74%;"></div></div>
+        <p class="stat-footnote">Average score updates as marks are edited below.</p>
+      </article>
+
+      <article class="stat-card gold">
+        <div class="stat-head">
+          <div>
+            <div class="stat-label">Top Result</div>
+            <div class="stat-value" id="topScore">88%</div>
+          </div>
+          <div class="stat-icon">🏅</div>
+        </div>
+        <div class="progress-track"><div class="progress-fill gold" id="topBar" style="width: 88%;"></div></div>
+        <p class="stat-footnote">Best current performance in the loaded register.</p>
+      </article>
+
+      <article class="stat-card orange">
+        <div class="stat-head">
+          <div>
+            <div class="stat-label">Pending Review</div>
+            <div class="stat-value" id="pendingCount">0</div>
+          </div>
+          <div class="stat-icon">🧾</div>
+        </div>
+        <div class="progress-track"><div class="progress-fill orange" id="pendingBar" style="width: 0%;"></div></div>
+        <p class="stat-footnote">Learners with incomplete marks stay in review status.</p>
+      </article>
+    </section>
+
+    <section class="content-grid">
+      <div class="stack">
+        <section class="panel highlight">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Assessment Filters</h2>
+              <p class="panel-subtitle">Choose the term, class, and subject before capturing or reviewing marks.</p>
+            </div>
+            <div class="eyebrow">Weighting: CA 30 | Project 20 | Exam 50</div>
+          </div>
+
+          <form id="recordsFilterForm">
+            <div class="control-grid three">
+              <div class="field">
+                <label for="recordsTerm">Term</label>
+                <select id="recordsTerm" name="recordsTerm">
+                  <option>Term 1</option>
+                  <option selected>Term 2</option>
+                  <option>Term 3</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="recordsGrade">Grade</label>
+                <select id="recordsGrade" name="recordsGrade">
+                  <option>Grade 8</option>
+                  <option>Grade 9</option>
+                  <option selected>Grade 10</option>
+                  <option>Grade 11</option>
+                  <option>Grade 12</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="recordsStream">Stream</label>
+                <select id="recordsStream" name="recordsStream">
+                  <option>Red</option>
+                  <option selected>Blue</option>
+                  <option>Gold</option>
+                  <option>Green</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="recordsSubject">Subject</label>
+                <select id="recordsSubject" name="recordsSubject">
+                  <option selected>Mathematics</option>
+                  <option>English</option>
+                  <option>Biology</option>
+                  <option>Computer Studies</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="assessmentType">Assessment Type</label>
+                <select id="assessmentType" name="assessmentType">
+                  <option selected>Mid-Term Assessment</option>
+                  <option>End of Term Exam</option>
+                  <option>Continuous Assessment</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="teacherName">Teacher</label>
+                <input type="text" id="teacherName" name="teacherName" value="Mrs. Chileshe">
+              </div>
+            </div>
+
+            <div class="toolbar-actions">
+              <p class="inline-note">Auto-calculation stays on so totals and grade bands adjust immediately as you type.</p>
+              <button type="submit" class="primary-btn">Load Record Book</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Gradebook</h2>
+              <p class="panel-subtitle">Capture continuous assessment, project, and exam scores for each learner.</p>
+            </div>
+            <div class="chip-row">
+              <span class="chip">Subject: Mathematics</span>
+              <span class="chip gold">Term 2</span>
+            </div>
+          </div>
+
+          <form id="gradebookForm">
+            <div class="data-table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Admission No.</th>
+                    <th>Learner</th>
+                    <th>CA / 30</th>
+                    <th>Project / 20</th>
+                    <th>Exam / 50</th>
+                    <th>Total</th>
+                    <th>Grade</th>
+                    <th>Remark</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="record-row">
+                    <td>AA-1001</td>
+                    <td>
+                      <div class="student-name">Natasha Banda</div>
+                      <div class="student-meta">Consistent class participation</div>
+                    </td>
+                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="24" aria-label="Continuous assessment for Natasha Banda"></td>
+                    <td><input class="score-input project-score" type="number" min="0" max="20" value="18" aria-label="Project score for Natasha Banda"></td>
+                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="41" aria-label="Exam score for Natasha Banda"></td>
+                    <td class="total-score">83</td>
+                    <td><span class="result-pill grade-a">A</span></td>
+                    <td class="remark-text">Excellent</td>
+                  </tr>
+                  <tr class="record-row">
+                    <td>AA-1002</td>
+                    <td>
+                      <div class="student-name">Luyando Phiri</div>
+                      <div class="student-meta">Improving after tutoring support</div>
+                    </td>
+                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="20" aria-label="Continuous assessment for Luyando Phiri"></td>
+                    <td><input class="score-input project-score" type="number" min="0" max="20" value="15" aria-label="Project score for Luyando Phiri"></td>
+                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="35" aria-label="Exam score for Luyando Phiri"></td>
+                    <td class="total-score">70</td>
+                    <td><span class="result-pill grade-b">B</span></td>
+                    <td class="remark-text">Very Good</td>
+                  </tr>
+                  <tr class="record-row">
+                    <td>AA-1003</td>
+                    <td>
+                      <div class="student-name">Mwaka Tembo</div>
+                      <div class="student-meta">Strong in calculations and review tasks</div>
+                    </td>
+                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="26" aria-label="Continuous assessment for Mwaka Tembo"></td>
+                    <td><input class="score-input project-score" type="number" min="0" max="20" value="17" aria-label="Project score for Mwaka Tembo"></td>
+                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="45" aria-label="Exam score for Mwaka Tembo"></td>
+                    <td class="total-score">88</td>
+                    <td><span class="result-pill grade-a">A</span></td>
+                    <td class="remark-text">Excellent</td>
+                  </tr>
+                  <tr class="record-row">
+                    <td>AA-1004</td>
+                    <td>
+                      <div class="student-name">Chanda Mwila</div>
+                      <div class="student-meta">Needs more confidence during timed exams</div>
+                    </td>
+                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="17" aria-label="Continuous assessment for Chanda Mwila"></td>
+                    <td><input class="score-input project-score" type="number" min="0" max="20" value="12" aria-label="Project score for Chanda Mwila"></td>
+                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="28" aria-label="Exam score for Chanda Mwila"></td>
+                    <td class="total-score">57</td>
+                    <td><span class="result-pill grade-c">C</span></td>
+                    <td class="remark-text">Satisfactory</td>
+                  </tr>
+                  <tr class="record-row">
+                    <td>AA-1005</td>
+                    <td>
+                      <div class="student-name">Taonga Zulu</div>
+                      <div class="student-meta">Dependable and ready for extension work</div>
+                    </td>
+                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="22" aria-label="Continuous assessment for Taonga Zulu"></td>
+                    <td><input class="score-input project-score" type="number" min="0" max="20" value="16" aria-label="Project score for Taonga Zulu"></td>
+                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="37" aria-label="Exam score for Taonga Zulu"></td>
+                    <td class="total-score">75</td>
+                    <td><span class="result-pill grade-b">B</span></td>
+                    <td class="remark-text">Very Good</td>
+                  </tr>
+                  <tr class="record-row">
+                    <td>AA-1006</td>
+                    <td>
+                      <div class="student-name">Mubanga Lungu</div>
+                      <div class="student-meta">Progress is steady with revision support</div>
+                    </td>
+                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="19" aria-label="Continuous assessment for Mubanga Lungu"></td>
+                    <td><input class="score-input project-score" type="number" min="0" max="20" value="13" aria-label="Project score for Mubanga Lungu"></td>
+                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="31" aria-label="Exam score for Mubanga Lungu"></td>
+                    <td class="total-score">63</td>
+                    <td><span class="result-pill grade-c">C</span></td>
+                    <td class="remark-text">Satisfactory</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="action-row">
+              <p class="inline-note">Draft saves are useful while departmental moderation is still in progress.</p>
+              <div class="page-actions">
+                <button type="button" class="ghost-btn" id="saveRecordsBtn">Save Draft</button>
+                <button type="submit" class="primary-btn">Update Academic Records</button>
+              </div>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <aside class="sidebar-stack">
+        <section class="sidebar-card gradient">
+          <h2 class="sidebar-title">Grading Scale</h2>
+          <div class="legend-list">
+            <div class="legend-item">
+              <div class="legend-copy">
+                <strong>A</strong>
+                <span>80 to 100: Excellent mastery and independent application.</span>
+              </div>
+            </div>
+            <div class="legend-item">
+              <div class="legend-copy">
+                <strong>B</strong>
+                <span>70 to 79: Strong understanding with minor support needed.</span>
+              </div>
+            </div>
+            <div class="legend-item">
+              <div class="legend-copy">
+                <strong>C</strong>
+                <span>50 to 69: Meets expectation with room to improve.</span>
+              </div>
+            </div>
+            <div class="legend-item">
+              <div class="legend-copy">
+                <strong>D or F</strong>
+                <span>Below 50: Intervention and remediation are recommended.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="sidebar-card">
+          <h2 class="sidebar-title">Moderation Checklist</h2>
+          <div class="simple-list">
+            <div class="simple-item">
+              <div class="simple-copy">
+                <strong>Verify class list</strong>
+                <span>Confirm no transfer or absentee learner is missing from the register.</span>
+              </div>
+            </div>
+            <div class="simple-item">
+              <div class="simple-copy">
+                <strong>Check score ranges</strong>
+                <span>Marks outside the allowed weighting are flagged automatically.</span>
+              </div>
+            </div>
+            <div class="simple-item">
+              <div class="simple-copy">
+                <strong>Publish after review</strong>
+                <span>Only publish once the department head signs off the assessment window.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="sidebar-card">
+          <h2 class="sidebar-title">Teacher Notes</h2>
+          <div class="simple-list">
+            <div class="simple-item">
+              <div class="simple-copy">
+                <strong>Class trend</strong>
+                <span>Most learners improved in algebra after the last revision clinic.</span>
+              </div>
+            </div>
+            <div class="simple-item">
+              <div class="simple-copy">
+                <strong>Intervention group</strong>
+                <span>Focus on exam pacing for learners below the 60% threshold.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const recordRows = Array.from(document.querySelectorAll(".record-row"));
+    const gradedCountEl = document.getElementById("gradedCount");
+    const pendingCountEl = document.getElementById("pendingCount");
+    const averageScoreEl = document.getElementById("averageScore");
+    const topScoreEl = document.getElementById("topScore");
+    const gradedBarEl = document.getElementById("gradedBar");
+    const averageBarEl = document.getElementById("averageBar");
+    const topBarEl = document.getElementById("topBar");
+    const pendingBarEl = document.getElementById("pendingBar");
+
+    function clampScore(value, max) {
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric)) {
+        return 0;
+      }
+      return Math.max(0, Math.min(max, numeric));
+    }
+
+    function gradeForScore(score) {
+      if (score >= 80) {
+        return { label: "A", className: "grade-a", remark: "Excellent" };
+      }
+      if (score >= 70) {
+        return { label: "B", className: "grade-b", remark: "Very Good" };
+      }
+      if (score >= 50) {
+        return { label: "C", className: "grade-c", remark: "Satisfactory" };
+      }
+      if (score >= 40) {
+        return { label: "D", className: "grade-d", remark: "Needs Support" };
+      }
+      return { label: "F", className: "grade-f", remark: "Intervention Required" };
+    }
+
+    function syncRecords() {
+      let gradedCount = 0;
+      let runningTotal = 0;
+      let topScore = 0;
+
+      recordRows.forEach((row) => {
+        const caInput = row.querySelector(".ca-score");
+        const projectInput = row.querySelector(".project-score");
+        const examInput = row.querySelector(".exam-score");
+
+        const ca = clampScore(caInput.value, 30);
+        const project = clampScore(projectInput.value, 20);
+        const exam = clampScore(examInput.value, 50);
+
+        caInput.value = ca;
+        projectInput.value = project;
+        examInput.value = exam;
+
+        const total = ca + project + exam;
+        const totalCell = row.querySelector(".total-score");
+        const gradeCell = row.querySelector(".result-pill");
+        const remarkCell = row.querySelector(".remark-text");
+        const gradeMeta = gradeForScore(total);
+
+        totalCell.textContent = String(total);
+        gradeCell.textContent = gradeMeta.label;
+        gradeCell.className = "result-pill " + gradeMeta.className;
+        remarkCell.textContent = gradeMeta.remark;
+
+        const isComplete = caInput.value !== "" && projectInput.value !== "" && examInput.value !== "";
+        if (isComplete) {
+          gradedCount += 1;
+          runningTotal += total;
+          topScore = Math.max(topScore, total);
+        }
+      });
+
+      const pending = recordRows.length - gradedCount;
+      const average = gradedCount ? Math.round(runningTotal / gradedCount) : 0;
+
+      gradedCountEl.textContent = String(gradedCount);
+      pendingCountEl.textContent = String(pending);
+      averageScoreEl.textContent = average + "%";
+      topScoreEl.textContent = topScore + "%";
+
+      gradedBarEl.style.width = (gradedCount / recordRows.length) * 100 + "%";
+      averageBarEl.style.width = average + "%";
+      topBarEl.style.width = topScore + "%";
+      pendingBarEl.style.width = (pending / recordRows.length) * 100 + "%";
+    }
+
+    recordRows.forEach((row) => {
+      row.querySelectorAll(".score-input").forEach((input) => {
+        input.addEventListener("input", syncRecords);
+      });
+    });
+
+    document.getElementById("recordsFilterForm").addEventListener("submit", (event) => {
+      event.preventDefault();
+      alert("Academic record book loaded for the selected term, class, and subject.");
+    });
+
+    document.getElementById("saveRecordsBtn").addEventListener("click", () => {
+      syncRecords();
+      alert("Academic record draft saved locally. Backend persistence can be added next.");
+    });
+
+    document.getElementById("publishResultsBtn").addEventListener("click", () => {
+      syncRecords();
+      alert("Results published successfully. This action is ready to connect to your publishing workflow.");
+    });
+
+    document.getElementById("gradebookForm").addEventListener("submit", (event) => {
+      event.preventDefault();
+      syncRecords();
+      alert("Academic records updated successfully.");
+    });
+
+    syncRecords();
+  </script>
+</body>
+</html>
