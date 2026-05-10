@@ -14,9 +14,11 @@ A brief description of whatThe core aim was to design and develop a web-based St
 
 ## Features
 
-- Feature 1
-- Feature 2
-- Feature 3
+•	Sprint 1: User Authentication and Role-Based Access Control (RBAC).
+•	Sprint 2: Student Registration and Profile Management.
+•	Sprint 3: Attendance Recording and Management.
+•	Sprint 4: Academic Record Storage and Results Processing.
+•	Sprint 5: Report Generation and Data Retrieval.
 
 ### Tech Stack
 
