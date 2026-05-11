@@ -36,12 +36,14 @@
       margin-bottom: 8px;
     }
 
+
     .form-group label {
       display: block;
       margin-bottom: 8px;
       font-size: 14px;
       font-weight: 500;
       color: #1a3a52;
+      padding: 5px;
     }
 
     .form-group input {
