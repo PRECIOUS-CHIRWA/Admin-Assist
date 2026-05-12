@@ -1,0 +1,11 @@
+{
+  "name": "admin-assist-prototype",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix Backend run dev",
+    "start": "npm --prefix Backend start",
+    "backend:dev": "npm --prefix Backend run dev",
+    "backend:start": "npm --prefix Backend start"
+  }
+}

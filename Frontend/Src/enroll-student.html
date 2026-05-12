@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Enrollment - Admin Assist</title>
+  <link rel="stylesheet" href="enroll.css">
+</head>
+
+<body>
+  <header>
+    <div class="logo">Admin Assist</div>
+  </header>
+
+  <div class="main-container">
+    <div class="breadcrumb">
+      <a href="dashboard.html">Enrollment</a> > <span>Enter Student Information</span>
+    </div>
+
+    <h1 class="page-title">Student Enrollment</h1>
+    <p class="page-subtitle">Enter Student Information</p>
+
+    <div class="content-wrapper">
+      <div class="form-section">
+        <form id="enrollmentForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="firstName">First Name</label>
+              <input type="text" id="firstName" name="firstName" placeholder="First Name" required>
+            </div>
+            <div class="form-group">
+              <label for="lastName">Last Name</label>
+              <input type="text" id="lastName" name="lastName" placeholder="Last Name" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="dob">Date of Birth</label>
+              <input type="date" id="dob" name="dob" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="admissionNo">Admission Number</label>
+              <input type="text" id="admissionNo" name="admissionNo" placeholder="123 4562" required>
+            </div>
+          </div>
+
+          <div class="form-row full">
+            <div class="form-group">
+              <label>Gender</label>
+              <div class="radio-group">
+                <div class="radio-option">
+                  <input type="radio" id="male" name="gender" value="Male" required>
+                  <label for="male">Male</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" id="female" name="gender" value="Female">
+                  <label for="female">Female</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="grade">Grade</label>
+              <select id="grade" name="grade" required>
+                <option value="" disabled selected>Grade 10</option>
+                <option value="grade-8">Grade 8</option>
+                <option value="grade-9">Grade 9</option>
+                <option value="grade-10">Grade 10</option>
+                <option value="grade-11">Grade 11</option>
+                <option value="grade-12">Grade 12</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row full">
+            <div class="form-group">
+              <label for="address">Address</label>
+              <textarea id="address" name="address" placeholder="Enter student address" required></textarea>
+            </div>
+          </div>
+
+          <div class="form-row full">
+            <div class="form-group">
+              <label for="parentName">Parent/Guardian Name</label>
+              <input type="text" id="parentName" name="parentName" placeholder="Enter parent/guardian name" required>
+            </div>
+          </div>
+
+          <div class="form-row full">
+            <div class="form-group">
+              <label for="parentContact">Parent/Guardian Contact</label>
+              <input type="tel" id="parentContact" name="parentContact" placeholder="Enter contact number" required>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn">Submit Enrollment</button>
+        </form>
+      </div>
+
+      <div class="sidebar">
+        <div class="sidebar-card steps-card">
+          <div class="steps-title">ℹ️ Enrollment Steps</div>
+          <div class="step-item active">
+            <div class="step-number">1</div>
+            <span>Enter Student Information</span>
+          </div>
+          <div class="step-item">
+            <div class="step-number">2</div>
+            <span>Review & Submit</span>
+          </div>
+          <div class="step-item">
+            <div class="step-number">3</div>
+            <span>Pending Approval</span>
+          </div>
+        </div>
+
+        <div class="sidebar-card activity-card">
+          <div class="activity-title">⚡ Recent Activity</div>
+          <div class="activity-list">
+            <div class="activity-item">
+              <strong>1. Enter Student Information</strong>
+              Fill in the student details and submit the enrollment form.
+            </div>
+            <div class="activity-item">
+              <strong>1. Review & Submit</strong>
+              Fill in the student details and submit the enrollment form.
+            </div>
+          </div>
+          <div class="illustration">👨‍🎓</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('enrollmentForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      alert('Enrollment form submitted successfully. This will be connected to the backend for processing.');
+    });
+  </script>
+</body>
+</html>

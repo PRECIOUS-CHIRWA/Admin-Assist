@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generate Report - Admin Assist</title>
+  <link rel="stylesheet" href="admin-pages.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="logo-group">
+      <div class="logo-mark">AA</div>
+      <div class="logo-copy">
+        <div class="logo">Admin Assist</div>
+        <span>School administration workspace</span>
+      </div>
+    </div>
+    <div class="user-profile">
+      <div class="user-meta">
+        <strong>Admin User</strong>
+        <span>Reporting Desk</span>
+      </div>
+      <div class="user-avatar">A</div>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <div class="breadcrumb">
+      <a href="dashboard.html">Dashboard</a> / <span>Generate Report</span>
+    </div>
+
+    <section class="page-intro">
+      <div>
+        <h1 class="page-title">Generate Report</h1>
+        <p class="page-subtitle">Assemble attendance, academic, and operational summaries into export-ready reports for school leadership, teachers, or guardians.</p>
+      </div>
+      <div class="page-actions">
+        <a class="ghost-btn" href="dashboard.html">Back to Dashboard</a>
+        <button type="button" class="secondary-btn" id="scheduleReportBtn">Schedule Export</button>
+      </div>
+    </section>
+
+    <section class="stats-grid">
+      <article class="stat-card blue">
+        <div class="stat-head">
+          <div>
+            <div class="stat-label">Reports This Month</div>
+            <div class="stat-value">24</div>
+          </div>
+          <div class="stat-icon">📄</div>
+        </div>
+        <div class="progress-track"><div class="progress-fill blue" style="width: 82%;"></div></div>
+        <p class="stat-footnote">Leadership and departmental summaries generated from one workspace.</p>
+      </article>
+
+      <article class="stat-card teal">
+        <div class="stat-head">
+          <div>
+            <div class="stat-label">Pending Exports</div>
+            <div class="stat-value">3</div>
+          </div>
+          <div class="stat-icon">⏳</div>
+        </div>
+        <div class="progress-track"><div class="progress-fill teal" style="width: 36%;"></div></div>
+        <p class="stat-footnote">Queued reports waiting for review or scheduled delivery.</p>
+      </article>
+
+      <article class="stat-card gold">
+        <div class="stat-head">
+          <div>
+            <div class="stat-label">Saved Templates</div>
+            <div class="stat-value">7</div>
+          </div>
+          <div class="stat-icon">🗂️</div>
+        </div>
+        <div class="progress-track"><div class="progress-fill gold" style="width: 68%;"></div></div>
+        <p class="stat-footnote">Reusable layouts for weekly, term, and board reporting.</p>
+      </article>
+
+      <article class="stat-card orange">
+        <div class="stat-head">
+          <div>
+            <div class="stat-label">Auto Schedules</div>
+            <div class="stat-value">4</div>
+          </div>
+          <div class="stat-icon">📬</div>
+        </div>
+        <div class="progress-track"><div class="progress-fill orange" style="width: 52%;"></div></div>
+        <p class="stat-footnote">Reports that can be delivered automatically after approval.</p>
+      </article>
+    </section>
+
+    <section class="content-grid">
+      <div class="stack">
+        <section class="panel highlight">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Report Builder</h2>
+              <p class="panel-subtitle">Pick the report modules, define the reporting window, and choose how the export should be delivered.</p>
+            </div>
+            <div class="eyebrow">One-click exports for PDF, Excel, and CSV</div>
+          </div>
+
+          <form id="reportBuilderForm">
+            <div class="option-grid">
+              <label class="option-toggle">
+                <input type="checkbox" class="report-module" value="Attendance Summary" checked>
+                <span class="option-card">
+                  <span class="option-top">
+                    <span class="option-title">Attendance Summary</span>
+                    <span class="option-icon blue">📊</span>
+                  </span>
+                  <span class="option-copy">Show attendance rate, late arrivals, and follow-up cases by class or stream.</span>
+                </span>
+              </label>
+
+              <label class="option-toggle">
+                <input type="checkbox" class="report-module" value="Academic Performance" checked>
+                <span class="option-card">
+                  <span class="option-top">
+                    <span class="option-title">Academic Performance</span>
+                    <span class="option-icon teal">📘</span>
+                  </span>
+                  <span class="option-copy">Include subject averages, top performers, and learners needing support.</span>
+                </span>
+              </label>
+
+              <label class="option-toggle">
+                <input type="checkbox" class="report-module" value="Enrollment Snapshot">
+                <span class="option-card">
+                  <span class="option-top">
+                    <span class="option-title">Enrollment Snapshot</span>
+                    <span class="option-icon gold">📝</span>
+                  </span>
+                  <span class="option-copy">Track new admissions, transfers, and pending approval requests.</span>
+                </span>
+              </label>
+
+              <label class="option-toggle">
+                <input type="checkbox" class="report-module" value="Guardian Follow-up">
+                <span class="option-card">
+                  <span class="option-top">
+                    <span class="option-title">Guardian Follow-up</span>
+                    <span class="option-icon rose">📞</span>
+                  </span>
+                  <span class="option-copy">Highlight repeat absences, low performance alerts, and outreach actions.</span>
+                </span>
+              </label>
+            </div>
+
+            <div class="control-grid three">
+              <div class="field">
+                <label for="reportAudience">Audience</label>
+                <select id="reportAudience" name="reportAudience">
+                  <option selected>School Leadership Team</option>
+                  <option>Class Teachers</option>
+                  <option>Parents and Guardians</option>
+                  <option>District Office</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="reportGrade">Grade Scope</label>
+                <select id="reportGrade" name="reportGrade">
+                  <option selected>All Grades</option>
+                  <option>Grade 8</option>
+                  <option>Grade 9</option>
+                  <option>Grade 10</option>
+                  <option>Grade 11</option>
+                  <option>Grade 12</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="reportTerm">Term</label>
+                <select id="reportTerm" name="reportTerm">
+                  <option>Term 1</option>
+                  <option selected>Term 2</option>
+                  <option>Term 3</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="reportStart">Start Date</label>
+                <input type="date" id="reportStart" name="reportStart" value="2026-04-01">
+              </div>
+              <div class="field">
+                <label for="reportEnd">End Date</label>
+                <input type="date" id="reportEnd" name="reportEnd" value="2026-04-26">
+              </div>
+              <div class="field">
+                <label for="reportFormat">Export Format</label>
+                <select id="reportFormat" name="reportFormat">
+                  <option selected>PDF</option>
+                  <option>Excel</option>
+                  <option>CSV</option>
+                </select>
+              </div>
+              <div class="field full">
+                <label>Include Extras</label>
+                <div class="checkbox-row">
+                  <label class="checkbox-chip"><input type="checkbox" id="includeCharts" checked> Charts and visuals</label>
+                  <label class="checkbox-chip"><input type="checkbox" id="includeStudentList" checked> Student detail appendix</label>
+                  <label class="checkbox-chip"><input type="checkbox" id="emailPrincipal"> Email copy to principal</label>
+                </div>
+              </div>
+              <div class="field full">
+                <label for="reportNotes">Report Notes</label>
+                <textarea id="reportNotes" name="reportNotes" placeholder="Add short guidance for recipients or internal preparation notes.">Focus this issue on attendance recovery and mathematics progress.</textarea>
+              </div>
+            </div>
+
+            <div class="action-row">
+              <p class="inline-note">Preview refreshes automatically as you change the report modules and export settings.</p>
+              <button type="submit" class="primary-btn">Generate Report</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Preview Summary</h2>
+              <p class="panel-subtitle">This is the export snapshot recipients will receive once the report is generated.</p>
+            </div>
+            <div class="chip-row">
+              <span class="chip teal" id="previewFormatChip">PDF Export</span>
+            </div>
+          </div>
+
+          <div class="preview-shell">
+            <div class="preview-grid">
+              <div class="preview-block">
+                <div class="preview-label">Audience</div>
+                <div class="preview-value" id="previewAudience">School Leadership Team</div>
+              </div>
+              <div class="preview-block">
+                <div class="preview-label">Reporting Window</div>
+                <div class="preview-value" id="previewWindow">Apr 1, 2026 to Apr 26, 2026</div>
+              </div>
+              <div class="preview-block">
+                <div class="preview-label">Grade Scope</div>
+                <div class="preview-value" id="previewGrade">All Grades</div>
+              </div>
+              <div class="preview-block">
+                <div class="preview-label">Term</div>
+                <div class="preview-value" id="previewTerm">Term 2</div>
+              </div>
+            </div>
+
+            <div class="preview-label">Included Modules</div>
+            <div class="preview-tags" id="previewModules">
+              <span class="preview-tag">Attendance Summary</span>
+              <span class="preview-tag">Academic Performance</span>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="preview-label">Included Extras</div>
+            <div class="preview-tags" id="previewExtras">
+              <span class="preview-tag">Charts and visuals</span>
+              <span class="preview-tag">Student detail appendix</span>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="preview-label">Notes</div>
+            <p class="helper-text" id="previewNotes">Focus this issue on attendance recovery and mathematics progress.</p>
+          </div>
+        </section>
+      </div>
+
+      <aside class="sidebar-stack">
+        <section class="sidebar-card gradient">
+          <h2 class="sidebar-title">Popular Templates</h2>
+          <div class="template-list">
+            <div class="template-item">
+              <div class="template-copy">
+                <strong>Weekly Operations Brief</strong>
+                <span>Attendance, incidents, enrollment changes, and action items.</span>
+              </div>
+            </div>
+            <div class="template-item">
+              <div class="template-copy">
+                <strong>Mid-Term Academic Digest</strong>
+                <span>Subject averages, learners at risk, and intervention notes.</span>
+              </div>
+            </div>
+            <div class="template-item">
+              <div class="template-copy">
+                <strong>Board Meeting Snapshot</strong>
+                <span>High-level KPIs with a short leadership commentary section.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="sidebar-card">
+          <h2 class="sidebar-title">Recent Export Queue</h2>
+          <div class="queue-list">
+            <div class="queue-item">
+              <div class="queue-copy">
+                <strong>Attendance Recovery Report</strong>
+                <span>Queued for PDF export at 14:30.</span>
+              </div>
+            </div>
+            <div class="queue-item">
+              <div class="queue-copy">
+                <strong>Grade 12 Academic Digest</strong>
+                <span>Awaiting approval before email delivery.</span>
+              </div>
+            </div>
+            <div class="queue-item">
+              <div class="queue-copy">
+                <strong>Leadership Weekly Summary</strong>
+                <span>Last exported successfully on April 24, 2026.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="sidebar-card">
+          <h2 class="sidebar-title">Delivery Checklist</h2>
+          <div class="simple-list">
+            <div class="simple-item">
+              <div class="simple-copy">
+                <strong>Confirm the date range</strong>
+                <span>Make sure the reporting window covers the exact school days required.</span>
+              </div>
+            </div>
+            <div class="simple-item">
+              <div class="simple-copy">
+                <strong>Trim unnecessary modules</strong>
+                <span>Leadership reports should stay concise when recipients only need headlines.</span>
+              </div>
+            </div>
+            <div class="simple-item">
+              <div class="simple-copy">
+                <strong>Review notes before sharing</strong>
+                <span>Internal comments should be removed from guardian-facing exports.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const reportForm = document.getElementById("reportBuilderForm");
+    const moduleInputs = Array.from(document.querySelectorAll(".report-module"));
+    const previewAudience = document.getElementById("previewAudience");
+    const previewWindow = document.getElementById("previewWindow");
+    const previewGrade = document.getElementById("previewGrade");
+    const previewTerm = document.getElementById("previewTerm");
+    const previewModules = document.getElementById("previewModules");
+    const previewExtras = document.getElementById("previewExtras");
+    const previewNotes = document.getElementById("previewNotes");
+    const previewFormatChip = document.getElementById("previewFormatChip");
+
+    function formatDateLabel(value) {
+      if (!value) {
+        return "Not set";
+      }
+
+      const [year, month, day] = value.split("-");
+      const date = new Date(Number(year), Number(month) - 1, Number(day));
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      });
+    }
+
+    function renderTags(container, items, fallbackText) {
+      container.innerHTML = "";
+      const values = items.length ? items : [fallbackText];
+
+      values.forEach((item) => {
+        const tag = document.createElement("span");
+        tag.className = "preview-tag";
+        tag.textContent = item;
+        container.appendChild(tag);
+      });
+    }
+
+    function syncReportPreview() {
+      const audience = document.getElementById("reportAudience").value;
+      const grade = document.getElementById("reportGrade").value;
+      const term = document.getElementById("reportTerm").value;
+      const start = document.getElementById("reportStart").value;
+      const end = document.getElementById("reportEnd").value;
+      const format = document.getElementById("reportFormat").value;
+      const notes = document.getElementById("reportNotes").value.trim();
+
+      const selectedModules = moduleInputs.filter((input) => input.checked).map((input) => input.value);
+      const selectedExtras = [];
+
+      if (document.getElementById("includeCharts").checked) {
+        selectedExtras.push("Charts and visuals");
+      }
+
+      if (document.getElementById("includeStudentList").checked) {
+        selectedExtras.push("Student detail appendix");
+      }
+
+      if (document.getElementById("emailPrincipal").checked) {
+        selectedExtras.push("Email copy to principal");
+      }
+
+      previewAudience.textContent = audience;
+      previewWindow.textContent = formatDateLabel(start) + " to " + formatDateLabel(end);
+      previewGrade.textContent = grade;
+      previewTerm.textContent = term;
+      previewNotes.textContent = notes || "No additional notes added.";
+      previewFormatChip.textContent = format + " Export";
+
+      renderTags(previewModules, selectedModules, "No modules selected");
+      renderTags(previewExtras, selectedExtras, "No extras included");
+    }
+
+    reportForm.addEventListener("input", syncReportPreview);
+    reportForm.addEventListener("change", syncReportPreview);
+
+    reportForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      syncReportPreview();
+      alert("Report generated successfully. This action is ready to connect to your export service.");
+    });
+
+    document.getElementById("scheduleReportBtn").addEventListener("click", () => {
+      syncReportPreview();
+      alert("Report scheduled successfully. Backend scheduling can be connected next.");
+    });
+
+    syncReportPreview();
+  </script>
+</body>
+</html>

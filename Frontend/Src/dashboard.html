@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Admin Assist</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <header>
+    <div class="logo">Admin Assist</div>
+    <div class="user-profile">
+      <span>Admin User</span>
+      <div class="user-avatar">A</div>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <h1 class="dashboard-title">Welcome, Admin!</h1>
+
+    <div class="stats-grid">
+      <div class="stat-card blue">
+        <div class="stat-header">
+          <div>
+            <div class="stat-label">Total Students</div>
+            <div class="stat-value">878</div>
+          </div>
+          <div class="stat-icon">👥</div>
+        </div>
+        <div class="stat-bar blue"></div>
+      </div>
+
+      <div class="stat-card green">
+        <div class="stat-header">
+          <div>
+            <div class="stat-label">Total Teachers</div>
+            <div class="stat-value">45</div>
+          </div>
+          <div class="stat-icon">👨‍🏫</div>
+        </div>
+        <div class="stat-bar green"></div>
+      </div>
+
+      <div class="stat-card blue">
+        <div class="stat-header">
+          <div>
+            <div class="stat-label">New Enrollment Requests</div>
+            <div class="stat-value">12</div>
+          </div>
+          <div class="stat-icon">📋</div>
+        </div>
+        <div class="stat-bar blue"></div>
+      </div>
+
+      <div class="stat-card orange">
+        <div class="stat-header">
+          <div>
+            <div class="stat-label">Pending Approvals</div>
+            <div class="stat-value">6</div>
+          </div>
+          <div class="stat-icon">✓</div>
+        </div>
+        <div class="stat-bar orange"></div>
+      </div>
+    </div>
+
+    <div class="activity-section">
+      <h2 class="activity-title">Recent Activity</h2>
+      <div class="activity-grid">
+        <div class="activity-card" onclick="window.location.href='enroll-student.html'">
+          <div class="activity-image enrollment">📝</div>
+          <div class="activity-content">
+            <div class="activity-title-small">Student Enrollment</div>
+            <div class="activity-description">Manage student enrollment records.</div>
+          </div>
+        </div>
+
+        <div class="activity-card" onclick="window.location.href='attendance-management.html'">
+          <div class="activity-image attendance">📊</div>
+          <div class="activity-content">
+            <div class="activity-title-small">Attendance Management</div>
+            <div class="activity-description">Monitor and track student attendance.</div>
+          </div>
+        </div>
+
+        <div class="activity-card" onclick="window.location.href='academic-records.html'">
+          <div class="activity-image records">📄</div>
+          <div class="activity-content">
+            <div class="activity-title-small">Academic Records</div>
+            <div class="activity-description">Manage grades, report cards, and transcripts.</div>
+          </div>
+        </div>
+
+        <div class="activity-card" onclick="window.location.href='generate-report.html'">
+          <div class="activity-image reports">📈</div>
+          <div class="activity-content">
+            <div class="activity-title-small">Generate Reports</div>
+            <div class="activity-description">Create and manage various school reports.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
