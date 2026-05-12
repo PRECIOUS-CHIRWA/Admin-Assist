@@ -4,7 +4,7 @@ const pool = require("../config/db");
 
 const scrypt = promisify(crypto.scrypt);
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const ALLOWED_ROLES = new Set(["admin", "staff", "user"]);
+const ALLOWED_ROLES = new Set(["admin", "staff", "user", "HeadMaster"]);
 const DEFAULT_ROLE = "user";
 const TOKEN_TTL_SECONDS = 60 * 60 * 24;
 
@@ -58,6 +58,7 @@ const createToken = (user) => {
     return `${data}.${signature}`;
 };
 
+// Signup handler
 const signup = async (req, res) => {
     try {
         const name = String(req.body.name || "").trim();
@@ -115,6 +116,7 @@ const signup = async (req, res) => {
     }
 };
 
+// Login handler
 const login = async (req, res) => {
     try {
         const email = normalizeEmail(req.body.email);
