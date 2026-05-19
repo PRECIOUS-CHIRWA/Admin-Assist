@@ -4,16 +4,171 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - Admin Assist</title>
+<<<<<<< HEAD
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a3a52 0%, #0f2d42 50%, #1a3a52 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .login-container {
+      background: white;
+      padding: 48px 40px;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      max-width: 480px;
+      width: 100%;
+      border-top: 4px solid #d4af37;
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .login-header h1 {
+      font-size: 28px;
+      font-weight: 600;
+      color: #1a3a52;
+      margin-bottom: 8px;
+    }
+
+    .login-header p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #1a3a52;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #d4af37;
+      box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+    }
+
+    .remember-forgot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+
+    .remember-forgot input[type="checkbox"] {
+      margin-right: 6px;
+      cursor: pointer;
+    }
+
+    .remember-forgot label {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .remember-forgot a {
+      color: #2b84d9;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .remember-forgot a:hover {
+      text-decoration: underline;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #1a5580 0%, #2b84d9 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 20px;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(26, 85, 128, 0.3);
+    }
+
+    .signup-link {
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .signup-link a {
+      color: #2b84d9;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .signup-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+=======
   <link rel="stylesheet" href="login.css">
+>>>>>>> d5124fb0fb20328b24d0992abefe0748bf53b57c
 </head>
 <body>
   <div class="login-container">
     <div class="login-header">
+<<<<<<< HEAD
+=======
       <div class="login-logo">AA</div>
+>>>>>>> d5124fb0fb20328b24d0992abefe0748bf53b57c
       <h1>Welcome Back!</h1>
       <p>Sign in to your Admin Assist account</p>
     </div>
 
+<<<<<<< HEAD
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input 
+          type="email" 
+          id="email" 
+          name="email" 
+          placeholder="Enter your email" 
+          required
+        >
+=======
     <!-- NEW: Error banner — hidden until a login attempt fails -->
     <div id="error-banner" class="error-banner" role="alert" aria-live="polite"></div>
 
@@ -22,24 +177,59 @@
         <label for="email">Email</label>
         <input type="email" id="email" name="email"
                placeholder="Enter your email" required autocomplete="email">
+>>>>>>> d5124fb0fb20328b24d0992abefe0748bf53b57c
       </div>
 
       <div class="form-group">
         <label for="password">Password</label>
+<<<<<<< HEAD
+        <input 
+          type="password" 
+          id="password" 
+          name="password" 
+          placeholder="Enter your password" 
+          required
+        >
+=======
         <div class="input-wrap">
           <input type="password" id="password" name="password"
                  placeholder="Enter your password" required autocomplete="current-password">
           <button type="button" class="toggle-pw" aria-label="Show password" id="togglePw">👁</button>
         </div>
+>>>>>>> d5124fb0fb20328b24d0992abefe0748bf53b57c
       </div>
 
       <div class="remember-forgot">
         <label>
+<<<<<<< HEAD
+          <input type="checkbox" name="remember">
+          Remember Me
+=======
           <input type="checkbox" name="remember"> Remember Me
+>>>>>>> d5124fb0fb20328b24d0992abefe0748bf53b57c
         </label>
         <a href="#">Forgot Password?</a>
       </div>
 
+<<<<<<< HEAD
+      <button type="submit" class="login-btn">Login</button>
+    </form>
+
+    <div class="signup-link">
+      <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      // Add your login logic here
+      alert('Login functionality to be connected to backend');
+    });
+  </script>
+</body>
+</html>
+=======
       <button type="submit" class="login-btn" id="loginBtn">Login</button>
     </form>
 
@@ -99,3 +289,4 @@
   </script>
 </body>
 </html>
+>>>>>>> d5124fb0fb20328b24d0992abefe0748bf53b57c
