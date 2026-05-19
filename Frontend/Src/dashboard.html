@@ -8,10 +8,18 @@
 </head>
 <body>
   <header>
-    <div class="logo">Admin Assist</div>
+     <div class="logo">Admin Assist</div>
     <div class="user-profile">
-      <span>Admin User</span>
-      <div class="user-avatar">A</div>
+      <!-- Populated from sessionStorage by the script below -->
+      <span id="headerUserName">…</span>
+      <div class="user-avatar" id="headerAvatar">?</div>
+      <!-- Logout button -->
+      <button id="logoutBtn" style="
+        margin-left:12px; padding:8px 14px; border:none; border-radius:6px;
+        background:#c0392b; color:#fff; font-size:13px; font-weight:600;
+        cursor:pointer;">
+        Logout
+      </button>
     </div>
   </header>
 
@@ -101,5 +109,32 @@
       </div>
     </div>
   </div>
+
+  <!-- auth.js must come first — auth-guard.js depends on it -->
+  <script src="auth.js"></script>
+  <script src="auth-guard.js"></script>
+  <script>
+    // Populate the UI with the stored user data
+    const user = getUser();
+    if (user) {
+      const firstName = user.name ? user.name.split(" ")[0] : "Admin";
+      document.getElementById("welcomeTitle").textContent  = `Welcome, ${firstName}!`;
+      document.getElementById("headerUserName").textContent = user.name || "User";
+      document.getElementById("headerAvatar").textContent   = firstName.charAt(0).toUpperCase();
+    }
+
+    // Logout — calls the backend to invalidate the refresh token,
+    // then clears local session and redirects to login
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      try {
+        await authFetch(`${API_BASE}/auth/logout`, { method: "POST" });
+      } catch {
+        // Even if the network call fails, clear local state
+      } finally {
+        clearSession();
+        window.location.href = "login.html";
+      }
+    });
+  </script>
 </body>
 </html>

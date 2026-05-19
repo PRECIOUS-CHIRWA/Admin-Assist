@@ -1,24 +1,97 @@
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config({ quiet: true });
+const express    = require("express");
+const cors       = require("cors");
+const helmet     = require("helmet");               // NEW
+const rateLimit  = require("express-rate-limit");   // NEW
+const cookieParser = require("cookie-parser");      // NEW
+require("dotenv").config({ quiet: true });
 
 const app = express();
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// ─── Security Headers ────────────────────────────────────────────────────────
+// Helmet sets ~14 HTTP headers that block common attacks:
+// clickjacking (X-Frame-Options), MIME sniffing, XSS, and more.
+// Must be the FIRST middleware so headers are applied to every response.
+app.use(helmet());
 
-//Import and connect routes
-const authRoutes = require('./routes/authRoutes');
+// ─── CORS ────────────────────────────────────────────────────────────────────
+// Only allow requests from your actual frontend origin.
+// Add your GitHub Pages URL to ALLOWED_ORIGIN in .env when you deploy.
+const allowedOrigins = (process.env.ALLOWED_ORIGIN || "")
+    .split(",")
+    .map(o => o.trim())
+    .filter(Boolean);
 
-//1. Import the routes
-app.use('/api/auth', authRoutes);
+// During local development, also allow localhost
+if (process.env.NODE_ENV !== "production") {
+    allowedOrigins.push("http://localhost:5500");   // Live Server default
+    allowedOrigins.push("http://127.0.0.1:5500");
+}
 
-//2.Tell app to use them for any URL starting with /api/auth
-// Basic route
-app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to Admin Assist API' });
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (e.g. curl, Postman during development)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+        callback(new Error(`CORS: Origin '${origin}' is not allowed`));
+    },
+    methods:          ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders:   ["Content-Type", "Authorization"],
+    credentials:      true,   // Required to send/receive httpOnly cookies
+}));
+
+// ─── Rate Limiters ───────────────────────────────────────────────────────────
+// Auth limiter: tight window on login/signup to block brute force
+const authLimiter = rateLimit({
+    windowMs:         15 * 60 * 1000,   // 15 minutes
+    max:              20,               // max 20 attempts per IP per window
+    standardHeaders:  true,            // Return limit info in RateLimit-* headers
+    legacyHeaders:    false,
+    message:          { error: "Too many requests from this IP, please try again in 15 minutes" },
+});
+
+// General limiter: looser cap for all other API routes
+const generalLimiter = rateLimit({
+    windowMs:         60 * 1000,        // 1 minute
+    max:              100,              // max 100 requests per IP per minute
+    standardHeaders:  true,
+    legacyHeaders:    false,
+    message:          { error: "Too many requests, please slow down" },
+});
+
+// ─── Body Parsing ────────────────────────────────────────────────────────────
+// Limit payload size to 10kb — prevents oversized body attacks
+app.use(express.json({ limit: "10kb" }));
+app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+app.use(cookieParser());
+
+// ─── Routes ──────────────────────────────────────────────────────────────────
+const authRoutes = require("./routes/authRoutes");
+
+// Auth routes get the tight rate limiter
+app.use("/api/auth", authLimiter, authRoutes);
+
+// All other future API routes get the general limiter
+app.use("/api", generalLimiter);
+
+// Health check — useful for deployment platforms to confirm the server is up
+app.get("/", (req, res) => {
+    res.json({ message: "Admin Assist API", status: "ok" });
+});
+
+// ─── 404 Handler ─────────────────────────────────────────────────────────────
+app.use((req, res) => {
+    res.status(404).json({ error: "Route not found" });
+});
+
+// ─── Global Error Handler ────────────────────────────────────────────────────
+// Catches any error passed to next(err) from route handlers
+app.use((err, req, res, next) => {
+    // CORS errors from our origin check above
+    if (err.message && err.message.startsWith("CORS:")) {
+        return res.status(403).json({ error: err.message });
+    }
+    console.error("Unhandled error:", err.message);
+    res.status(500).json({ error: "An unexpected error occurred" });
 });
 
 module.exports = app;
