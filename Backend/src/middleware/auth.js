@@ -1,15 +1,11 @@
 /**
  * auth.js — shared by every page that talks to the backend.
  * Load this BEFORE any page-specific scripts.
- *
- * BEFORE DEPLOYING:
- * Replace "https://your-backend-url.onrender.com" with your actual Render URL.
- * It will look like: https://admin-assist-api.onrender.com
  */
 const API_BASE = window.location.hostname === "localhost" ||
                  window.location.hostname === "127.0.0.1"
     ? "http://localhost:5000/api"
-    : "https://your-backend-url.onrender.com/api";  // ← REPLACE THIS
+    : "https://admin-assist-api.onrender.com/api";
 
 function getAccessToken() {
     return sessionStorage.getItem("accessToken") || null;
