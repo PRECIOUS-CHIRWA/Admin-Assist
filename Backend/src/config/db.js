@@ -3,15 +3,18 @@ require('dotenv').config({ quiet: true });
 
 const getEnv = (key) => process.env[key] && process.env[key].trim();
 
-// Create database connection pool
 const pool = mysql.createPool({
-    host: getEnv('DB_HOST'),
-    user: getEnv('DB_USER'),
-    password: getEnv('DB_PASSWORD'),
-    database: getEnv('DB_NAME'),
+    host:             getEnv('DB_HOST'),
+    port:             parseInt(getEnv('DB_PORT') || '3306', 10),  // NEW: Railway uses a custom port
+    user:             getEnv('DB_USER'),
+    password:         getEnv('DB_PASSWORD'),
+    database:         getEnv('DB_NAME'),
     waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
+    connectionLimit:  10,
+    queueLimit:       0,
+    ssl:              getEnv('NODE_ENV') === 'production'          // NEW: Railway requires SSL in production
+        ? { rejectUnauthorized: false }
+        : false,
 });
 
 pool.getConnection().then((conn) => {

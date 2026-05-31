@@ -5,15 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - Admin Assist</title>
   <link rel="stylesheet" href="dashboard.css">
+  <style>
+    /* Role badge shown next to the user's name in the header */
+    .role-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .role-badge.admin     { background: #fde68a; color: #78350f; }
+    .role-badge.headmaster{ background: #ddd6fe; color: #4c1d95; }
+    .role-badge.staff     { background: #d1fae5; color: #064e3b; }
+    .role-badge.user      { background: #dbeafe; color: #1e3a5f; }
+
+    /* Hide cards that the current role shouldn't see */
+    .admin-only   { display: none; }
+  </style>
 </head>
 <body>
   <header>
-     <div class="logo">Admin Assist</div>
+    <div class="logo">Admin Assist</div>
     <div class="user-profile">
-      <!-- Populated from sessionStorage by the script below -->
       <span id="headerUserName">…</span>
+      <span id="roleBadge" class="role-badge"></span>
       <div class="user-avatar" id="headerAvatar">?</div>
-      <!-- Logout button -->
       <button id="logoutBtn" style="
         margin-left:12px; padding:8px 14px; border:none; border-radius:6px;
         background:#c0392b; color:#fff; font-size:13px; font-weight:600;
@@ -24,7 +44,8 @@
   </header>
 
   <div class="main-container">
-    <h1 class="dashboard-title">Welcome, Admin!</h1>
+    <!-- FIX: Added id="welcomeTitle" which the script was already referencing -->
+    <h1 class="dashboard-title" id="welcomeTitle">Welcome!</h1>
 
     <div class="stats-grid">
       <div class="stat-card blue">
@@ -60,7 +81,8 @@
         <div class="stat-bar blue"></div>
       </div>
 
-      <div class="stat-card orange">
+      <!-- Admin/Headmaster only stat -->
+      <div class="stat-card orange admin-only" id="pendingApprovalsCard">
         <div class="stat-header">
           <div>
             <div class="stat-label">Pending Approvals</div>
@@ -73,9 +95,11 @@
     </div>
 
     <div class="activity-section">
-      <h2 class="activity-title">Recent Activity</h2>
+      <h2 class="activity-title">Quick Access</h2>
       <div class="activity-grid">
-        <div class="activity-card" onclick="window.location.href='enroll-student.html'">
+        <!-- Visible to admin and headmaster only -->
+        <div class="activity-card admin-only" id="enrollCard"
+             onclick="window.location.href='enroll-student.html'">
           <div class="activity-image enrollment">📝</div>
           <div class="activity-content">
             <div class="activity-title-small">Student Enrollment</div>
@@ -83,6 +107,7 @@
           </div>
         </div>
 
+        <!-- Visible to all roles -->
         <div class="activity-card" onclick="window.location.href='attendance-management.html'">
           <div class="activity-image attendance">📊</div>
           <div class="activity-content">
@@ -99,7 +124,9 @@
           </div>
         </div>
 
-        <div class="activity-card" onclick="window.location.href='generate-report.html'">
+        <!-- Visible to admin and headmaster only -->
+        <div class="activity-card admin-only" id="reportCard"
+             onclick="window.location.href='generate-report.html'">
           <div class="activity-image reports">📈</div>
           <div class="activity-content">
             <div class="activity-title-small">Generate Reports</div>
@@ -110,26 +137,39 @@
     </div>
   </div>
 
-  <!-- auth.js must come first — auth-guard.js depends on it -->
   <script src="auth.js"></script>
   <script src="auth-guard.js"></script>
   <script>
-    // Populate the UI with the stored user data
     const user = getUser();
+
     if (user) {
-      const firstName = user.name ? user.name.split(" ")[0] : "Admin";
-      document.getElementById("welcomeTitle").textContent  = `Welcome, ${firstName}!`;
+      const firstName = user.name ? user.name.split(" ")[0] : "User";
+      const role      = user.role || "user";
+
+      // Populate header
+      document.getElementById("welcomeTitle").textContent   = `Welcome, ${firstName}!`;
       document.getElementById("headerUserName").textContent = user.name || "User";
       document.getElementById("headerAvatar").textContent   = firstName.charAt(0).toUpperCase();
+
+      // Role badge
+      const badge = document.getElementById("roleBadge");
+      badge.textContent  = role.charAt(0).toUpperCase() + role.slice(1);
+      badge.className    = `role-badge ${role}`;
+
+      // RBAC: show admin-only elements for admin and headmaster
+      const isPrivileged = role === "admin" || role === "headmaster";
+      if (isPrivileged) {
+        document.querySelectorAll(".admin-only").forEach(el => {
+          el.style.display = "";   // restore default display
+        });
+      }
     }
 
-    // Logout — calls the backend to invalidate the refresh token,
-    // then clears local session and redirects to login
     document.getElementById("logoutBtn").addEventListener("click", async () => {
       try {
         await authFetch(`${API_BASE}/auth/logout`, { method: "POST" });
       } catch {
-        // Even if the network call fails, clear local state
+        // clear locally even if the network call fails
       } finally {
         clearSession();
         window.location.href = "login.html";
