@@ -97,7 +97,7 @@ const signup = async (req, res) => {
 // ─── Login ──────────────────────
 const login = async (req, res) => {
     try {
-        const email    = normalizeEmail(req.body.email);
+        const email = normalizeEmail(req.body.email);
         const password = req.body.password;
 
         if (!email || !password)
