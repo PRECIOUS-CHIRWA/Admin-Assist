@@ -116,13 +116,15 @@
   <script src="auth.js"></script>
   <script src="auth-guard.js"></script>
   <script>
-    const user = getUser();
+    // auth-guard.js has already checked authentication
+    // currentUser variable is available from auth-guard.js
+    const user = currentUser || getUser();
 
     if (user) {
       const firstName = user.name ? user.name.split(" ")[0] : "User";
       const role      = user.role || "user";
 
-      // Populate header
+      // Populate header with user info
       document.getElementById("welcomeTitle").textContent   = `Welcome, ${firstName}!`;
       document.getElementById("headerUserName").textContent = user.name || "User";
       document.getElementById("headerAvatar").textContent   = firstName.charAt(0).toUpperCase();
@@ -141,6 +143,43 @@
       }
     }
 
+    // ===== Fetch Real Dashboard Stats =====
+    // In a full implementation, the backend would provide a /api/dashboard/stats endpoint
+    // that returns: { totalStudents, totalTeachers, enrollmentRequests, pendingApprovals }
+    // For now, this shows the structure for when those endpoints are ready.
+    
+    async function loadDashboardStats() {
+      try {
+        // Future: Replace with actual API call to /api/dashboard/stats
+        // const response = await authFetch(`${API_BASE}/dashboard/stats`);
+        // const stats = await response.json();
+        
+        // Placeholder: Using mock data - replace with real API once backend is ready
+        const stats = {
+          totalStudents: 878,
+          totalTeachers: 45,
+          enrollmentRequests: 12,
+          pendingApprovals: 6
+        };
+
+        // Update stat cards with real data
+        const cards = document.querySelectorAll(".stat-value");
+        if (cards.length >= 4) {
+          cards[0].textContent = stats.totalStudents;  // Total Students
+          cards[1].textContent = stats.totalTeachers;  // Total Teachers
+          cards[2].textContent = stats.enrollmentRequests;  // New Enrollment Requests
+          cards[3].textContent = stats.pendingApprovals;  // Pending Approvals
+        }
+      } catch (err) {
+        console.warn("Could not load dashboard stats:", err);
+        // Stats remain at default values
+      }
+    }
+
+    // Load stats on page load
+    loadDashboardStats();
+
+    // Logout button
     document.getElementById("logoutBtn").addEventListener("click", async () => {
       try {
         await authFetch(`${API_BASE}/auth/logout`, { method: "POST" });

@@ -9,7 +9,7 @@ const {
     verifyEmail,
     resendVerification,
 } = require("../controllers/authController");
-const { authenticate, authorize }      = require("../middleware/auth");
+const { authenticate, authorize } = require("../middleware/auth");
 
 // ─── Public ───────────────────────────────────────────────────────────────────
 router.post("/signup", signup);
@@ -18,7 +18,7 @@ router.post("/verify-email", verifyEmail);
 router.post("/resend-verification", resendVerification);
 
 // ─── Any authenticated user ───────────────────────────────────────────────────
-router.get ("/me",     authenticate, getMe);
+router.get ("/me", authenticate, getMe);
 router.post("/logout", authenticate, logout);
 
 // ─── Admin + Headmaster only ──────────────────────────────────────────────────

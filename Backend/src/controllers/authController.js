@@ -38,7 +38,7 @@ const createTokens = (user) => {
     if (!secret) throw new Error("JWT_SECRET environment variable is not set");
 
     const payload      = { sub: user.id, email: user.email, role: user.role };
-    const accessToken  = jwt.sign(payload,          secret, { expiresIn: ACCESS_TTL });
+    const accessToken  = jwt.sign(payload, secret, { expiresIn: ACCESS_TTL });
     const refreshToken = jwt.sign({ sub: user.id }, secret, { expiresIn: REFRESH_TTL });
 
     return { accessToken, refreshToken };
@@ -82,18 +82,18 @@ const sendAccountVerification = async (user) => {
 
 const cookieOptions = () => ({
     httpOnly: true,
-    secure:   process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge:   7 * 24 * 60 * 60 * 1000,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
 });
 
 // ─── Signup ─────────────────────
 const signup = async (req, res) => {
     try {
-        const name     = String(req.body.name || "").trim();
-        const email    = normalizeEmail(req.body.email);
+        const name = String(req.body.name || "").trim();
+        const email = normalizeEmail(req.body.email);
         const password = req.body.password;
-        const role     = String(req.body.role || DEFAULT_ROLE).trim().toLowerCase();
+        const role = String(req.body.role || DEFAULT_ROLE).trim().toLowerCase();
 
         if (!name || !email || !password)
             return res.status(400).json({ error: "Name, email, and password are required" });
@@ -318,15 +318,23 @@ const resendVerification = async (req, res) => {
 // ─── Logout ───────────────────────
 const logout = async (req, res) => {
     try {
+        const userId = req.user?.sub;  // From JWT token
         const raw = req.cookies?.refreshToken;
 
-        //  Delete the stored token hash so it can never be reused
+        // Option 1: Delete just this device's refresh token
         if (raw) {
             await pool.execute(
-                "DELETE FROM refresh_tokens WHERE token_hash = ?",
-                [hashToken(raw)]
+                "DELETE FROM refresh_tokens WHERE token_hash = ? AND user_id = ?",
+                [hashToken(raw), userId]
             );
         }
+
+        // Option 2 (more secure): Delete ALL refresh tokens for this user
+        // (forces logout from all devices)
+        // Uncomment to enable "logout from all devices":
+        // if (userId) {
+        //     await pool.execute("DELETE FROM refresh_tokens WHERE user_id = ?", [userId]);
+        // }
 
         res.clearCookie("refreshToken", {
             httpOnly: true,
@@ -334,7 +342,10 @@ const logout = async (req, res) => {
             sameSite: "strict",
         });
 
-        res.json({ message: "Logged out successfully" });
+        res.json({ 
+            message: "Logged out successfully",
+            status: "ok"
+        });
     } catch (err) {
         console.error("Logout error:", err.message);
         res.status(500).json({ error: "Something went wrong during logout" });

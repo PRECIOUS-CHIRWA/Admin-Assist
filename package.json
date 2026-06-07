@@ -7,5 +7,10 @@
     "start": "npm --prefix Backend start",
     "backend:dev": "npm --prefix Backend run dev",
     "backend:start": "npm --prefix Backend start"
+  },
+  "dependencies": {
+    "express-session": "^1.19.0",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0"
   }
 }

@@ -16,7 +16,7 @@ const API_BASE = window.location.hostname === "localhost" ||
  * Returns the stored access token or null if the user is not logged in.
  */
 function getAccessToken() {
-    return sessionStorage.getItem("accessToken") || null;
+    return localStorage.getItem("accessToken") || null;
 }
 
 /**
@@ -25,7 +25,7 @@ function getAccessToken() {
  */
 function getUser() {
     try {
-        const raw = sessionStorage.getItem("user");
+        const raw = localStorage.getItem("user");
         return raw ? JSON.parse(raw) : null;
     } catch {
         return null;
@@ -37,8 +37,8 @@ function getUser() {
  * Wipes the in-memory session. Called on logout or token expiry.
  */
 function clearSession() {
-    sessionStorage.removeItem("accessToken");
-    sessionStorage.removeItem("user");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("user");
 }
 
 /**

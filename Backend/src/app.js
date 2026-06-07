@@ -15,7 +15,6 @@ app.use(helmet());
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
 // Only allow requests from your actual frontend origin.
-// Add your GitHub Pages URL to ALLOWED_ORIGIN in .env when you deploy.
 const allowedOrigins = (process.env.ALLOWED_ORIGIN || "")
     .split(",")
     .map(o => o.trim().toLowerCase())
