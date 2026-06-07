@@ -18,7 +18,7 @@ app.use(helmet());
 // Add your GitHub Pages URL to ALLOWED_ORIGIN in .env when you deploy.
 const allowedOrigins = (process.env.ALLOWED_ORIGIN || "")
     .split(",")
-    .map(o => o.trim())
+    .map(o => o.trim().toLowerCase())
     .filter(Boolean);
 
 // During local development, also allow localhost
@@ -31,7 +31,7 @@ app.use(cors({
     origin: (origin, callback) => {
         // Allow requests with no origin (e.g. curl, Postman during development)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.includes(origin)) return callback(null, true);
+        if (allowedOrigins.includes(origin.toLowerCase())) return callback(null, true);
         callback(new Error(`CORS: Origin '${origin}' is not allowed`));
     },
     methods:          ["GET", "POST", "PUT", "DELETE", "OPTIONS"],

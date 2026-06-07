@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Email - Admin Assist</title>
+  <link rel="stylesheet" href="login.css">
+  <style>
+    .verify-panel {
+      text-align: center;
+    }
+
+    .verify-status {
+      margin: 1rem 0 1.4rem;
+      padding: 0.9rem 1rem;
+      border-radius: 8px;
+      background: #f3f6fb;
+      color: #25324a;
+      line-height: 1.5;
+    }
+
+    .verify-status.success {
+      background: #eaf7ef;
+      color: #17633a;
+    }
+
+    .verify-status.error {
+      background: #fdecec;
+      color: #9f1d1d;
+    }
+
+    .verify-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .verify-link {
+      color: #0f4c81;
+      font-weight: 700;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container verify-panel">
+    <div class="login-header">
+      <div class="login-logo">AA</div>
+      <h1>Email Verification</h1>
+      <p>Activating your Admin Assist account</p>
+    </div>
+
+    <div id="verifyStatus" class="verify-status">Checking your verification link...</div>
+
+    <div class="verify-actions">
+      <a class="login-btn" href="login.html">Go to Login</a>
+      <a class="verify-link" href="signup.html">Create another account</a>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script>
+    async function verifyEmail() {
+      const status = document.getElementById("verifyStatus");
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("token");
+      const email = params.get("email");
+
+      if (!token || !email) {
+        status.textContent = "This verification link is missing required details.";
+        status.className = "verify-status error";
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/verify-email`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, token }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Email verification failed");
+
+        status.textContent = data.message || "Email verified successfully. You can now log in.";
+        status.className = "verify-status success";
+      } catch (err) {
+        status.textContent = err.message;
+        status.className = "verify-status error";
+      }
+    }
+
+    verifyEmail();
+  </script>
+</body>
+</html>

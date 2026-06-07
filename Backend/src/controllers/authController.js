@@ -2,6 +2,7 @@ const crypto     = require("crypto");
 const { promisify } = require("util");
 const jwt        = require("jsonwebtoken");
 const pool       = require("../config/db");
+const { sendVerificationEmail } = require("../services/emailService");
 
 const scrypt = promisify(crypto.scrypt);
 const EMAIL_PATTERN  = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -11,6 +12,7 @@ const ACCESS_TTL     = "15m";
 const REFRESH_TTL    = "7d";
 const MAX_ATTEMPTS   = 5;
 const LOCKOUT_MS     = 15 * 60 * 1000;   // 15 minutes
+const VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000;
 
 const normalizeEmail  = (email) => String(email || "").trim().toLowerCase();
 const isValidPassword = (pw)    => typeof pw === "string" && pw.length >= 8;
@@ -46,6 +48,38 @@ const createTokens = (user) => {
 const hashToken = (token) =>
     crypto.createHash("sha256").update(token).digest("hex");
 
+const publicAppUrl = () =>
+    String(process.env.PUBLIC_APP_URL || process.env.FRONTEND_URL || "http://localhost:5500")
+        .trim()
+        .replace(/\/+$/, "");
+
+const buildVerificationUrl = (email, token) => {
+    const params = new URLSearchParams({ email, token });
+    return `${publicAppUrl()}/verify-email.html?${params.toString()}`;
+};
+
+const createVerificationToken = async (userId) => {
+    const token = crypto.randomBytes(32).toString("hex");
+    const tokenHash = hashToken(token);
+    const expiresAt = new Date(Date.now() + VERIFICATION_TTL_MS);
+
+    await pool.execute("DELETE FROM email_verification_tokens WHERE user_id = ?", [userId]);
+    await pool.execute(
+        "INSERT INTO email_verification_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)",
+        [userId, tokenHash, expiresAt]
+    );
+
+    return token;
+};
+
+const sendAccountVerification = async (user) => {
+    const token = await createVerificationToken(user.id);
+    await sendVerificationEmail({
+        to: { email: user.email, name: user.name },
+        verificationUrl: buildVerificationUrl(user.email, token),
+    });
+};
+
 const cookieOptions = () => ({
     httpOnly: true,
     secure:   process.env.NODE_ENV === "production",
@@ -78,13 +112,26 @@ const signup = async (req, res) => {
 
         const passwordHash = await hashPassword(password);
         const [result] = await pool.execute(
-            "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)",
+            "INSERT INTO users (name, email, password_hash, role, email_verified) VALUES (?, ?, ?, ?, 0)",
             [name, email, passwordHash, role]
         );
+        const user = { id: result.insertId, name, email, role };
+
+        let verificationEmailSent = false;
+        try {
+            await sendAccountVerification(user);
+            verificationEmailSent = true;
+        } catch (emailErr) {
+            console.error("Verification email error:", emailErr.message);
+        }
 
         res.status(201).json({
-            message: "User signed up successfully",
-            user:    { id: result.insertId, name, email, role },
+            message: verificationEmailSent
+                ? "Account created. Check your email to verify your account before logging in."
+                : "Account created, but the verification email could not be sent. Please request a new verification link.",
+            verificationRequired: true,
+            verificationEmailSent,
+            user,
         });
     } catch (err) {
         if (err.code === "ER_DUP_ENTRY")
@@ -105,7 +152,7 @@ const login = async (req, res) => {
 
         const [users] = await pool.execute(
             `SELECT id, name, email, password_hash, role,
-                    is_active, failed_attempts, locked_until
+                    is_active, email_verified, failed_attempts, locked_until
              FROM users WHERE email = ? LIMIT 1`,
             [email]
         );
@@ -120,6 +167,9 @@ const login = async (req, res) => {
         //  Reject disabled accounts
         if (!user.is_active)
             return res.status(403).json({ error: "This account has been deactivated. Please contact an administrator." });
+
+        if (!user.email_verified)
+            return res.status(403).json({ error: "Please verify your email address before logging in." });
 
         //  Check lockout
         if (user.locked_until && new Date(user.locked_until) > new Date()) {
@@ -185,7 +235,7 @@ const login = async (req, res) => {
 const getMe = async (req, res) => {
     try {
         const [rows] = await pool.execute(
-            "SELECT id, name, email, role, created_at FROM users WHERE id = ? LIMIT 1",
+            "SELECT id, name, email, role, email_verified, created_at FROM users WHERE id = ? LIMIT 1",
             [req.user.sub]
         );
         if (!rows[0]) return res.status(404).json({ error: "User not found" });
@@ -193,6 +243,75 @@ const getMe = async (req, res) => {
     } catch (err) {
         console.error("getMe error:", err.message);
         res.status(500).json({ error: "Something went wrong" });
+    }
+};
+
+// ─── Verify Email ─────────────────
+const verifyEmail = async (req, res) => {
+    try {
+        const email = normalizeEmail(req.body.email);
+        const token = String(req.body.token || "").trim();
+
+        if (!email || !token)
+            return res.status(400).json({ error: "Email and verification token are required" });
+
+        const [rows] = await pool.execute(
+            `SELECT evt.id, evt.user_id, evt.expires_at, u.email_verified
+             FROM email_verification_tokens evt
+             INNER JOIN users u ON u.id = evt.user_id
+             WHERE u.email = ? AND evt.token_hash = ?
+             LIMIT 1`,
+            [email, hashToken(token)]
+        );
+
+        const verification = rows[0];
+        if (!verification)
+            return res.status(400).json({ error: "Invalid verification link" });
+
+        if (new Date(verification.expires_at) <= new Date()) {
+            await pool.execute("DELETE FROM email_verification_tokens WHERE id = ?", [verification.id]);
+            return res.status(410).json({ error: "Verification link expired. Please request a new one." });
+        }
+
+        if (!verification.email_verified) {
+            await pool.execute(
+                "UPDATE users SET email_verified = 1, email_verified_at = NOW() WHERE id = ?",
+                [verification.user_id]
+            );
+        }
+        await pool.execute("DELETE FROM email_verification_tokens WHERE user_id = ?", [verification.user_id]);
+
+        res.json({ message: "Email verified successfully. You can now log in." });
+    } catch (err) {
+        console.error("Verify email error:", err.message);
+        res.status(500).json({ error: "Something went wrong during email verification" });
+    }
+};
+
+// ─── Resend Verification ──────────
+const resendVerification = async (req, res) => {
+    const genericMessage = "If that account exists and still needs verification, a new link has been sent.";
+
+    try {
+        const email = normalizeEmail(req.body.email);
+        if (!email || !EMAIL_PATTERN.test(email))
+            return res.status(400).json({ error: "Please provide a valid email address" });
+
+        const [users] = await pool.execute(
+            "SELECT id, name, email, email_verified FROM users WHERE email = ? LIMIT 1",
+            [email]
+        );
+
+        const user = users[0];
+        if (!user || user.email_verified) {
+            return res.json({ message: genericMessage });
+        }
+
+        await sendAccountVerification(user);
+        res.json({ message: genericMessage });
+    } catch (err) {
+        console.error("Resend verification error:", err.message);
+        res.status(500).json({ error: "Something went wrong while resending verification email" });
     }
 };
 
@@ -222,4 +341,4 @@ const logout = async (req, res) => {
     }
 };
 
-module.exports = { signup, login, getMe, logout };
+module.exports = { signup, login, getMe, logout, verifyEmail, resendVerification };

@@ -121,8 +121,8 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Signup failed");
 
-        showBanner("Account created! Redirecting to login…", "success");
-        setTimeout(() => { window.location.href = "login.html"; }, 1800);
+        showBanner(data.message || "Account created. Check your email before logging in.", "success");
+        e.target.reset();
       } catch (err) {
         showBanner(err.message);
       } finally {
