@@ -17,6 +17,11 @@
       background: #f3f6fb;
       color: #25324a;
       line-height: 1.5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 60px;
+      gap: 0.8rem;
     }
 
     .verify-status.success {
@@ -27,6 +32,19 @@
     .verify-status.error {
       background: #fdecec;
       color: #9f1d1d;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
     .verify-actions {
@@ -40,6 +58,12 @@
       font-weight: 700;
       text-decoration: none;
     }
+
+    .countdown {
+      font-size: 0.85em;
+      margin-top: 0.5rem;
+      opacity: 0.8;
+    }
   </style>
 </head>
 <body>
@@ -50,7 +74,10 @@
       <p>Activating your Admin Assist account</p>
     </div>
 
-    <div id="verifyStatus" class="verify-status">Checking your verification link...</div>
+    <div id="verifyStatus" class="verify-status">
+      <div class="spinner"></div>
+      <span>Checking your verification link...</span>
+    </div>
 
     <div class="verify-actions">
       <a class="login-btn" href="login.html">Go to Login</a>
@@ -67,7 +94,7 @@
       const email = params.get("email");
 
       if (!token || !email) {
-        status.textContent = "This verification link is missing required details.";
+        status.innerHTML = "<span>❌ This verification link is missing required details or has expired.</span>";
         status.className = "verify-status error";
         return;
       }
@@ -82,10 +109,28 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Email verification failed");
 
-        status.textContent = data.message || "Email verified successfully. You can now log in.";
+        // Success! Show message and auto-redirect
+        status.innerHTML = "<span>✅ Email verified successfully!</span>";
         status.className = "verify-status success";
+        
+        let countdown = 3;
+        const countdownDiv = document.createElement("div");
+        countdownDiv.className = "countdown";
+        countdownDiv.textContent = `Redirecting to login in ${countdown} seconds...`;
+        status.appendChild(countdownDiv);
+        
+        const interval = setInterval(() => {
+          countdown--;
+          if (countdown <= 0) {
+            clearInterval(interval);
+            window.location.href = "login.html";
+          } else {
+            countdownDiv.textContent = `Redirecting to login in ${countdown} seconds...`;
+          }
+        }, 1000);
+        
       } catch (err) {
-        status.textContent = err.message;
+        status.innerHTML = `<span>❌ ${err.message}<br><small style="display: block; margin-top: 0.5rem;">Please check the link or <a href="login.html" style="color: inherit; text-decoration: underline;">return to login</a> to resend verification.</small></span>`;
         status.className = "verify-status error";
       }
     }

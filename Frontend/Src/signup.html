@@ -64,6 +64,7 @@
 
     <div class="login-link">
       <p>Already have an account? <a href="login.html">Login</a></p>
+      <p style="font-size: 0.9em; margin-top: 0.5em;">Didn't receive verification email? <a href="login.html" style="color: #0f4c81;">Resend it</a></p>
     </div>
   </div>
 
@@ -121,8 +122,20 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Signup failed");
 
-        showBanner(data.message || "Account created. Check your email before logging in.", "success");
+        // Success! Show detailed message
+        const message = `✅ ${data.message || "Account created successfully!"}\n\nNext steps:\n1. Check your email (${email})\n2. Click the verification link\n3. Return here to log in`;
+        
+        showBanner(message, "success");
+        
+        // Clear form and disable for a moment
         e.target.reset();
+        btn.disabled = true;
+        btn.textContent = "Account Created ✓";
+        
+        // After 5 seconds, redirect to login
+        setTimeout(() => {
+          window.location.href = "login.html";
+        }, 5000);
       } catch (err) {
         showBanner(err.message);
       } finally {
