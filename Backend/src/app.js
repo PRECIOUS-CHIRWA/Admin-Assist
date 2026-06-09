@@ -14,21 +14,23 @@ const app = express();
 app.use(helmet());
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
-// Only allow requests from your actual frontend origin.
+// Always include the GitHub Pages origin and allow extra origins via env var.
+// ALLOWED_ORIGIN in .env can be a comma-separated list.
 const allowedOrigins = [
-    /*(process.env.ALLOWED_ORIGIN || "")
-    .split(",")
-    .map(o => o.trim().toLowerCase())
-    .filter(Boolean);*/
-
-    "http://localhost:3000",
-    "https://precious-chirwa.github.io"
+    "https://precious-chirwa.github.io",   // production frontend (GitHub Pages)
+    ...(process.env.ALLOWED_ORIGIN || "")
+        .split(",")
+        .map(o => o.trim().toLowerCase())
+        .filter(Boolean),
 ];
 
-// During local development, also allow localhost
+// During local development, also allow both common Live Server origins
 if (process.env.NODE_ENV !== "production") {
-    allowedOrigins.push("http://localhost:5000");   // Live Server default
+    allowedOrigins.push("http://localhost:5000");    // Live Server alt
     allowedOrigins.push("http://127.0.0.1:5000");
+    allowedOrigins.push("http://localhost:5500");    // VS Code Live Server default
+    allowedOrigins.push("http://127.0.0.1:5500");
+    allowedOrigins.push("http://localhost:3000");    // CRA / Vite dev server
 }
 
 app.use(cors({
