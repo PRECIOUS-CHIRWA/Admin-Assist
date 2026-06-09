@@ -1,7 +1,7 @@
-const express    = require("express");
-const cors       = require("cors");
-const helmet     = require("helmet");               // NEW
-const rateLimit  = require("express-rate-limit");   // NEW
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");               // NEW
+const rateLimit = require("express-rate-limit");   // NEW
 const cookieParser = require("cookie-parser");      // NEW
 require("dotenv").config({ quiet: true });
 
@@ -22,8 +22,8 @@ const allowedOrigins = (process.env.ALLOWED_ORIGIN || "")
 
 // During local development, also allow localhost
 if (process.env.NODE_ENV !== "production") {
-    allowedOrigins.push("http://localhost:5500");   // Live Server default
-    allowedOrigins.push("http://127.0.0.1:5500");
+    allowedOrigins.push("http://localhost:55115");   // Live Server default
+    allowedOrigins.push("http://127.0.0.1:55115");
 }
 
 app.use(cors({
@@ -33,28 +33,28 @@ app.use(cors({
         if (allowedOrigins.includes(origin.toLowerCase())) return callback(null, true);
         callback(new Error(`CORS: Origin '${origin}' is not allowed`));
     },
-    methods:          ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders:   ["Content-Type", "Authorization"],
-    credentials:      true,   // Required to send/receive httpOnly cookies
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,   // Required to send/receive httpOnly cookies
 }));
 
 // ─── Rate Limiters ───────────────────────────────────────────────────────────
 // Auth limiter: tight window on login/signup to block brute force
 const authLimiter = rateLimit({
-    windowMs:         15 * 60 * 1000,   // 15 minutes
-    max:              20,               // max 20 attempts per IP per window
-    standardHeaders:  true,            // Return limit info in RateLimit-* headers
-    legacyHeaders:    false,
-    message:          { error: "Too many requests from this IP, please try again in 15 minutes" },
+    windowMs: 15 * 60 * 1000,   // 15 minutes
+    max: 20,               // max 20 attempts per IP per window
+    standardHeaders: true,            // Return limit info in RateLimit-* headers
+    legacyHeaders: false,
+    message: { error: "Too many requests from this IP, please try again in 15 minutes" },
 });
 
 // General limiter: looser cap for all other API routes
 const generalLimiter = rateLimit({
-    windowMs:         60 * 1000,        // 1 minute
-    max:              100,              // max 100 requests per IP per minute
-    standardHeaders:  true,
-    legacyHeaders:    false,
-    message:          { error: "Too many requests, please slow down" },
+    windowMs: 60 * 1000,        // 1 minute
+    max: 100,              // max 100 requests per IP per minute
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many requests, please slow down" },
 });
 
 // ─── Body Parsing ────────────────────────────────────────────────────────────
