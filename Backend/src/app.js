@@ -15,10 +15,15 @@ app.use(helmet());
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
 // Only allow requests from your actual frontend origin.
-const allowedOrigins = (process.env.ALLOWED_ORIGIN || "")
+const allowedOrigins = [
+    /*(process.env.ALLOWED_ORIGIN || "")
     .split(",")
     .map(o => o.trim().toLowerCase())
-    .filter(Boolean);
+    .filter(Boolean);*/
+
+    "http://localhost:3000",
+    "https://precious-chirwa.github.io"
+];
 
 // During local development, also allow localhost
 if (process.env.NODE_ENV !== "production") {
