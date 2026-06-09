@@ -1,15 +1,10 @@
-/**
- * auth.js — shared by every page that talks to the backend.
- * Load this BEFORE any page-specific scripts:
- *   <script src="auth.js"></script>
- */
 
 // Switch this to your deployed backend URL before pushing to GitHub Pages.
 // During local development it points to localhost.
 const API_BASE = window.location.hostname === "localhost" ||
-                 window.location.hostname === "127.0.0.1"
+    window.location.hostname === "127.0.0.1"
     ? "http://localhost:5000/api"
-    : "https://your-backend-url.com/api";   // ← update this before deploying
+    : "https://admin-assist-api.onrender.com";
 
 /**
  * getAccessToken()
