@@ -22,8 +22,8 @@ const allowedOrigins = (process.env.ALLOWED_ORIGIN || "")
 
 // During local development, also allow localhost
 if (process.env.NODE_ENV !== "production") {
-    allowedOrigins.push("http://localhost:55115");   // Live Server default
-    allowedOrigins.push("http://127.0.0.1:55115");
+    allowedOrigins.push("http://localhost:5000");   // Live Server default
+    allowedOrigins.push("http://127.0.0.1:5000");
 }
 
 app.use(cors({
