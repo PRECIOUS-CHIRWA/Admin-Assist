@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Directory - Admin Assist</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="students.css">
+</head>
+<body>
+  <header>
+    <div class="logo">Admin Assist</div>
+    <div class="user-profile">
+      <span id="headerUserName">…</span>
+      <span id="roleBadge" class="role-badge"></span>
+      <div class="user-avatar" id="headerAvatar">?</div>
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <div class="breadcrumb">
+      <a href="dashboard.html">Dashboard</a> > <span>Student Directory</span>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+      <div>
+        <h1 style="font-family: 'Playfair Display', serif; font-size: 32px; margin-bottom: 8px;">Student Directory</h1>
+        <p style="color: #666;">Manage all enrolled students</p>
+      </div>
+      <button id="addStudentBtn" class="btn-add">+ Add New Student</button>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="table-controls">
+      <div class="search-box">
+        <input type="text" id="searchStudents" placeholder="Search by name, admission number, or grade...">
+      </div>
+      <div class="filters">
+        <select id="filterGrade">
+          <option value="">All Grades</option>
+          <option value="Grade 8">Grade 8</option>
+          <option value="Grade 9">Grade 9</option>
+          <option value="Grade 10">Grade 10</option>
+          <option value="Grade 11">Grade 11</option>
+          <option value="Grade 12">Grade 12</option>
+        </select>
+        <select id="filterStatus">
+          <option value="">All Statuses</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+          <option value="Suspended">Suspended</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Admission No</th>
+            <th>Full Name</th>
+            <th>Grade</th>
+            <th>Section</th>
+            <th>Gender</th>
+            <th>Enrollment Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Populated by JavaScript -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- PAGINATION -->
+    <div id="pagination"></div>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script src="auth.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="students.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      requireAuth();
+      const user = getUser();
+      if (user) {
+        const firstName = user.name ? user.name.split(" ")[0] : "User";
+        document.getElementById("headerUserName").textContent = user.name || "User";
+        document.getElementById("headerAvatar").textContent = firstName.charAt(0).toUpperCase();
+        document.getElementById("roleBadge").textContent = user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "User";
+      }
+
+      document.getElementById("logoutBtn").addEventListener("click", async () => {
+        try {
+          await authFetch(`${API_BASE}/auth/logout`, { method: "POST" });
+        } catch {}
+        finally {
+          clearSession();
+          window.location.href = "login.html";
+        }
+      });
+
+      initializeStudentList();
+    });
+  </script>
+</body>
+</html>

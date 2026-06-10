@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Student Profile - Admin Assist</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="students.css">
+</head>
+<body>
+  <header>
+    <div class="logo">Admin Assist</div>
+    <div class="user-profile">
+      <span id="headerUserName">…</span>
+      <span id="roleBadge" class="role-badge"></span>
+      <div class="user-avatar" id="headerAvatar">?</div>
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <div class="breadcrumb">
+      <a href="dashboard.html">Dashboard</a> > <a href="students.html">Student Directory</a> > <span>Edit Student</span>
+    </div>
+
+    <h1 style="font-family: 'Playfair Display', serif; font-size: 32px; margin-bottom: 32px;">Edit Student Profile</h1>
+
+    <div class="form-content">
+      <form id="editForm">
+        <!-- PERSONAL INFORMATION -->
+        <h2 style="font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 20px; margin-top: 0;">Personal Information</h2>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="firstName">First Name *</label>
+            <input type="text" id="firstName" required>
+            <div class="error-message"></div>
+          </div>
+          <div class="form-group">
+            <label for="lastName">Last Name *</label>
+            <input type="text" id="lastName" required>
+            <div class="error-message"></div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="dateOfBirth">Date of Birth *</label>
+            <input type="date" id="dateOfBirth" required>
+            <div class="error-message"></div>
+          </div>
+          <div class="form-group">
+            <label for="gender">Gender *</label>
+            <select id="gender" required>
+              <option value="">Select gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+            <div class="error-message"></div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="nrcNumber">NRC / Birth Certificate Number</label>
+            <input type="text" id="nrcNumber">
+            <div class="error-message"></div>
+          </div>
+          <div class="form-group">
+            <label for="district">District</label>
+            <input type="text" id="district">
+            <div class="error-message"></div>
+          </div>
+        </div>
+
+        <div class="form-row full">
+          <div class="form-group">
+            <label for="homeAddress">Home Address</label>
+            <textarea id="homeAddress" rows="3"></textarea>
+            <div class="error-message"></div>
+          </div>
+        </div>
+
+        <div class="form-row full">
+          <div class="form-group">
+            <label for="province">Province *</label>
+            <select id="province" required>
+              <option value="">Select a province</option>
+              <option value="Central">Central</option>
+              <option value="Copperbelt">Copperbelt</option>
+              <option value="Eastern">Eastern</option>
+              <option value="Luapula">Luapula</option>
+              <option value="Lusaka">Lusaka</option>
+              <option value="Muchinga">Muchinga</option>
+              <option value="North-Western">North-Western</option>
+              <option value="Northern">Northern</option>
+              <option value="Southern">Southern</option>
+              <option value="Western">Western</option>
+            </select>
+            <div class="error-message"></div>
+          </div>
+        </div>
+
+        <hr style="margin: 40px 0; border: none; border-top: 1px solid #e0e0e0;">
+
+        <!-- ACADEMIC INFORMATION -->
+        <h2 style="font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 20px; margin-top: 0;">Academic Information</h2>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="admissionNumber">Admission Number *</label>
+            <input type="text" id="admissionNumber" required>
+            <div class="error-message"></div>
+          </div>
+          <div class="form-group">
+            <label for="grade">Grade *</label>
+            <select id="grade" required>
+              <option value="">Select a grade</option>
+              <option value="Grade 8">Grade 8</option>
+              <option value="Grade 9">Grade 9</option>
+              <option value="Grade 10">Grade 10</option>
+              <option value="Grade 11">Grade 11</option>
+              <option value="Grade 12">Grade 12</option>
+            </select>
+            <div class="error-message"></div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="section">Section/Class *</label>
+            <input type="text" id="section" required>
+            <div class="error-message"></div>
+          </div>
+          <div class="form-group">
+            <label for="enrollmentDate">Enrollment Date *</label>
+            <input type="date" id="enrollmentDate" required>
+            <div class="error-message"></div>
+          </div>
+        </div>
+
+        <div class="form-row full">
+          <div class="form-group">
+            <label for="previousSchool">Previous School</label>
+            <input type="text" id="previousSchool">
+            <div class="error-message"></div>
+          </div>
+        </div>
+
+        <hr style="margin: 40px 0; border: none; border-top: 1px solid #e0e0e0;">
+
+        <!-- PARENT/GUARDIAN INFORMATION -->
+        <h2 style="font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 20px; margin-top: 0;">Parent/Guardian Information</h2>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="parentGuardianName">Parent/Guardian Full Name *</label>
+            <input type="text" id="parentGuardianName" required>
+            <div class="error-message"></div>
+          </div>
+          <div class="form-group">
+            <label for="relationship">Relationship *</label>
+            <select id="relationship" required>
+              <option value="">Select relationship</option>
+              <option value="Father">Father</option>
+              <option value="Mother">Mother</option>
+              <option value="Guardian">Guardian</option>
+            </select>
+            <div class="error-message"></div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="phoneNumber">Phone Number *</label>
+            <input type="tel" id="phoneNumber" required>
+            <div class="error-message"></div>
+          </div>
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email">
+            <div class="error-message"></div>
+          </div>
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div class="form-nav" style="margin-top: 40px;">
+          <button type="button" id="cancelBtn" class="btn btn-secondary">Cancel</button>
+          <button type="button" id="saveBtn" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script src="auth.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="students.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      requireAuth();
+      const user = getUser();
+      if (user) {
+        const firstName = user.name ? user.name.split(" ")[0] : "User";
+        document.getElementById("headerUserName").textContent = user.name || "User";
+        document.getElementById("headerAvatar").textContent = firstName.charAt(0).toUpperCase();
+        document.getElementById("roleBadge").textContent = user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "User";
+      }
+
+      document.getElementById("logoutBtn").addEventListener("click", async () => {
+        try {
+          await authFetch(`${API_BASE}/auth/logout`, { method: "POST" });
+        } catch {}
+        finally {
+          clearSession();
+          window.location.href = "login.html";
+        }
+      });
+
+      initializeEditStudent();
+    });
+  </script>
+</body>
+</html>
