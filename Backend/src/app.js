@@ -84,6 +84,35 @@ app.get("/", (req, res) => {
     res.json({ message: "Admin Assist API", status: "ok" });
 });
 
+// ─── DB Diagnostics (development only) ───────────────────────────────────────
+// Visit GET /api/debug/db to confirm MySQL connectivity.
+// This route is REMOVED in production to avoid leaking config details.
+if (process.env.NODE_ENV !== "production") {
+    const pool = require("./config/db");
+    app.get("/api/debug/db", async (req, res) => {
+        try {
+            const [rows] = await pool.execute("SELECT 1 AS connected");
+            res.json({
+                status:   "connected",
+                result:   rows[0],
+                host:     process.env.DB_HOST,
+                port:     process.env.DB_PORT,
+                database: process.env.DB_NAME,
+                ssl:      (process.env.NODE_ENV || "").toLowerCase() === "production",
+            });
+        } catch (err) {
+            res.status(500).json({
+                status:  "error",
+                code:    err.code,
+                message: err.message,
+                host:    process.env.DB_HOST,
+                port:    process.env.DB_PORT,
+            });
+        }
+    });
+}
+
+
 // ─── 404 Handler ─────────────────────────────────────────────────────────────
 app.use((req, res) => {
     res.status(404).json({ error: "Route not found" });
