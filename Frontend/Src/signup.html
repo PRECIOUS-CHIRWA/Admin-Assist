@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign Up - Admin Assist</title>
   <link rel="stylesheet" href="signup.css">
 </head>
-
 <body>
   <div class="signup-container">
     <div class="signup-header">
@@ -22,19 +20,20 @@
     <form id="signupForm" novalidate>
       <div class="form-group">
         <label for="fullname">Full Name</label>
-        <input type="text" id="fullname" name="fullname" placeholder="Enter your full name" required
-          autocomplete="name">
+        <input type="text" id="fullname" name="fullname"
+               placeholder="Enter your full name" required autocomplete="name">
       </div>
 
       <div class="form-group">
         <label for="email">Email Address</label>
-        <input type="email" id="email" name="email" placeholder="Enter your email" required autocomplete="email">
+        <input type="email" id="email" name="email"
+               placeholder="Enter your email" required autocomplete="email">
       </div>
 
       <div class="form-group">
         <label for="role">Role</label>
         <select id="role" name="role" required>
-          <option value="staff" selected>Staff</option>
+          <option value="staff"      selected>Staff</option>
           <option value="user">User</option>
           <option value="headmaster">Headmaster</option>
           <option value="admin">Admin</option>
@@ -44,8 +43,9 @@
       <div class="form-group">
         <label for="password">Create Password</label>
         <div class="input-wrap">
-          <input type="password" id="password" name="password" placeholder="At least 8 characters" minlength="8"
-            required autocomplete="new-password">
+          <input type="password" id="password" name="password"
+                 placeholder="At least 8 characters" minlength="8"
+                 required autocomplete="new-password">
           <button type="button" class="toggle-pw" id="togglePw" aria-label="Show password">👁</button>
         </div>
       </div>
@@ -53,8 +53,9 @@
       <div class="form-group">
         <label for="confirmPassword">Confirm Password</label>
         <div class="input-wrap">
-          <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Repeat your password"
-            minlength="8" required autocomplete="new-password">
+          <input type="password" id="confirmPassword" name="confirmPassword"
+                 placeholder="Repeat your password" minlength="8"
+                 required autocomplete="new-password">
         </div>
       </div>
 
@@ -63,12 +64,10 @@
 
     <div class="login-link">
       <p>Already have an account? <a href="login.html">Login</a></p>
-      <p style="font-size: 0.9em; margin-top: 0.5em;">Didn't receive verification email? <a href="login.html"
-          style="color: #0f4c81;">Resend it</a></p>
     </div>
   </div>
 
-  <script src="frontAuth.js"></script>
+  <script src="auth.js"></script>
   <script>
     // Password visibility toggle
     document.getElementById("togglePw").addEventListener("click", function () {
@@ -82,22 +81,22 @@
     function showBanner(message, type = "error") {
       const banner = document.getElementById("form-banner");
       banner.textContent = message;
-      banner.className = `form-banner visible ${type}`;
+      banner.className   = `form-banner visible ${type}`;
     }
 
     document.getElementById("signupForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const btn = document.getElementById("signupBtn");
+      const btn    = document.getElementById("signupBtn");
       const banner = document.getElementById("form-banner");
 
       banner.className = "form-banner";
       banner.textContent = "";
 
-      const name = document.getElementById("fullname").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const role = document.getElementById("role").value;
+      const name     = document.getElementById("fullname").value.trim();
+      const email    = document.getElementById("email").value.trim();
+      const role     = document.getElementById("role").value;
       const password = document.getElementById("password").value;
-      const confirm = document.getElementById("confirmPassword").value;
+      const confirm  = document.getElementById("confirmPassword").value;
 
       // Client-side validation before hitting the network
       if (password !== confirm) {
@@ -109,41 +108,28 @@
         return;
       }
 
-      btn.disabled = true;
+      btn.disabled    = true;
       btn.textContent = "Creating account…";
 
       try {
-        const res = await fetch(`${API_BASE}/auth/signup`, {
-          method: "POST",
+        const res  = await fetch(`${API_BASE}/auth/signup`, {
+          method:  "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, password, role }),
+          body:    JSON.stringify({ name, email, password, role }),
         });
 
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Signup failed");
 
-        // Success! Show detailed message
-        const message = `✅ ${data.message || "Account created successfully!"}\n\nNext steps:\n1. Check your email (${email})\n2. Click the verification link\n3. Return here to log in`;
-
-        showBanner(message, "success");
-
-        // Clear form and disable for a moment
-        e.target.reset();
-        btn.disabled = true;
-        btn.textContent = "Account Created ✓";
-
-        // After 5 seconds, redirect to login
-        setTimeout(() => {
-          window.location.href = "login.html";
-        }, 5000);
+        showBanner("Account created! Redirecting to login…", "success");
+        setTimeout(() => { window.location.href = "login.html"; }, 1800);
       } catch (err) {
         showBanner(err.message);
       } finally {
-        btn.disabled = false;
+        btn.disabled    = false;
         btn.textContent = "Sign Up";
       }
     });
   </script>
 </body>
-
 </html>

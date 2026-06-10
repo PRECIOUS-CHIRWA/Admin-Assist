@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - Admin Assist</title>
   <link rel="stylesheet" href="login.css">
 </head>
-
 <body>
   <div class="login-container">
     <div class="login-header">
@@ -21,14 +19,15 @@
     <form id="loginForm" novalidate>
       <div class="form-group">
         <label for="email">Email</label>
-        <input type="email" id="email" name="email" placeholder="Enter your email" required autocomplete="email">
+        <input type="email" id="email" name="email"
+               placeholder="Enter your email" required autocomplete="email">
       </div>
 
       <div class="form-group">
         <label for="password">Password</label>
         <div class="input-wrap">
-          <input type="password" id="password" name="password" placeholder="Enter your password" required
-            autocomplete="current-password">
+          <input type="password" id="password" name="password"
+                 placeholder="Enter your password" required autocomplete="current-password">
           <button type="button" class="toggle-pw" aria-label="Show password" id="togglePw">👁</button>
         </div>
       </div>
@@ -37,10 +36,7 @@
         <label>
           <input type="checkbox" name="remember"> Remember Me
         </label>
-        <div class="forgot-links">
-          <a href="#" id="forgotPasswordLink">Forgot Password?</a>
-          <a href="#" id="resendVerificationLink">Resend Verification Email</a>
-        </div>
+        <a href="#">Forgot Password?</a>
       </div>
 
       <button type="submit" class="login-btn" id="loginBtn">Login</button>
@@ -52,7 +48,7 @@
     </div>
   </div>
 
-  <script src="frontAuth.js"></script>
+  <script src="auth.js"></script>
   <script>
     document.getElementById("togglePw").addEventListener("click", function () {
       const pw = document.getElementById("password");
@@ -62,62 +58,32 @@
       this.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
     });
 
-    // Resend verification email
-    document.getElementById("resendVerificationLink").addEventListener("click", async (e) => {
-      e.preventDefault();
-      const email = document.getElementById("email").value.trim();
-
-      if (!email) {
-        alert("Please enter your email address first.");
-        return;
-      }
-
-      const banner = document.getElementById("error-banner");
-      banner.textContent = "Sending verification email...";
-      banner.classList.add("visible");
-
-      try {
-        const res = await fetch(`${API_BASE}/auth/resend-verification`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        });
-
-        const data = await res.json();
-        banner.textContent = data.message || "If that account exists and still needs verification, a new email has been sent.";
-        banner.className = "error-banner visible success";
-      } catch (err) {
-        banner.textContent = "Error sending verification email. Please try again.";
-        banner.className = "error-banner visible";
-      }
-    });
-
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const btn = document.getElementById("loginBtn");
+      const btn    = document.getElementById("loginBtn");
       const banner = document.getElementById("error-banner");
 
       banner.textContent = "";
       banner.classList.remove("visible");
-      btn.disabled = true;
+      btn.disabled    = true;
       btn.textContent = "Signing in…";
 
-      const email = document.getElementById("email").value.trim();
+      const email    = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
 
       try {
         const res = await fetch(`${API_BASE}/auth/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method:      "POST",
+          headers:     { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ email, password }),
+          body:        JSON.stringify({ email, password }),
         });
 
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Login failed");
 
-        localStorage.setItem("accessToken", data.accessToken);
-        localStorage.setItem("user", JSON.stringify(data.user));
+        sessionStorage.setItem("accessToken", data.accessToken);
+        sessionStorage.setItem("user", JSON.stringify(data.user));
 
         // RBAC redirect — send each role to the right landing page
         const role = data.user?.role;
@@ -132,11 +98,10 @@
         banner.textContent = err.message;
         banner.classList.add("visible");
       } finally {
-        btn.disabled = false;
+        btn.disabled    = false;
         btn.textContent = "Login";
       }
     });
   </script>
 </body>
-
 </html>
