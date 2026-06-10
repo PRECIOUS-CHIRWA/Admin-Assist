@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - Admin Assist</title>
   <link rel="stylesheet" href="dashboard.css">
 </head>
-
 <body>
   <header>
     <div class="logo">Admin Assist</div>
@@ -76,7 +74,8 @@
       <h2 class="activity-title">Quick Access</h2>
       <div class="activity-grid">
         <!-- Visible to admin and headmaster only -->
-        <div class="activity-card admin-only" id="enrollCard" onclick="window.location.href='enroll-student.html'">
+        <div class="activity-card admin-only" id="enrollCard"
+             onclick="window.location.href='enroll-student.html'">
           <div class="activity-image enrollment">📝</div>
           <div class="activity-content">
             <div class="activity-title-small">Student Enrollment</div>
@@ -102,7 +101,8 @@
         </div>
 
         <!-- Visible to admin and headmaster only -->
-        <div class="activity-card admin-only" id="reportCard" onclick="window.location.href='generate-report.html'">
+        <div class="activity-card admin-only" id="reportCard"
+             onclick="window.location.href='generate-report.html'">
           <div class="activity-image reports">📈</div>
           <div class="activity-content">
             <div class="activity-title-small">Generate Reports</div>
@@ -113,26 +113,24 @@
     </div>
   </div>
 
-  <script src="frontAuth.js"></script>
+  <script src="auth.js"></script>
   <script src="auth-guard.js"></script>
   <script>
-    // auth-guard.js has already checked authentication
-    // currentUser variable is available from auth-guard.js
-    const user = currentUser || getUser();
+    const user = getUser();
 
     if (user) {
       const firstName = user.name ? user.name.split(" ")[0] : "User";
-      const role = user.role || "user";
+      const role      = user.role || "user";
 
-      // Populate header with user info
-      document.getElementById("welcomeTitle").textContent = `Welcome, ${firstName}!`;
+      // Populate header
+      document.getElementById("welcomeTitle").textContent   = `Welcome, ${firstName}!`;
       document.getElementById("headerUserName").textContent = user.name || "User";
-      document.getElementById("headerAvatar").textContent = firstName.charAt(0).toUpperCase();
+      document.getElementById("headerAvatar").textContent   = firstName.charAt(0).toUpperCase();
 
       // Role badge
       const badge = document.getElementById("roleBadge");
-      badge.textContent = role.charAt(0).toUpperCase() + role.slice(1);
-      badge.className = `role-badge ${role}`;
+      badge.textContent  = role.charAt(0).toUpperCase() + role.slice(1);
+      badge.className    = `role-badge ${role}`;
 
       // RBAC: show admin-only elements for admin and headmaster
       const isPrivileged = role === "admin" || role === "headmaster";
@@ -143,43 +141,6 @@
       }
     }
 
-    // ===== Fetch Real Dashboard Stats =====
-    // In a full implementation, the backend would provide a /api/dashboard/stats endpoint
-    // that returns: { totalStudents, totalTeachers, enrollmentRequests, pendingApprovals }
-    // For now, this shows the structure for when those endpoints are ready.
-
-    async function loadDashboardStats() {
-      try {
-        // Future: Replace with actual API call to /api/dashboard/stats
-        // const response = await authFetch(`${API_BASE}/dashboard/stats`);
-        // const stats = await response.json();
-
-        // Placeholder: Using mock data - replace with real API once backend is ready
-        const stats = {
-          totalStudents: 878,
-          totalTeachers: 45,
-          enrollmentRequests: 12,
-          pendingApprovals: 6
-        };
-
-        // Update stat cards with real data
-        const cards = document.querySelectorAll(".stat-value");
-        if (cards.length >= 4) {
-          cards[0].textContent = stats.totalStudents;  // Total Students
-          cards[1].textContent = stats.totalTeachers;  // Total Teachers
-          cards[2].textContent = stats.enrollmentRequests;  // New Enrollment Requests
-          cards[3].textContent = stats.pendingApprovals;  // Pending Approvals
-        }
-      } catch (err) {
-        console.warn("Could not load dashboard stats:", err);
-        // Stats remain at default values
-      }
-    }
-
-    // Load stats on page load
-    loadDashboardStats();
-
-    // Logout button
     document.getElementById("logoutBtn").addEventListener("click", async () => {
       try {
         await authFetch(`${API_BASE}/auth/logout`, { method: "POST" });
@@ -192,5 +153,4 @@
     });
   </script>
 </body>
-
 </html>

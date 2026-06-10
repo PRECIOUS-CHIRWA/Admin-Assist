@@ -1,24 +1,15 @@
 const express = require("express");
 const router  = express.Router();
 
-const {
-    signup,
-    login,
-    getMe,
-    logout,
-    verifyEmail,
-    resendVerification,
-} = require("../controllers/authController");
-const { authenticate, authorize } = require("../middleware/auth");
+const { signup, login, getMe, logout } = require("../controllers/authController");
+const { authenticate, authorize }      = require("../middleware/auth");
 
 // ─── Public ───────────────────────────────────────────────────────────────────
 router.post("/signup", signup);
 router.post("/login",  login);
-router.post("/verify-email", verifyEmail);
-router.post("/resend-verification", resendVerification);
 
 // ─── Any authenticated user ───────────────────────────────────────────────────
-router.get ("/me", authenticate, getMe);
+router.get ("/me",     authenticate, getMe);
 router.post("/logout", authenticate, logout);
 
 // ─── Admin + Headmaster only ──────────────────────────────────────────────────

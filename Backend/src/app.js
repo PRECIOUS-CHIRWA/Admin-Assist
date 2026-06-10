@@ -1,7 +1,7 @@
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");               // NEW
-const rateLimit = require("express-rate-limit");   // NEW
+const express    = require("express");
+const cors       = require("cors");
+const helmet     = require("helmet");               // NEW
+const rateLimit  = require("express-rate-limit");   // NEW
 const cookieParser = require("cookie-parser");      // NEW
 require("dotenv").config({ quiet: true });
 
@@ -14,54 +14,48 @@ const app = express();
 app.use(helmet());
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
-// Always include the GitHub Pages origin and allow extra origins via env var.
-// ALLOWED_ORIGIN in .env can be a comma-separated list.
-const allowedOrigins = [
-    "https://precious-chirwa.github.io",   // production frontend (GitHub Pages)
-    ...(process.env.ALLOWED_ORIGIN || "")
-        .split(",")
-        .map(o => o.trim().toLowerCase())
-        .filter(Boolean),
-];
+// Only allow requests from your actual frontend origin.
+// Add your GitHub Pages URL to ALLOWED_ORIGIN in .env when you deploy.
+const allowedOrigins = (process.env.ALLOWED_ORIGIN || "")
+    .split(",")
+    .map(o => o.trim())
+    .filter(Boolean);
 
-// During local development, also allow both common Live Server origins
+// During local development, also allow localhost
 if (process.env.NODE_ENV !== "production") {
-    allowedOrigins.push("http://localhost:5000");    // Live Server alt
-    allowedOrigins.push("http://127.0.0.1:5000");
-    allowedOrigins.push("http://localhost:5500");    // VS Code Live Server default
+    allowedOrigins.push("http://localhost:5500");   // Live Server default
     allowedOrigins.push("http://127.0.0.1:5500");
-    allowedOrigins.push("http://localhost:3000");    // CRA / Vite dev server
 }
 
 app.use(cors({
     origin: (origin, callback) => {
         // Allow requests with no origin (e.g. curl, Postman during development)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.includes(origin.toLowerCase())) return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
         callback(new Error(`CORS: Origin '${origin}' is not allowed`));
     },
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,   // Required to send/receive httpOnly cookies
+    methods:          ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders:   ["Content-Type", "Authorization"],
+    credentials:      true,   // Required to send/receive httpOnly cookies
 }));
 
 // ─── Rate Limiters ───────────────────────────────────────────────────────────
 // Auth limiter: tight window on login/signup to block brute force
 const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,   // 15 minutes
-    max: 20,               // max 20 attempts per IP per window
-    standardHeaders: true,            // Return limit info in RateLimit-* headers
-    legacyHeaders: false,
-    message: { error: "Too many requests from this IP, please try again in 15 minutes" },
+    windowMs:         15 * 60 * 1000,   // 15 minutes
+    max:              20,               // max 20 attempts per IP per window
+    standardHeaders:  true,            // Return limit info in RateLimit-* headers
+    legacyHeaders:    false,
+    message:          { error: "Too many requests from this IP, please try again in 15 minutes" },
 });
 
 // General limiter: looser cap for all other API routes
 const generalLimiter = rateLimit({
-    windowMs: 60 * 1000,        // 1 minute
-    max: 100,              // max 100 requests per IP per minute
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: { error: "Too many requests, please slow down" },
+    windowMs:         60 * 1000,        // 1 minute
+    max:              100,              // max 100 requests per IP per minute
+    standardHeaders:  true,
+    legacyHeaders:    false,
+    message:          { error: "Too many requests, please slow down" },
 });
 
 // ─── Body Parsing ────────────────────────────────────────────────────────────
@@ -83,35 +77,6 @@ app.use("/api", generalLimiter);
 app.get("/", (req, res) => {
     res.json({ message: "Admin Assist API", status: "ok" });
 });
-
-// ─── DB Diagnostics (development only) ───────────────────────────────────────
-// Visit GET /api/debug/db to confirm MySQL connectivity.
-// This route is REMOVED in production to avoid leaking config details.
-if (process.env.NODE_ENV !== "production") {
-    const pool = require("./config/db");
-    app.get("/api/debug/db", async (req, res) => {
-        try {
-            const [rows] = await pool.execute("SELECT 1 AS connected");
-            res.json({
-                status:   "connected",
-                result:   rows[0],
-                host:     process.env.DB_HOST,
-                port:     process.env.DB_PORT,
-                database: process.env.DB_NAME,
-                ssl:      (process.env.NODE_ENV || "").toLowerCase() === "production",
-            });
-        } catch (err) {
-            res.status(500).json({
-                status:  "error",
-                code:    err.code,
-                message: err.message,
-                host:    process.env.DB_HOST,
-                port:    process.env.DB_PORT,
-            });
-        }
-    });
-}
-
 
 // ─── 404 Handler ─────────────────────────────────────────────────────────────
 app.use((req, res) => {
