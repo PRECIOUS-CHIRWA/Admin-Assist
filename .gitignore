@@ -1,8 +1,6 @@
 Backend/.env
 Backend/node_modules/
 node_modules/
-_site/
-.worktrees/
 npm-debug.log*
 *.log
 .DS_Store

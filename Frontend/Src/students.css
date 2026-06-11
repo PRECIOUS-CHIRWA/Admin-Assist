@@ -3,11 +3,13 @@
    ============================================ */
 
 :root {
-  --primary: #0A1628;
-  --primary-light: #1a2f4f;
-  --copper: #B87333;
-  --copper-light: #d9a375;
-  --surface: #F5F7FA;
+  --primary: #1a3a52;
+  --primary-strong: #0f2d42;
+  --primary-light: #2a4a62;
+  --accent: #d4af37;
+  --accent-light: #f0c674;
+  --surface: #ffffff;
+  --surface-secondary: #f8fafc;
   --text: #1a1a1a;
   --text-muted: #666666;
   --border: #e0e0e0;
@@ -29,20 +31,20 @@ html {
 
 body {
   font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: var(--surface);
+  background: var(--surface-secondary);
   color: var(--text);
   line-height: 1.6;
 }
 
 /* HEADER */
 header {
-  background: linear-gradient(135deg, var(--primary) 0%, #050b14 100%);
-  border-bottom: 3px solid var(--copper);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-strong) 100%);
+  border-bottom: 3px solid var(--accent);
   padding: 20px 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -51,7 +53,7 @@ header {
 .logo {
   font-size: 20px;
   font-weight: 700;
-  color: var(--copper);
+  color: var(--accent);
   letter-spacing: 0.5px;
 }
 
@@ -63,8 +65,8 @@ header {
 }
 
 .role-badge {
-  background: var(--copper);
-  color: white;
+  background: var(--accent);
+  color: var(--primary);
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 12px;
@@ -75,8 +77,8 @@ header {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--copper);
-  color: white;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+  color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -96,8 +98,9 @@ header button {
 }
 
 header button:hover {
-  background: var(--copper);
-  border-color: var(--copper);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--primary);
 }
 
 /* MAIN CONTAINER */
@@ -115,14 +118,14 @@ header button:hover {
 }
 
 .breadcrumb a {
-  color: var(--copper);
+  color: var(--accent);
   text-decoration: none;
   cursor: pointer;
   transition: color 0.3s ease;
 }
 
 .breadcrumb a:hover {
-  color: var(--copper-light);
+  color: var(--accent-light);
   text-decoration: underline;
 }
 
@@ -154,7 +157,7 @@ header button:hover {
 }
 
 .progress-bar {
-  background: var(--copper);
+  background: var(--accent);
   height: 100%;
   transition: width 0.4s ease;
   border-radius: 999px;
@@ -190,8 +193,8 @@ header button:hover {
 }
 
 .progress-step.active .step-indicator {
-  border-color: var(--copper);
-  background: var(--copper);
+  border-color: var(--accent);
+  background: var(--accent);
   color: white;
 }
 
@@ -209,7 +212,7 @@ header button:hover {
 }
 
 .progress-step.active .step-label {
-  color: var(--copper);
+  color: var(--accent);
   font-weight: 600;
 }
 
@@ -269,7 +272,7 @@ header button:hover {
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: var(--copper);
+  border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(184, 115, 51, 0.1);
 }
 
@@ -349,12 +352,12 @@ header button:hover {
 }
 
 .btn-primary {
-  background: var(--copper);
+  background: var(--accent);
   color: white;
 }
 
 .btn-primary:hover {
-  background: var(--copper-light);
+  background: var(--accent-light);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(184, 115, 51, 0.3);
 }
@@ -520,7 +523,7 @@ header button:hover {
 }
 
 .btn-add {
-  background: var(--copper);
+  background: var(--accent);
   color: white;
   padding: 10px 20px;
   border: none;
@@ -531,7 +534,7 @@ header button:hover {
 }
 
 .btn-add:hover {
-  background: var(--copper-light);
+  background: var(--accent-light);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(184, 115, 51, 0.3);
 }
@@ -579,13 +582,13 @@ th.sortable::after {
 th.sorted-asc::after {
   content: ' ↑';
   opacity: 1;
-  color: var(--copper);
+  color: var(--accent);
 }
 
 th.sorted-desc::after {
   content: ' ↓';
   opacity: 1;
-  color: var(--copper);
+  color: var(--accent);
 }
 
 tbody tr {
@@ -648,7 +651,7 @@ td {
 }
 
 .action-btn:hover {
-  border-color: var(--copper);
+  border-color: var(--accent);
   background: rgba(184, 115, 51, 0.08);
   transform: translateY(-2px);
 }
@@ -712,14 +715,14 @@ td {
 
 .pagination button:hover,
 .pagination a:hover {
-  border-color: var(--copper);
-  color: var(--copper);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .pagination button.active {
-  background: var(--copper);
+  background: var(--accent);
   color: white;
-  border-color: var(--copper);
+  border-color: var(--accent);
 }
 
 .pagination button:disabled {
@@ -781,7 +784,7 @@ td {
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: var(--copper);
+  background: var(--accent);
   color: white;
   display: flex;
   align-items: center;
@@ -825,9 +828,9 @@ td {
 
 .profile-actions button {
   padding: 10px;
-  border: 1px solid var(--copper);
+  border: 1px solid var(--accent);
   background: white;
-  color: var(--copper);
+  color: var(--accent);
   border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
@@ -835,7 +838,7 @@ td {
 }
 
 .profile-actions button:hover {
-  background: var(--copper);
+  background: var(--accent);
   color: white;
 }
 
@@ -864,8 +867,8 @@ td {
 }
 
 .tab.active {
-  color: var(--copper);
-  border-bottom-color: var(--copper);
+  color: var(--accent);
+  border-bottom-color: var(--accent);
 }
 
 .tab-content {

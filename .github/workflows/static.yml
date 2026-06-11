@@ -2,7 +2,7 @@ name: Deploy Frontend to GitHub Pages
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "Authentications"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -30,17 +30,10 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: Prepare static site
-        run: |
-          mkdir -p _site
-          cp -R Frontend/Src/. _site/
-          cp index.html index.css _site/
-          touch _site/.nojekyll
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '_site'
+          path: 'Frontend/Src'     # deploys everything inside this folder
 
       - name: Deploy to GitHub Pages
         id: deployment
