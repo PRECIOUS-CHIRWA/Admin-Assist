@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Profile - Admin Assist</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="students.css">
 </head>
+
 <body>
   <header>
     <div class="logo">Admin Assist</div>
@@ -20,7 +24,8 @@
 
   <div class="main-container">
     <div class="breadcrumb">
-      <a href="dashboard.html">Dashboard</a> > <a href="students.html">Student Directory</a> > <span>Student Profile</span>
+      <a href="dashboard.html">Dashboard</a> > <a href="students.html">Student Directory</a> > <span>Student
+        Profile</span>
     </div>
 
     <h1 style="font-family: 'Playfair Display', serif; font-size: 32px; margin-bottom: 32px;">Student Profile</h1>
@@ -65,7 +70,7 @@
 
   <!-- SCRIPTS -->
   <script src="auth.js"></script>
-  <script src="auth-guard.js"></script>
+  <!-- <script src="auth-guard.js"></script>-->
   <script src="students.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -81,7 +86,7 @@
       document.getElementById("logoutBtn").addEventListener("click", async () => {
         try {
           await authFetch(`${API_BASE}/auth/logout`, { method: "POST" });
-        } catch {}
+        } catch { }
         finally {
           clearSession();
           window.location.href = "login.html";
@@ -92,4 +97,5 @@
     });
   </script>
 </body>
+
 </html>
