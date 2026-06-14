@@ -46,6 +46,35 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     INDEX idx_user (user_id)
 );
 
+CREATE TABLE IF NOT EXISTS students (
+    id                   INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    admission_number     VARCHAR(20)   NOT NULL,
+    first_name           VARCHAR(100)  NOT NULL,
+    last_name            VARCHAR(100)  NOT NULL,
+    date_of_birth        DATE          NOT NULL,
+    gender               ENUM('Male','Female') NOT NULL,
+    nrc_number           VARCHAR(30)            DEFAULT NULL,
+    home_address         TEXT                   DEFAULT NULL,
+    district             VARCHAR(100)           DEFAULT NULL,
+    province             VARCHAR(50)   NOT NULL,
+    grade                VARCHAR(20)   NOT NULL,
+    section              VARCHAR(20)   NOT NULL,
+    enrollment_date      DATE          NOT NULL,
+    previous_school      VARCHAR(255)           DEFAULT NULL,
+    parent_guardian_name VARCHAR(150)  NOT NULL,
+    relationship         ENUM('Father','Mother','Guardian') NOT NULL,
+    phone_number         VARCHAR(20)   NOT NULL,
+    email                VARCHAR(255)           DEFAULT NULL,
+    status               ENUM('Active','Inactive','Suspended') NOT NULL DEFAULT 'Active',
+    created_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_admission_number (admission_number),
+    INDEX idx_grade (grade),
+    INDEX idx_status (status),
+    INDEX idx_name (last_name, first_name)
+);
 -- ─── Alter existing table (run only if users table already exists) ────────────
 -- If you already have a users table from the old schema, run these ALTER
 -- statements individually instead of the CREATE TABLE above:

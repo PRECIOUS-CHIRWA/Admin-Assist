@@ -1,9 +1,11 @@
-const express    = require("express");
-const cors       = require("cors");
-const helmet     = require("helmet");               // NEW
-const rateLimit  = require("express-rate-limit");   // NEW
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");               // NEW
+const rateLimit = require("express-rate-limit");   // NEW
 const cookieParser = require("cookie-parser");      // NEW
 require("dotenv").config({ quiet: true });
+
+const studentRoutes = require("./routes/studentRoutes");
 
 const app = express();
 
@@ -34,28 +36,28 @@ app.use(cors({
         if (allowedOrigins.includes(origin)) return callback(null, true);
         callback(new Error(`CORS: Origin '${origin}' is not allowed`));
     },
-    methods:          ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders:   ["Content-Type", "Authorization"],
-    credentials:      true,   // Required to send/receive httpOnly cookies
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,   // Required to send/receive httpOnly cookies
 }));
 
 // ─── Rate Limiters ───────────────────────────────────────────────────────────
 // Auth limiter: tight window on login/signup to block brute force
 const authLimiter = rateLimit({
-    windowMs:         15 * 60 * 1000,   // 15 minutes
-    max:              20,               // max 20 attempts per IP per window
-    standardHeaders:  true,            // Return limit info in RateLimit-* headers
-    legacyHeaders:    false,
-    message:          { error: "Too many requests from this IP, please try again in 15 minutes" },
+    windowMs: 15 * 60 * 1000,   // 15 minutes
+    max: 20,               // max 20 attempts per IP per window
+    standardHeaders: true,            // Return limit info in RateLimit-* headers
+    legacyHeaders: false,
+    message: { error: "Too many requests from this IP, please try again in 15 minutes" },
 });
 
 // General limiter: looser cap for all other API routes
 const generalLimiter = rateLimit({
-    windowMs:         60 * 1000,        // 1 minute
-    max:              100,              // max 100 requests per IP per minute
-    standardHeaders:  true,
-    legacyHeaders:    false,
-    message:          { error: "Too many requests, please slow down" },
+    windowMs: 60 * 1000,        // 1 minute
+    max: 100,              // max 100 requests per IP per minute
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many requests, please slow down" },
 });
 
 // ─── Body Parsing ────────────────────────────────────────────────────────────
@@ -72,6 +74,8 @@ app.use("/api/auth", authLimiter, authRoutes);
 
 // All other future API routes get the general limiter
 app.use("/api", generalLimiter);
+
+app.use("/api/students", studentRoutes);
 
 // Health check — useful for deployment platforms to confirm the server is up
 app.get("/", (req, res) => {

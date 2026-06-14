@@ -115,14 +115,14 @@ const formState = {
     homeAddress: '',
     district: '',
     province: '',
-    
+
     // Step 2
     admissionNumber: '',
     grade: '',
     section: '',
     enrollmentDate: new Date().toISOString().split('T')[0],
     previousSchool: '',
-    
+
     // Step 3
     parentGuardianName: '',
     relationship: '',
@@ -187,7 +187,7 @@ function generateAdmissionNumber() {
   const year = new Date().getFullYear();
   const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
   const suggestion = `ADM-${year}-${random}`;
-  
+
   const admInput = document.getElementById('admissionNumber');
   if (admInput) {
     admInput.placeholder = suggestion;
@@ -620,9 +620,9 @@ function renderStudentTable() {
       <td><span class="badge badge-${student.status.toLowerCase()}">${student.status}</span></td>
       <td>
         <div class="actions">
-          <button class="action-btn view" onclick="viewStudent('${student._id}')" title="View">👁</button>
-          <button class="action-btn edit" onclick="editStudent('${student._id}')" title="Edit">✏️</button>
-          <button class="action-btn delete" onclick="confirmDelete('${student._id}')" title="Delete">🗑</button>
+          <button class="action-btn view" onclick="viewStudent('${student.id}')" title="View">👁</button>
+          <button class="action-btn edit" onclick="editStudent('${student.id}')" title="Edit">✏️</button>
+          <button class="action-btn delete" onclick="confirmDelete('${student.id}')" title="Delete">🗑</button>
         </div>
       </td>
     </tr>
