@@ -75,7 +75,7 @@ app.use("/api/auth", authLimiter, authRoutes);
 // All other future API routes get the general limiter
 app.use("/api", generalLimiter);
 
-app.use("/api/students", studentRoutes);
+app.use("/api/student", studentRoutes);
 
 // Health check — useful for deployment platforms to confirm the server is up
 app.get("/", (req, res) => {
