@@ -87,3 +87,21 @@ CREATE TABLE IF NOT EXISTS students (
 --   ADD COLUMN last_login_at   DATETIME                  DEFAULT NULL     AFTER locked_until,
 --   ADD INDEX  idx_role   (role),
 --   ADD INDEX  idx_active (is_active);
+
+-- ─── Audit Log ────────────────────────────────────────────────────────────────
+-- Records system events (enroll, update, delete) for the dashboard activity feed.
+CREATE TABLE IF NOT EXISTS audit_log (
+    id          INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    actor_id    INT UNSIGNED  NOT NULL,
+    action      VARCHAR(100)  NOT NULL,   -- e.g. 'ENROLL_STUDENT', 'UPDATE_STUDENT'
+    entity_type VARCHAR(50)              DEFAULT NULL,   -- e.g. 'student'
+    entity_id   INT UNSIGNED             DEFAULT NULL,
+    details     JSON                     DEFAULT NULL,
+    created_at  TIMESTAMP     NOT NULL   DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+    FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_actor     (actor_id),
+    INDEX idx_entity    (entity_type, entity_id),
+    INDEX idx_created   (created_at)
+);
