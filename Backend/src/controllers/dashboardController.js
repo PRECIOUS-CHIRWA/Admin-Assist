@@ -45,7 +45,7 @@ const getRecentActivity = async (req, res) => {
 
         const [rows] = await pool.execute(
             `SELECT al.id, al.action, al.entity_type, al.entity_id, al.details, al.created_at,
-                    u.name AS actor_name, u.role AS actor_role
+                    u.fullName AS actorName, u.role AS actorRole
              FROM audit_log al
              LEFT JOIN users u ON u.id = al.actor_id
              ORDER BY al.created_at DESC
@@ -53,14 +53,15 @@ const getRecentActivity = async (req, res) => {
         );
 
         const activities = rows.map((row) => ({
-            id:         row.id,
-            action:     row.action,
+            id: row.id,
+            action: row.action,
             entityType: row.entity_type,
-            entityId:   row.entity_id,
-            details:    row.details,
-            actorName:  row.actor_name,
-            actorRole:  row.actor_role,
-            createdAt:  row.created_at,
+            entityId: row.entity_id,
+            details: row.details,
+            actorName: row.actor_name,
+            actorRole: row.actor_role,
+            createdAt: row.created_at,
+            description: buildDescription(row),
         }));
 
         res.json({ activities });
@@ -69,5 +70,30 @@ const getRecentActivity = async (req, res) => {
         res.status(500).json({ error: "Failed to load recent activity" });
     }
 };
+
+function buildDescription(row) {
+    switch (row.action) {
+        case 'CREATE':
+            return `${row.entity_type} created`;
+        case 'UPDATE':
+            return `${row.entity_type} updated`;
+        case 'DELETE':
+            return `${row.entity_type} deleted`;
+        case 'LOGIN':
+            return `${row.entity_type} logged in`;
+        case 'LOGOUT':
+            return `${row.entity_type} logged out`;
+        case 'ASSIGN':
+            return `${row.entity_type} assigned`;
+        case 'REVOKE':
+            return `${row.entity_type} revoked`;
+        case 'SUSPEND':
+            return `${row.entity_type} suspended`;
+        case 'RESTORE':
+            return `${row.entity_type} restored`;
+        default:
+            return `${row.entity_type} ${row.action.toLowerCase()}`;
+    }
+}
 
 module.exports = { getDashboardStats, getRecentActivity };

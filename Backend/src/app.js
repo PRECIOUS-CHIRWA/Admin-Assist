@@ -5,8 +5,9 @@ const rateLimit = require("express-rate-limit");   // NEW
 const cookieParser = require("cookie-parser");      // NEW
 require("dotenv").config({ quiet: true });
 
-const studentRoutes   = require("./routes/studentRoutes");
+const studentRoutes = require("./routes/studentRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const panelRoutes = require("./routes/panelRoutes");
 
 const app = express();
 
@@ -76,9 +77,9 @@ app.use("/api/auth", authLimiter, authRoutes);
 // All other future API routes get the general limiter
 app.use("/api", generalLimiter);
 
-// FIXED: was "/api/student" (missing 's') — now correctly "/api/students"
-app.use("/api/students",   studentRoutes);
-app.use("/api/dashboard",  dashboardRoutes);
+app.use("/api/students", studentRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api", panelRoutes);
 
 // Health check — useful for deployment platforms to confirm the server is up
 app.get("/", (req, res) => {
