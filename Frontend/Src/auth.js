@@ -16,7 +16,7 @@ const API_BASE = window.location.hostname === "localhost" ||
  * Returns the stored access token or null if the user is not logged in.
  */
 function getAccessToken() {
-    return sessionStorage.getItem("accessToken") || null;
+    return localStorage.getItem("accessToken") || null;
 }
 
 /**
@@ -25,7 +25,7 @@ function getAccessToken() {
  */
 function getUser() {
     try {
-        const raw = sessionStorage.getItem("user");
+        const raw = localStorage.getItem("user");
         return raw ? JSON.parse(raw) : null;
     } catch {
         return null;
@@ -37,8 +37,8 @@ function getUser() {
  * Wipes the in-memory session. Called on logout or token expiry.
  */
 function clearSession() {
-    sessionStorage.removeItem("accessToken");
-    sessionStorage.removeItem("user");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("user");
 }
 
 /**
@@ -189,10 +189,10 @@ async function loadCurrentUser() {
             el => (el.textContent = initials)
         );
 
-        // Also refresh sessionStorage so role-based UI (admin-only cards etc.)
+        // Also refresh localStorage so role-based UI (admin-only cards etc.)
         // keeps working on pages that still read from getUser()
         const current = getUser() || {};
-        sessionStorage.setItem("user", JSON.stringify({ ...current, ...user }));
+        localStorage.setItem("user", JSON.stringify({ ...current, ...user }));
 
     } catch (err) {
         console.warn("loadCurrentUser failed:", err.message);
