@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="students.css">
 </head>
 
-<body>
+<body data-page="student-profile">
   <header>
     <div class="logo">Admin Assist</div>
     <div class="user-profile">
@@ -25,7 +25,8 @@
 
   <div class="main-container">
     <div class="breadcrumb">
-      <a href="dashboard.html">Dashboard</a> &gt; <a href="students.html">Student Directory</a> &gt; <span>Student Profile</span>
+      <a href="dashboard.html">Dashboard</a> &gt; <a href="students.html">Student Directory</a> &gt; <span>Student
+        Profile</span>
     </div>
 
     <!-- Page toolbar — styled via students.css .page-header, no inline styles -->
@@ -46,9 +47,12 @@
 
         <!-- TAB BAR -->
         <div class="tabs" role="tablist">
-          <button class="tab active" role="tab" aria-selected="true"  aria-controls="tabPersonal"  id="tabBtnPersonal">Personal Info</button>
-          <button class="tab"        role="tab" aria-selected="false" aria-controls="tabAttendance" id="tabBtnAttendance">Attendance</button>
-          <button class="tab"        role="tab" aria-selected="false" aria-controls="tabAcademic"   id="tabBtnAcademic">Academic Records</button>
+          <button class="tab active" role="tab" aria-selected="true" aria-controls="tabPersonal"
+            id="tabBtnPersonal">Personal Info</button>
+          <button class="tab" role="tab" aria-selected="false" aria-controls="tabAttendance"
+            id="tabBtnAttendance">Attendance</button>
+          <button class="tab" role="tab" aria-selected="false" aria-controls="tabAcademic" id="tabBtnAcademic">Academic
+            Records</button>
         </div>
 
         <!-- TAB PANELS -->
@@ -80,6 +84,7 @@
   <script src="auth.js" defer></script>
   <script src="auth-guard.js" defer></script>
   <script src="students.js" defer></script>
+  <script src="navigation.js"></script>
   <script src="student-profile-page.js" defer></script>
 </body>
 

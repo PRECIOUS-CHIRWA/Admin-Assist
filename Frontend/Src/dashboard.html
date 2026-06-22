@@ -5,10 +5,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - Admin Assist</title>
-  <meta name="description" content="Admin Assist school management dashboard — overview of students, teachers and activity.">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap"
-    rel="stylesheet">
   <link rel="stylesheet" href="dashboard.css">
 </head>
 
@@ -16,10 +12,9 @@
   <header>
     <div class="logo">Admin Assist</div>
     <div class="user-profile">
-      <!-- data-user-* attrs are populated by loadCurrentUser() in auth.js -->
-      <div class="user-avatar" id="headerAvatar" data-user-initials>?</div>
-      <span id="headerUserName" data-user-name>…</span>
-      <span id="roleBadge" class="role-badge" data-user-role></span>
+      <div class="user-avatar" id="headerAvatar">?</div>
+      <span id="headerUserName">…</span>
+      <span id="roleBadge" class="role-badge"></span>
       <button id="logoutBtn">Logout</button>
     </div>
   </header>
@@ -27,7 +22,7 @@
   <div class="main-container">
     <h1 class="dashboard-title" id="welcomeTitle">Welcome!</h1>
 
-    <!-- STAT CARDS — values start at "—" and are filled by dashboard.js -->
+    <!-- STAT CARDS — values start at "—" and are filled by loadDashboardStats() -->
     <div class="stats-grid">
       <div class="stat-card blue">
         <div class="stat-header">
@@ -54,7 +49,7 @@
       <div class="stat-card blue">
         <div class="stat-header">
           <div>
-            <div class="stat-label">New Enrollment Requests</div>
+            <div class="stat-label">Enrolled Students</div>
             <div class="stat-value" data-stat="pendingEnrollments">—</div>
           </div>
           <div class="stat-icon">📋</div>
@@ -62,7 +57,7 @@
         <div class="stat-bar blue"></div>
       </div>
 
-      <!-- Admin / Headmaster only — hidden by default, revealed by dashboard.js -->
+      <!-- Admin/Headmaster only — shown by navigation.js RBAC logic -->
       <div class="stat-card orange admin-only" id="pendingApprovalsCard">
         <div class="stat-header">
           <div>
@@ -75,25 +70,26 @@
       </div>
     </div>
 
-    <!-- QUICK ACCESS -->
+    <!-- QUICK ACCESS — data-href replaces inline onclick (Rule 2 compliance) -->
     <div class="activity-section">
       <h2 class="activity-title">Quick Access</h2>
       <div class="activity-grid">
-        <!-- Admin / Headmaster only — JS reveals based on role -->
+
+        <!-- Admin / Headmaster only -->
         <div class="activity-card admin-only" id="enrollCard" data-href="enroll-student.html">
           <div class="activity-image enrollment">📝</div>
           <div class="activity-content">
             <div class="activity-title-small">Student Enrollment</div>
-            <div class="activity-description">Manage student enrollment records.</div>
+            <div class="activity-description">Register a new student.</div>
           </div>
         </div>
 
-        <!-- Visible to all roles -->
+        <!-- All roles -->
         <div class="activity-card" data-href="students.html">
-          <div class="activity-image directory">🗂️</div>
+          <div class="activity-image enrollment">👥</div>
           <div class="activity-content">
             <div class="activity-title-small">Student Directory</div>
-            <div class="activity-description">Browse and manage enrolled students.</div>
+            <div class="activity-description">Browse and manage all enrolled students.</div>
           </div>
         </div>
 
@@ -118,28 +114,27 @@
           <div class="activity-image reports">📈</div>
           <div class="activity-content">
             <div class="activity-title-small">Generate Reports</div>
-            <div class="activity-description">Create and manage various school reports.</div>
+            <div class="activity-description">Create and manage school reports.</div>
           </div>
         </div>
+
       </div>
     </div>
 
-    <!-- RECENT ACTIVITY — populated by dashboard.js from /api/dashboard/recent-activity -->
-    <div class="activity-section">
+    <!-- RECENT ACTIVITY — populated by loadRecentActivity() -->
+    <section class="recent-activity-section">
       <h2 class="activity-title">Recent Activity</h2>
-      <ul class="recent-activity-list" id="recentActivityList">
-        <!-- Skeleton shown while loading, replaced by live data -->
-        <li class="activity-skeleton"></li>
-        <li class="activity-skeleton"></li>
-        <li class="activity-skeleton"></li>
+      <ul class="activity-list" id="activity-list">
+        <!-- Skeleton shown while loading; replaced by dashboard.js -->
       </ul>
-    </div>
+    </section>
   </div>
 
-  <!-- External scripts only — no inline logic -->
-  <script src="auth.js" defer></script>
-  <script src="auth-guard.js" defer></script>
-  <script src="dashboard.js" defer></script>
+  <!-- Scripts: auth first, then guard, then shared nav, then page-specific -->
+  <script src="auth.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="navigation.js"></script>
+  <script src="dashboard.js"></script>
 </body>
 
 </html>

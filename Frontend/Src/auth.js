@@ -169,7 +169,11 @@ async function loadCurrentUser() {
         const user = data.user;
 
         const initials = user.fullName
-            ? user.fullName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()
+            ? user.fullName.split(" ")
+                .map(w => w[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase()
             : "?";
 
         const roleLabels = {

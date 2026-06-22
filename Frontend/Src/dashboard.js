@@ -1,133 +1,142 @@
 /**
  * dashboard.js
- * All page behaviour for dashboard.html.
- * Depends on auth.js being loaded first (provides loadCurrentUser, bindLogout, authFetch, API_BASE).
+ * Initialises the dashboard page: live stats, recent activity, RBAC, logout.
+ * Loaded after auth.js → auth-guard.js → navigation.js.
  */
 
-// ── Live stat cards ─────────────────────────────────────────────────────────
+/* === Sprint 2 Additions: Dashboard Live Data === */
 
-async function loadDashboardStats() {
-  try {
-    const res = await authFetch(`${API_BASE}/dashboard/stats`);
-    if (!res || !res.ok) {
-      const err = res ? await res.json().catch(() => ({})) : {};
-      throw new Error(err.error || "Failed to load statistics");
-    }
-    const stats = await res.json();
-    document.querySelectorAll("[data-stat]").forEach(el => {
-      const val = stats[el.dataset.stat];
-      el.textContent = val !== undefined ? Number(val).toLocaleString() : "—";
-    });
-  } catch (err) {
-    document.querySelectorAll("[data-stat]").forEach(el => {
-      el.textContent = "—";
-    });
-    showDashboardError(err.message);
-  }
-}
-
-// ── Recent Activity ──────────────────────────────────────────────────────────
-
-async function loadRecentActivity() {
-  const list = document.getElementById("recentActivityList");
-  if (!list) return;
-
-  try {
-    const res = await authFetch(`${API_BASE}/dashboard/recent-activity`);
-    if (!res || !res.ok) {
-      const err = res ? await res.json().catch(() => ({})) : {};
-      throw new Error(err.error || "Failed to load activity");
-    }
-    const { activities } = await res.json();
-
-    list.innerHTML = "";
-
-    if (!activities || activities.length === 0) {
-      const li = document.createElement("li");
-      li.className = "activity-empty";
-      li.textContent = "No recent activity to display.";
-      list.appendChild(li);
-      return;
-    }
-
-    activities.forEach(item => {
-      const li = document.createElement("li");
-      li.className = "activity-entry";
-
-      const when = new Date(item.createdAt).toLocaleString();
-      li.textContent = `${item.actorName || "System"} · ${item.action.replace(/_/g, " ")} · ${when}`;
-      list.appendChild(li);
-    });
-  } catch (err) {
-    list.innerHTML = `<li class="activity-error">${err.message}</li>`;
-  }
-}
-
-// ── RBAC visibility ──────────────────────────────────────────────────────────
-
-function applyRoleVisibility() {
-  const user = getUser();
-  if (!user) return;
-
-  const isPrivileged = user.role === "admin" || user.role === "headmaster";
-
-  // Admin-only cards are hidden via CSS by default (.admin-only { display: none })
-  // Privileged users get them shown
-  if (isPrivileged) {
-    document.querySelectorAll(".admin-only").forEach(el => {
-      el.classList.remove("admin-only-hidden");
-      // Remove the class that hides them so they participate in grid layout
-      el.removeAttribute("hidden");
-      el.style.display = "";   // restore to grid-item default
-    });
+document.addEventListener("DOMContentLoaded", () => {
+  // ── 1. Fast display from localStorage (no flicker) ───────────────────────
+  const storedUser = getUser();
+  if (storedUser) {
+    _applyRbacVisibility(storedUser.role || "user");
   }
 
-  // Welcome title with real first name
-  const titleEl = document.getElementById("welcomeTitle");
-  if (titleEl) {
-    const firstName = (user.name || user.fullName || "").split(" ")[0] || "User";
-    titleEl.textContent = `Welcome, ${firstName}!`;
-  }
-}
+  // ── 2. Fetch accurate user data from API ─────────────────────────────────
+  // loadCurrentUser() is defined in auth.js and updates the header elements.
+  loadCurrentUser().then(user => {
+    if (user) _applyRbacVisibility(user.role || "user");
+  });
 
-// ── Card navigation (replaces inline onclick) ────────────────────────────────
+  // ── 3. Load live stat counts ──────────────────────────────────────────────
+  loadDashboardStats();
 
-function bindCardNavigation() {
+  // ── 4. Load recent activity feed ─────────────────────────────────────────
+  loadRecentActivity();
+
+  // ── 5. Wire activity card clicks ─────────────────────────────────────────
+  // data-href on each card replaces the old inline onclick="" attributes.
   document.querySelectorAll(".activity-card[data-href]").forEach(card => {
     card.addEventListener("click", () => {
       window.location.href = card.dataset.href;
     });
-    // Keyboard accessibility
-    card.setAttribute("role", "link");
-    card.setAttribute("tabindex", "0");
-    card.addEventListener("keydown", e => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        window.location.href = card.dataset.href;
+  });
+
+  // ── 6. Logout ─────────────────────────────────────────────────────────────
+  // navigation.js also wires this, but having it here too is harmless and
+  // ensures it works even if navigation.js is removed from a page.
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn && !logoutBtn.dataset.wired) {
+    logoutBtn.dataset.wired = "true";
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await authFetch(`${API_BASE}/auth/logout`, { method: "POST" });
+      } catch { /* clear locally even if the network request fails */ }
+      finally {
+        clearSession();
+        window.location.href = "login.html";
       }
     });
-  });
-}
+  }
+});
 
-// ── Error display ────────────────────────────────────────────────────────────
+/**
+ * loadDashboardStats()
+ * GET /api/dashboard/stats
+ * Expects: { totalStudents, totalTeachers, pendingEnrollments, pendingApprovals }
+ * Writes each value into the matching [data-stat] element.
+ */
+async function loadDashboardStats() {
+  try {
+    const res = await authFetch(`${API_BASE}/dashboard/stats`);
+    if (!res || !res.ok) throw new Error("Could not load dashboard stats");
 
-function showDashboardError(message) {
-  // Use showToast if defined by students.js, otherwise create a simple alert element
-  if (typeof showToast === "function") {
-    showToast(message, "error");
-  } else {
-    console.warn("Dashboard error:", message);
+    const stats = await res.json();
+
+    document.querySelectorAll("[data-stat]").forEach(el => {
+      const key = el.dataset.stat;
+      const val = stats[key];
+      // toLocaleString adds commas: 1000 → "1,000"
+      el.textContent = val !== undefined ? Number(val).toLocaleString() : "—";
+    });
+  } catch (err) {
+    // Keep "—" in all cards; log the reason so it's debuggable
+    console.error("loadDashboardStats:", err.message);
   }
 }
 
-// ── Initialise ───────────────────────────────────────────────────────────────
+/**
+ * loadRecentActivity()
+ * GET /api/dashboard/recent-activity
+ * Expects an array of { action, actorName, createdAt, entityType }
+ * Renders a <li> per event into #activity-list.
+ */
+async function loadRecentActivity() {
+  const list = document.getElementById("activity-list");
+  if (!list) return;
 
-document.addEventListener("DOMContentLoaded", () => {
-  requireAuth();
-  loadCurrentUser();
-  bindLogout();
-  applyRoleVisibility();
-  bindCardNavigation();
-  loadDashboardStats();
-  loadRecentActivity();
-});
+  // Show skeleton rows while the request is in flight
+  list.innerHTML = `
+        <li class="activity-item activity-skeleton"></li>
+        <li class="activity-item activity-skeleton"></li>
+        <li class="activity-item activity-skeleton"></li>
+    `;
+
+  try {
+    const res = await authFetch(`${API_BASE}/dashboard/recent-activity`);
+    if (!res || !res.ok) throw new Error("Could not load recent activity");
+
+    const items = await res.json(); // array from the backend
+
+    if (!Array.isArray(items) || items.length === 0) {
+      list.innerHTML = `<li class="activity-empty">No recent activity yet.</li>`;
+      return;
+    }
+
+    list.innerHTML = items.map(item => `
+            <li class="activity-item">
+                <span class="activity-dot"></span>
+                <div class="activity-detail">
+                    <span class="activity-action">${_esc(item.action)}</span>
+                    <span class="activity-meta">
+                        ${_esc(item.actorName || "System")} &middot;
+                        ${new Date(item.createdAt).toLocaleString()}
+                    </span>
+                </div>
+            </li>
+        `).join("");
+
+  } catch (err) {
+    list.innerHTML = `<li class="activity-error">
+            Could not load activity: ${_esc(err.message)}
+        </li>`;
+  }
+}
+
+// ─── Private helpers ──────────────────────────────────────────────────────────
+
+function _applyRbacVisibility(role) {
+  const isPrivileged = role === "admin" || role === "headmaster";
+  document.querySelectorAll(".admin-only").forEach(el => {
+    el.style.display = isPrivileged ? "" : "none";
+  });
+}
+
+// Escapes user-controlled text before inserting into innerHTML
+function _esc(str) {
+  return String(str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}

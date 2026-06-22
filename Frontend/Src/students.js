@@ -1,13 +1,6 @@
 /**
  * students.js
  * API and form management for student enrollment, list, profile, and edit pages
- */
-
-// ============================================
-// API FUNCTIONS
-// ============================================
-
-/**
  * Fetch all students with pagination, search, and filters
  */
 async function fetchStudents(page = 1, limit = 10, search = '', grade = '', status = '') {
@@ -502,7 +495,7 @@ function showSuccessOverlay(admissionNumber) {
 
   if (enrollAnotherBtn) {
     enrollAnotherBtn.addEventListener('click', () => {
-      window.location.href = 'enrollment.html';
+      window.location.href = 'enroll-student.html';
     });
   }
 
@@ -538,7 +531,7 @@ function initializeStudentList() {
     let searchTimeout;
     searchInput.addEventListener('input', (e) => {
       clearTimeout(searchTimeout);
-      searchTerm = e.target.value;
+      studentListState.searchTerm = e.target.value;
       searchTimeout = setTimeout(() => {
         studentListState.currentPage = 1;
         loadStudentList();
@@ -567,7 +560,7 @@ function initializeStudentList() {
   const addBtn = document.getElementById('addStudentBtn');
   if (addBtn) {
     addBtn.addEventListener('click', () => {
-      window.location.href = 'enrollment.html';
+      window.location.href = 'enroll-student.html';
     });
   }
 
@@ -999,3 +992,16 @@ function showToast(message, type = 'info') {
     setTimeout(() => toast.remove(), 300);
   }, 3000);
 }
+
+/* === Sprint 2 Additions: Auto Page Initialisation ===
+ * Reads the data-page attribute set on <body> in each HTML file.
+ * This removes the need for inline <script> blocks in the HTML,
+ * keeping separation of concerns clean (Rule 2).
+ */
+document.addEventListener("DOMContentLoaded", () => {
+  const page = document.body.dataset.page;
+  if (page === "student-list") initializeStudentList();
+  if (page === "student-profile") initializeStudentProfile();
+  if (page === "edit-student") initializeEditStudent();
+  // enroll-student is handled by enroll-student.js
+});
