@@ -7,7 +7,7 @@ const jwt = require("jsonwebtoken");
  */
 const authenticate = (req, res, next) => {
     const header = req.headers.authorization || "";
-    const token  = header.startsWith("Bearer ") ? header.slice(7) : null;
+    const token = header.startsWith("Bearer ") ? header.slice(7) : null;
 
     if (!token) {
         return res.status(401).json({ error: "Authentication required" });
@@ -25,20 +25,18 @@ const authenticate = (req, res, next) => {
     }
 };
 
-/**
- * authorize(...roles)
- * Must be used AFTER authenticate.
+/*
+ * authorize(...roles) Must be used AFTER authenticate.
  * Blocks access if the user's role is not in the allowed list.
- *
- * Usage:
- *   router.get("/admin-only", authenticate, authorize("admin"), handler)
- *   router.get("/staff-area", authenticate, authorize("admin", "staff"), handler)
- */
+*/
+
 const authorize = (...roles) => (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {
         return res.status(403).json({ error: "You do not have permission to access this resource" });
     }
     next();
 };
+
+
 
 module.exports = { authenticate, authorize };

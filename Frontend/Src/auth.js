@@ -70,6 +70,10 @@ async function authFetch(url, options = {}) {
     return res;
 }
 
+// authFetch(`${API_BASE}/students`). This bridges the gap.
+async function apiFetch(path, options = {}) {
+    return authFetch(`${API_BASE}${path}`, options);
+}
 /**
  * requireAuth()
  * Called at the top of every protected page.
@@ -78,7 +82,9 @@ async function authFetch(url, options = {}) {
  * for pages that call it explicitly via DOMContentLoaded handlers.)
  */
 function requireAuth() {
-    if (!getAccessToken() || !getUser()) {
+    const token = getAccessToken();
+    const user = getUser();
+    if (!token || !user) {
         const intended = encodeURIComponent(window.location.pathname + window.location.search);
         window.location.replace("login.html?next=" + intended);
     }
@@ -96,10 +102,10 @@ function requireAuth() {
  */
 function formatRole(role) {
     const labels = {
-        admin:      "Administrator",
+        admin: "Administrator",
         headmaster: "Headmaster",
-        staff:      "Staff",
-        user:       "User",
+        staff: "Staff",
+        user: "User",
     };
     return labels[role] || (role ? role.charAt(0).toUpperCase() + role.slice(1) : "");
 }
@@ -134,15 +140,15 @@ function applyUserToDOM(user) {
     });
 
     // ── Legacy id-based pattern (existing pages) ─────────────────────────────
-    const nameEl   = document.getElementById("headerUserName");
+    const nameEl = document.getElementById("headerUserName");
     const avatarEl = document.getElementById("headerAvatar");
-    const badgeEl  = document.getElementById("roleBadge");
+    const badgeEl = document.getElementById("roleBadge");
 
-    if (nameEl)   nameEl.textContent   = user.name || user.fullName || "User";
+    if (nameEl) nameEl.textContent = user.name || user.fullName || "User";
     if (avatarEl) avatarEl.textContent = getInitials(user.name || user.fullName || "");
     if (badgeEl) {
         badgeEl.textContent = formatRole(user.role);
-        badgeEl.className   = `role-badge ${user.role || ""}`;
+        badgeEl.className = `role-badge ${user.role || ""}`;
     }
 }
 
@@ -157,14 +163,39 @@ async function loadCurrentUser() {
     if (cached) applyUserToDOM(cached);
 
     try {
-        const res = await authFetch(`${API_BASE}/auth/me`);
+        const res = await apiFetch("/api/auth/me");
         if (!res || !res.ok) return;
-        const user = await res.json();
-        // Keep session storage fresh
-        sessionStorage.setItem("user", JSON.stringify(user));
-        applyUserToDOM(user);
-    } catch {
-        // Network error — cached values already shown, nothing more to do
+        const data = await res.json();
+        const user = data.user;
+
+        const initials = user.fullName
+            ? user.fullName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()
+            : "?";
+
+        const roleLabels = {
+            admin: "Administrator",
+            headmaster: "Headmaster",
+            staff: "Teacher",
+            user: "User",
+        };
+
+        document.querySelectorAll("[data-user-name]").forEach(
+            el => (el.textContent = user.fullName || "")
+        );
+        document.querySelectorAll("[data-user-role]").forEach(
+            el => (el.textContent = roleLabels[user.role] || user.role)
+        );
+        document.querySelectorAll("[data-user-initials]").forEach(
+            el => (el.textContent = initials)
+        );
+
+        // Also refresh sessionStorage so role-based UI (admin-only cards etc.)
+        // keeps working on pages that still read from getUser()
+        const current = getUser() || {};
+        sessionStorage.setItem("user", JSON.stringify({ ...current, ...user }));
+
+    } catch (err) {
+        console.warn("loadCurrentUser failed:", err.message);
     }
 }
 
@@ -186,4 +217,4 @@ function bindLogout(buttonId = "logoutBtn") {
             window.location.href = "login.html";
         }
     });
-}
+}
