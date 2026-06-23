@@ -5,6 +5,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Assist | Student Information System</title>
+  <script>
+    // Enforce trailing slash on directory URL to prevent broken relative links on GitHub Pages
+    if (window.location.pathname.split('/').pop().indexOf('.') === -1 && !window.location.pathname.endsWith('/')) {
+      window.location.replace(window.location.pathname + '/' + window.location.search + window.location.hash);
+    }
+  </script>
   <link
     href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap"
     rel="stylesheet">
