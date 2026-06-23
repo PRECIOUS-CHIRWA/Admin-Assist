@@ -5,32 +5,35 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Directory - Admin Assist</title>
+  <meta name="description" content="Browse and manage enrolled students in Admin Assist.">
   <link
     href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="students.css">
+  <link rel="stylesheet" href="navigation.css">
 </head>
 
-<body>
+<body data-page="student-list">
   <header>
     <div class="logo">Admin Assist</div>
     <div class="user-profile">
-      <span id="headerUserName">…</span>
-      <span id="roleBadge" class="role-badge"></span>
-      <div class="user-avatar" id="headerAvatar">?</div>
+      <span id="headerUserName" data-user-name>…</span>
+      <span id="roleBadge" class="role-badge" data-user-role></span>
+      <div class="user-avatar" id="headerAvatar" data-user-initials>?</div>
       <button id="logoutBtn">Logout</button>
     </div>
   </header>
 
   <div class="main-container">
     <div class="breadcrumb">
-      <a href="dashboard.html">Dashboard</a> > <span>Student Directory</span>
+      <a href="dashboard.html">Dashboard</a> &gt; <span>Student Directory</span>
     </div>
 
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+    <!-- Page heading — styled via students.css .page-header, no inline styles -->
+    <div class="page-header">
       <div>
-        <h1 style="font-family: 'Playfair Display', serif; font-size: 32px; margin-bottom: 8px;">Student Directory</h1>
-        <p style="color: #666;">Manage all enrolled students</p>
+        <h1 class="page-title">Student Directory</h1>
+        <p class="page-subtitle">Manage all enrolled students</p>
       </div>
       <button id="addStudentBtn" class="btn-add">+ Add New Student</button>
     </div>
@@ -75,7 +78,7 @@
           </tr>
         </thead>
         <tbody>
-          <!-- Populated by JavaScript -->
+          <!-- Populated by students.js — skeleton shown while loading -->
         </tbody>
       </table>
     </div>
@@ -84,34 +87,12 @@
     <div id="pagination"></div>
   </div>
 
-  <!-- SCRIPTS -->
-  <script src="auth.js"></script>
-  <!-- <script src="auth-guard.js"></script> -->
-  <script src="students.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      requireAuth();
-      const user = getUser();
-      if (user) {
-        const firstName = user.name ? user.name.split(" ")[0] : "User";
-        document.getElementById("headerUserName").textContent = user.name || "User";
-        document.getElementById("headerAvatar").textContent = firstName.charAt(0).toUpperCase();
-        document.getElementById("roleBadge").textContent = user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "User";
-      }
-
-      document.getElementById("logoutBtn").addEventListener("click", async () => {
-        try {
-          await authFetch(`${API_BASE}/auth/logout`, { method: "POST" });
-        } catch { }
-        finally {
-          clearSession();
-          window.location.href = "login.html";
-        }
-      });
-
-      initializeStudentList();
-    });
-  </script>
+  <!-- External scripts only — no inline logic -->
+  <script src="auth.js" defer></script>
+  <script src="auth-guard.js" defer></script>
+  <script src="students.js" defer></script>
+  <script src="navigation.js"></script>
+  <script src="students-page.js" defer></script>
 </body>
 
 </html>

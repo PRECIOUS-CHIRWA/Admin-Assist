@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Generate Report - Admin Assist</title>
   <link rel="stylesheet" href="admin-pages.css">
+  <link rel="stylesheet" href="navigation.css">
 </head>
+
 <body>
   <header class="app-header">
     <div class="logo-group">
@@ -32,7 +35,8 @@
     <section class="page-intro">
       <div>
         <h1 class="page-title">Generate Report</h1>
-        <p class="page-subtitle">Assemble attendance, academic, and operational summaries into export-ready reports for school leadership, teachers, or guardians.</p>
+        <p class="page-subtitle">Assemble attendance, academic, and operational summaries into export-ready reports for
+          school leadership, teachers, or guardians.</p>
       </div>
       <div class="page-actions">
         <a class="ghost-btn" href="dashboard.html">Back to Dashboard</a>
@@ -49,7 +53,9 @@
           </div>
           <div class="stat-icon">📄</div>
         </div>
-        <div class="progress-track"><div class="progress-fill blue" style="width: 82%;"></div></div>
+        <div class="progress-track">
+          <div class="progress-fill blue" style="width: 82%;"></div>
+        </div>
         <p class="stat-footnote">Leadership and departmental summaries generated from one workspace.</p>
       </article>
 
@@ -61,7 +67,9 @@
           </div>
           <div class="stat-icon">⏳</div>
         </div>
-        <div class="progress-track"><div class="progress-fill teal" style="width: 36%;"></div></div>
+        <div class="progress-track">
+          <div class="progress-fill teal" style="width: 36%;"></div>
+        </div>
         <p class="stat-footnote">Queued reports waiting for review or scheduled delivery.</p>
       </article>
 
@@ -73,7 +81,9 @@
           </div>
           <div class="stat-icon">🗂️</div>
         </div>
-        <div class="progress-track"><div class="progress-fill gold" style="width: 68%;"></div></div>
+        <div class="progress-track">
+          <div class="progress-fill gold" style="width: 68%;"></div>
+        </div>
         <p class="stat-footnote">Reusable layouts for weekly, term, and board reporting.</p>
       </article>
 
@@ -85,7 +95,9 @@
           </div>
           <div class="stat-icon">📬</div>
         </div>
-        <div class="progress-track"><div class="progress-fill orange" style="width: 52%;"></div></div>
+        <div class="progress-track">
+          <div class="progress-fill orange" style="width: 52%;"></div>
+        </div>
         <p class="stat-footnote">Reports that can be delivered automatically after approval.</p>
       </article>
     </section>
@@ -96,7 +108,8 @@
           <div class="panel-header">
             <div>
               <h2 class="panel-title">Report Builder</h2>
-              <p class="panel-subtitle">Pick the report modules, define the reporting window, and choose how the export should be delivered.</p>
+              <p class="panel-subtitle">Pick the report modules, define the reporting window, and choose how the export
+                should be delivered.</p>
             </div>
             <div class="eyebrow">One-click exports for PDF, Excel, and CSV</div>
           </div>
@@ -110,7 +123,8 @@
                     <span class="option-title">Attendance Summary</span>
                     <span class="option-icon blue">📊</span>
                   </span>
-                  <span class="option-copy">Show attendance rate, late arrivals, and follow-up cases by class or stream.</span>
+                  <span class="option-copy">Show attendance rate, late arrivals, and follow-up cases by class or
+                    stream.</span>
                 </span>
               </label>
 
@@ -121,7 +135,8 @@
                     <span class="option-title">Academic Performance</span>
                     <span class="option-icon teal">📘</span>
                   </span>
-                  <span class="option-copy">Include subject averages, top performers, and learners needing support.</span>
+                  <span class="option-copy">Include subject averages, top performers, and learners needing
+                    support.</span>
                 </span>
               </label>
 
@@ -143,7 +158,8 @@
                     <span class="option-title">Guardian Follow-up</span>
                     <span class="option-icon rose">📞</span>
                   </span>
-                  <span class="option-copy">Highlight repeat absences, low performance alerts, and outreach actions.</span>
+                  <span class="option-copy">Highlight repeat absences, low performance alerts, and outreach
+                    actions.</span>
                 </span>
               </label>
             </div>
@@ -196,19 +212,24 @@
               <div class="field full">
                 <label>Include Extras</label>
                 <div class="checkbox-row">
-                  <label class="checkbox-chip"><input type="checkbox" id="includeCharts" checked> Charts and visuals</label>
-                  <label class="checkbox-chip"><input type="checkbox" id="includeStudentList" checked> Student detail appendix</label>
-                  <label class="checkbox-chip"><input type="checkbox" id="emailPrincipal"> Email copy to principal</label>
+                  <label class="checkbox-chip"><input type="checkbox" id="includeCharts" checked> Charts and
+                    visuals</label>
+                  <label class="checkbox-chip"><input type="checkbox" id="includeStudentList" checked> Student detail
+                    appendix</label>
+                  <label class="checkbox-chip"><input type="checkbox" id="emailPrincipal"> Email copy to
+                    principal</label>
                 </div>
               </div>
               <div class="field full">
                 <label for="reportNotes">Report Notes</label>
-                <textarea id="reportNotes" name="reportNotes" placeholder="Add short guidance for recipients or internal preparation notes.">Focus this issue on attendance recovery and mathematics progress.</textarea>
+                <textarea id="reportNotes" name="reportNotes"
+                  placeholder="Add short guidance for recipients or internal preparation notes.">Focus this issue on attendance recovery and mathematics progress.</textarea>
               </div>
             </div>
 
             <div class="action-row">
-              <p class="inline-note">Preview refreshes automatically as you change the report modules and export settings.</p>
+              <p class="inline-note">Preview refreshes automatically as you change the report modules and export
+                settings.</p>
               <button type="submit" class="primary-btn">Generate Report</button>
             </div>
           </form>
@@ -218,7 +239,8 @@
           <div class="panel-header">
             <div>
               <h2 class="panel-title">Preview Summary</h2>
-              <p class="panel-subtitle">This is the export snapshot recipients will receive once the report is generated.</p>
+              <p class="panel-subtitle">This is the export snapshot recipients will receive once the report is
+                generated.</p>
             </div>
             <div class="chip-row">
               <span class="chip teal" id="previewFormatChip">PDF Export</span>
@@ -262,7 +284,8 @@
             <div class="divider"></div>
 
             <div class="preview-label">Notes</div>
-            <p class="helper-text" id="previewNotes">Focus this issue on attendance recovery and mathematics progress.</p>
+            <p class="helper-text" id="previewNotes">Focus this issue on attendance recovery and mathematics progress.
+            </p>
           </div>
         </section>
       </div>
@@ -345,94 +368,8 @@
 
   <script src="auth.js"></script>
   <script src="auth-guard.js"></script>
-  <script>
-    const reportForm = document.getElementById("reportBuilderForm");
-    const moduleInputs = Array.from(document.querySelectorAll(".report-module"));
-    const previewAudience = document.getElementById("previewAudience");
-    const previewWindow = document.getElementById("previewWindow");
-    const previewGrade = document.getElementById("previewGrade");
-    const previewTerm = document.getElementById("previewTerm");
-    const previewModules = document.getElementById("previewModules");
-    const previewExtras = document.getElementById("previewExtras");
-    const previewNotes = document.getElementById("previewNotes");
-    const previewFormatChip = document.getElementById("previewFormatChip");
-
-    function formatDateLabel(value) {
-      if (!value) {
-        return "Not set";
-      }
-
-      const [year, month, day] = value.split("-");
-      const date = new Date(Number(year), Number(month) - 1, Number(day));
-      return date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric"
-      });
-    }
-
-    function renderTags(container, items, fallbackText) {
-      container.innerHTML = "";
-      const values = items.length ? items : [fallbackText];
-
-      values.forEach((item) => {
-        const tag = document.createElement("span");
-        tag.className = "preview-tag";
-        tag.textContent = item;
-        container.appendChild(tag);
-      });
-    }
-
-    function syncReportPreview() {
-      const audience = document.getElementById("reportAudience").value;
-      const grade = document.getElementById("reportGrade").value;
-      const term = document.getElementById("reportTerm").value;
-      const start = document.getElementById("reportStart").value;
-      const end = document.getElementById("reportEnd").value;
-      const format = document.getElementById("reportFormat").value;
-      const notes = document.getElementById("reportNotes").value.trim();
-
-      const selectedModules = moduleInputs.filter((input) => input.checked).map((input) => input.value);
-      const selectedExtras = [];
-
-      if (document.getElementById("includeCharts").checked) {
-        selectedExtras.push("Charts and visuals");
-      }
-
-      if (document.getElementById("includeStudentList").checked) {
-        selectedExtras.push("Student detail appendix");
-      }
-
-      if (document.getElementById("emailPrincipal").checked) {
-        selectedExtras.push("Email copy to principal");
-      }
-
-      previewAudience.textContent = audience;
-      previewWindow.textContent = formatDateLabel(start) + " to " + formatDateLabel(end);
-      previewGrade.textContent = grade;
-      previewTerm.textContent = term;
-      previewNotes.textContent = notes || "No additional notes added.";
-      previewFormatChip.textContent = format + " Export";
-
-      renderTags(previewModules, selectedModules, "No modules selected");
-      renderTags(previewExtras, selectedExtras, "No extras included");
-    }
-
-    reportForm.addEventListener("input", syncReportPreview);
-    reportForm.addEventListener("change", syncReportPreview);
-
-    reportForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      syncReportPreview();
-      alert("Report generated successfully. This action is ready to connect to your export service.");
-    });
-
-    document.getElementById("scheduleReportBtn").addEventListener("click", () => {
-      syncReportPreview();
-      alert("Report scheduled successfully. Backend scheduling can be connected next.");
-    });
-
-    syncReportPreview();
-  </script>
+  <script src="navigation.js"></script>
+  <script src="g-r.js"></script>
 </body>
+
 </html>

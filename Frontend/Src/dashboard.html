@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - Admin Assist</title>
   <link rel="stylesheet" href="dashboard.css">
+  <link rel="stylesheet" href="navigation.css">
 </head>
 
 <body>
@@ -15,22 +16,20 @@
       <div class="user-avatar" id="headerAvatar">?</div>
       <span id="headerUserName">…</span>
       <span id="roleBadge" class="role-badge"></span>
-      <button id="logoutBtn">
-        Logout
-      </button>
+      <button id="logoutBtn">Logout</button>
     </div>
   </header>
 
   <div class="main-container">
-    <!-- FIX: Added id="welcomeTitle" which the script was already referencing -->
     <h1 class="dashboard-title" id="welcomeTitle">Welcome!</h1>
 
+    <!-- STAT CARDS — values start at "—" and are filled by loadDashboardStats() -->
     <div class="stats-grid">
       <div class="stat-card blue">
         <div class="stat-header">
           <div>
             <div class="stat-label">Total Students</div>
-            <div class="stat-value">878</div>
+            <div class="stat-value" data-stat="totalStudents">—</div>
           </div>
           <div class="stat-icon">👥</div>
         </div>
@@ -41,7 +40,7 @@
         <div class="stat-header">
           <div>
             <div class="stat-label">Total Teachers</div>
-            <div class="stat-value">45</div>
+            <div class="stat-value" data-stat="totalTeachers">—</div>
           </div>
           <div class="stat-icon">👨‍🏫</div>
         </div>
@@ -51,20 +50,20 @@
       <div class="stat-card blue">
         <div class="stat-header">
           <div>
-            <div class="stat-label">New Enrollment Requests</div>
-            <div class="stat-value">12</div>
+            <div class="stat-label">Enrolled Students</div>
+            <div class="stat-value" data-stat="pendingEnrollments">—</div>
           </div>
           <div class="stat-icon">📋</div>
         </div>
         <div class="stat-bar blue"></div>
       </div>
 
-      <!-- Admin/Headmaster only stat -->
+      <!-- Admin/Headmaster only — shown by navigation.js RBAC logic -->
       <div class="stat-card orange admin-only" id="pendingApprovalsCard">
         <div class="stat-header">
           <div>
             <div class="stat-label">Pending Approvals</div>
-            <div class="stat-value">6</div>
+            <div class="stat-value" data-stat="pendingApprovals">—</div>
           </div>
           <div class="stat-icon">✓</div>
         </div>
@@ -72,20 +71,30 @@
       </div>
     </div>
 
+    <!-- QUICK ACCESS — data-href replaces inline onclick (Rule 2 compliance) -->
     <div class="activity-section">
       <h2 class="activity-title">Quick Access</h2>
       <div class="activity-grid">
-        <!-- Visible to admin and headmaster only -->
-        <div class="activity-card admin-only" id="enrollCard" onclick="window.location.href='enroll-student.html'">
+
+        <!-- Admin / Headmaster only -->
+        <div class="activity-card admin-only" id="enrollCard" data-href="enroll-student.html">
           <div class="activity-image enrollment">📝</div>
           <div class="activity-content">
             <div class="activity-title-small">Student Enrollment</div>
-            <div class="activity-description">Manage student enrollment records.</div>
+            <div class="activity-description">Register a new student.</div>
           </div>
         </div>
 
-        <!-- Visible to all roles -->
-        <div class="activity-card" onclick="window.location.href='attendance-management.html'">
+        <!-- All roles -->
+        <div class="activity-card" data-href="students.html">
+          <div class="activity-image enrollment">👥</div>
+          <div class="activity-content">
+            <div class="activity-title-small">Student Directory</div>
+            <div class="activity-description">Browse and manage all enrolled students.</div>
+          </div>
+        </div>
+
+        <div class="activity-card" data-href="attendance-management.html">
           <div class="activity-image attendance">📊</div>
           <div class="activity-content">
             <div class="activity-title-small">Attendance Management</div>
@@ -93,7 +102,7 @@
           </div>
         </div>
 
-        <div class="activity-card" onclick="window.location.href='academic-records.html'">
+        <div class="activity-card" data-href="academic-records.html">
           <div class="activity-image records">📄</div>
           <div class="activity-content">
             <div class="activity-title-small">Academic Records</div>
@@ -101,57 +110,32 @@
           </div>
         </div>
 
-        <!-- Visible to admin and headmaster only -->
-        <div class="activity-card admin-only" id="reportCard" onclick="window.location.href='generate-report.html'">
+        <!-- Admin / Headmaster only -->
+        <div class="activity-card admin-only" id="reportCard" data-href="generate-report.html">
           <div class="activity-image reports">📈</div>
           <div class="activity-content">
             <div class="activity-title-small">Generate Reports</div>
-            <div class="activity-description">Create and manage various school reports.</div>
+            <div class="activity-description">Create and manage school reports.</div>
           </div>
         </div>
+
       </div>
     </div>
+
+    <!-- RECENT ACTIVITY — populated by loadRecentActivity() -->
+    <section class="recent-activity-section">
+      <h2 class="activity-title">Recent Activity</h2>
+      <ul class="activity-list" id="activity-list">
+        <!-- Skeleton shown while loading; replaced by dashboard.js -->
+      </ul>
+    </section>
   </div>
 
+  <!-- Scripts: auth first, then guard, then shared nav, then page-specific -->
   <script src="auth.js"></script>
-  <!-- <script src="auth-guard.js"></script> -->
-  <script>
-    const user = getUser();
-
-    if (user) {
-      const firstName = user.name ? user.name.split(" ")[0] : "User";
-      const role = user.role || "user";
-
-      // Populate header
-      document.getElementById("welcomeTitle").textContent = `Welcome, ${firstName}!`;
-      document.getElementById("headerUserName").textContent = user.name || "User";
-      document.getElementById("headerAvatar").textContent = firstName.charAt(0).toUpperCase();
-
-      // Role badge
-      const badge = document.getElementById("roleBadge");
-      badge.textContent = role.charAt(0).toUpperCase() + role.slice(1);
-      badge.className = `role-badge ${role}`;
-
-      // RBAC: show admin-only elements for admin and headmaster
-      const isPrivileged = role === "admin" || role === "headmaster";
-      if (isPrivileged) {
-        document.querySelectorAll(".admin-only").forEach(el => {
-          el.style.display = "";   // restore default display
-        });
-      }
-    }
-
-    document.getElementById("logoutBtn").addEventListener("click", async () => {
-      try {
-        await authFetch(`${API_BASE}/auth/logout`, { method: "POST" });
-      } catch {
-        // clear locally even if the network call fails
-      } finally {
-        clearSession();
-        window.location.href = "login.html";
-      }
-    });
-  </script>
+  <script src="auth-guard.js"></script>
+  <script src="navigation.js"></script>
+  <script src="dashboard.js"></script>
 </body>
 
 </html>

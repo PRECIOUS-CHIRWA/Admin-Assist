@@ -238,6 +238,7 @@ header button:hover {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -290,9 +291,9 @@ header button:hover {
   display: none;
 }
 
-.form-group input.error ~ .error-message,
-.form-group select.error ~ .error-message,
-.form-group textarea.error ~ .error-message {
+.form-group input.error~.error-message,
+.form-group select.error~.error-message,
+.form-group textarea.error~.error-message {
   display: block;
 }
 
@@ -758,6 +759,7 @@ td {
   0% {
     background-position: 200% 0;
   }
+
   100% {
     background-position: -200% 0;
   }
@@ -926,6 +928,7 @@ td {
     transform: translateX(400px);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -1013,4 +1016,11 @@ td {
     left: 5%;
     right: 5%;
   }
+}
+
+/* === Sprint 2 Additions: Utility Classes === */
+
+/* Used on the enrollment form submit button — hidden until Step 3 is reached */
+.is-hidden {
+  display: none !important;
 }

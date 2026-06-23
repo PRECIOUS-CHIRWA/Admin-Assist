@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Academic Records - Admin Assist</title>
   <link rel="stylesheet" href="admin-pages.css">
+  <link rel="stylesheet" href="navigation.css">
 </head>
+
 <body>
   <header class="app-header">
     <div class="logo-group">
@@ -32,7 +35,8 @@
     <section class="page-intro">
       <div>
         <h1 class="page-title">Academic Records</h1>
-        <p class="page-subtitle">Maintain subject marks, calculate totals automatically, and prepare the term record book with a cleaner grading workflow.</p>
+        <p class="page-subtitle">Maintain subject marks, calculate totals automatically, and prepare the term record
+          book with a cleaner grading workflow.</p>
       </div>
       <div class="page-actions">
         <a class="ghost-btn" href="dashboard.html">Back to Dashboard</a>
@@ -49,7 +53,9 @@
           </div>
           <div class="stat-icon">📘</div>
         </div>
-        <div class="progress-track"><div class="progress-fill blue" id="gradedBar" style="width: 100%;"></div></div>
+        <div class="progress-track">
+          <div class="progress-fill blue" id="gradedBar" style="width: 100%;"></div>
+        </div>
         <p class="stat-footnote">Records captured for the active Mathematics assessment.</p>
       </article>
 
@@ -61,7 +67,9 @@
           </div>
           <div class="stat-icon">📈</div>
         </div>
-        <div class="progress-track"><div class="progress-fill teal" id="averageBar" style="width: 74%;"></div></div>
+        <div class="progress-track">
+          <div class="progress-fill teal" id="averageBar" style="width: 74%;"></div>
+        </div>
         <p class="stat-footnote">Average score updates as marks are edited below.</p>
       </article>
 
@@ -73,7 +81,9 @@
           </div>
           <div class="stat-icon">🏅</div>
         </div>
-        <div class="progress-track"><div class="progress-fill gold" id="topBar" style="width: 88%;"></div></div>
+        <div class="progress-track">
+          <div class="progress-fill gold" id="topBar" style="width: 88%;"></div>
+        </div>
         <p class="stat-footnote">Best current performance in the loaded register.</p>
       </article>
 
@@ -85,7 +95,9 @@
           </div>
           <div class="stat-icon">🧾</div>
         </div>
-        <div class="progress-track"><div class="progress-fill orange" id="pendingBar" style="width: 0%;"></div></div>
+        <div class="progress-track">
+          <div class="progress-fill orange" id="pendingBar" style="width: 0%;"></div>
+        </div>
         <p class="stat-footnote">Learners with incomplete marks stay in review status.</p>
       </article>
     </section>
@@ -154,7 +166,8 @@
             </div>
 
             <div class="toolbar-actions">
-              <p class="inline-note">Auto-calculation stays on so totals and grade bands adjust immediately as you type.</p>
+              <p class="inline-note">Auto-calculation stays on so totals and grade bands adjust immediately as you type.
+              </p>
               <button type="submit" class="primary-btn">Load Record Book</button>
             </div>
           </form>
@@ -194,9 +207,12 @@
                       <div class="student-name">Natasha Banda</div>
                       <div class="student-meta">Consistent class participation</div>
                     </td>
-                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="24" aria-label="Continuous assessment for Natasha Banda"></td>
-                    <td><input class="score-input project-score" type="number" min="0" max="20" value="18" aria-label="Project score for Natasha Banda"></td>
-                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="41" aria-label="Exam score for Natasha Banda"></td>
+                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="24"
+                        aria-label="Continuous assessment for Natasha Banda"></td>
+                    <td><input class="score-input project-score" type="number" min="0" max="20" value="18"
+                        aria-label="Project score for Natasha Banda"></td>
+                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="41"
+                        aria-label="Exam score for Natasha Banda"></td>
                     <td class="total-score">83</td>
                     <td><span class="result-pill grade-a">A</span></td>
                     <td class="remark-text">Excellent</td>
@@ -207,9 +223,12 @@
                       <div class="student-name">Luyando Phiri</div>
                       <div class="student-meta">Improving after tutoring support</div>
                     </td>
-                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="20" aria-label="Continuous assessment for Luyando Phiri"></td>
-                    <td><input class="score-input project-score" type="number" min="0" max="20" value="15" aria-label="Project score for Luyando Phiri"></td>
-                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="35" aria-label="Exam score for Luyando Phiri"></td>
+                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="20"
+                        aria-label="Continuous assessment for Luyando Phiri"></td>
+                    <td><input class="score-input project-score" type="number" min="0" max="20" value="15"
+                        aria-label="Project score for Luyando Phiri"></td>
+                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="35"
+                        aria-label="Exam score for Luyando Phiri"></td>
                     <td class="total-score">70</td>
                     <td><span class="result-pill grade-b">B</span></td>
                     <td class="remark-text">Very Good</td>
@@ -220,9 +239,12 @@
                       <div class="student-name">Mwaka Tembo</div>
                       <div class="student-meta">Strong in calculations and review tasks</div>
                     </td>
-                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="26" aria-label="Continuous assessment for Mwaka Tembo"></td>
-                    <td><input class="score-input project-score" type="number" min="0" max="20" value="17" aria-label="Project score for Mwaka Tembo"></td>
-                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="45" aria-label="Exam score for Mwaka Tembo"></td>
+                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="26"
+                        aria-label="Continuous assessment for Mwaka Tembo"></td>
+                    <td><input class="score-input project-score" type="number" min="0" max="20" value="17"
+                        aria-label="Project score for Mwaka Tembo"></td>
+                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="45"
+                        aria-label="Exam score for Mwaka Tembo"></td>
                     <td class="total-score">88</td>
                     <td><span class="result-pill grade-a">A</span></td>
                     <td class="remark-text">Excellent</td>
@@ -233,9 +255,12 @@
                       <div class="student-name">Chanda Mwila</div>
                       <div class="student-meta">Needs more confidence during timed exams</div>
                     </td>
-                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="17" aria-label="Continuous assessment for Chanda Mwila"></td>
-                    <td><input class="score-input project-score" type="number" min="0" max="20" value="12" aria-label="Project score for Chanda Mwila"></td>
-                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="28" aria-label="Exam score for Chanda Mwila"></td>
+                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="17"
+                        aria-label="Continuous assessment for Chanda Mwila"></td>
+                    <td><input class="score-input project-score" type="number" min="0" max="20" value="12"
+                        aria-label="Project score for Chanda Mwila"></td>
+                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="28"
+                        aria-label="Exam score for Chanda Mwila"></td>
                     <td class="total-score">57</td>
                     <td><span class="result-pill grade-c">C</span></td>
                     <td class="remark-text">Satisfactory</td>
@@ -246,9 +271,12 @@
                       <div class="student-name">Taonga Zulu</div>
                       <div class="student-meta">Dependable and ready for extension work</div>
                     </td>
-                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="22" aria-label="Continuous assessment for Taonga Zulu"></td>
-                    <td><input class="score-input project-score" type="number" min="0" max="20" value="16" aria-label="Project score for Taonga Zulu"></td>
-                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="37" aria-label="Exam score for Taonga Zulu"></td>
+                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="22"
+                        aria-label="Continuous assessment for Taonga Zulu"></td>
+                    <td><input class="score-input project-score" type="number" min="0" max="20" value="16"
+                        aria-label="Project score for Taonga Zulu"></td>
+                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="37"
+                        aria-label="Exam score for Taonga Zulu"></td>
                     <td class="total-score">75</td>
                     <td><span class="result-pill grade-b">B</span></td>
                     <td class="remark-text">Very Good</td>
@@ -259,9 +287,12 @@
                       <div class="student-name">Mubanga Lungu</div>
                       <div class="student-meta">Progress is steady with revision support</div>
                     </td>
-                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="19" aria-label="Continuous assessment for Mubanga Lungu"></td>
-                    <td><input class="score-input project-score" type="number" min="0" max="20" value="13" aria-label="Project score for Mubanga Lungu"></td>
-                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="31" aria-label="Exam score for Mubanga Lungu"></td>
+                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="19"
+                        aria-label="Continuous assessment for Mubanga Lungu"></td>
+                    <td><input class="score-input project-score" type="number" min="0" max="20" value="13"
+                        aria-label="Project score for Mubanga Lungu"></td>
+                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="31"
+                        aria-label="Exam score for Mubanga Lungu"></td>
                     <td class="total-score">63</td>
                     <td><span class="result-pill grade-c">C</span></td>
                     <td class="remark-text">Satisfactory</td>
@@ -357,122 +388,10 @@
     </section>
   </main>
 
-   <script src="auth.js"></script>
+  <script src="auth.js"></script>
   <script src="auth-guard.js"></script>
-  <script>
-    const recordRows = Array.from(document.querySelectorAll(".record-row"));
-    const gradedCountEl = document.getElementById("gradedCount");
-    const pendingCountEl = document.getElementById("pendingCount");
-    const averageScoreEl = document.getElementById("averageScore");
-    const topScoreEl = document.getElementById("topScore");
-    const gradedBarEl = document.getElementById("gradedBar");
-    const averageBarEl = document.getElementById("averageBar");
-    const topBarEl = document.getElementById("topBar");
-    const pendingBarEl = document.getElementById("pendingBar");
-
-    function clampScore(value, max) {
-      const numeric = Number(value);
-      if (!Number.isFinite(numeric)) {
-        return 0;
-      }
-      return Math.max(0, Math.min(max, numeric));
-    }
-
-    function gradeForScore(score) {
-      if (score >= 80) {
-        return { label: "A", className: "grade-a", remark: "Excellent" };
-      }
-      if (score >= 70) {
-        return { label: "B", className: "grade-b", remark: "Very Good" };
-      }
-      if (score >= 50) {
-        return { label: "C", className: "grade-c", remark: "Satisfactory" };
-      }
-      if (score >= 40) {
-        return { label: "D", className: "grade-d", remark: "Needs Support" };
-      }
-      return { label: "F", className: "grade-f", remark: "Intervention Required" };
-    }
-
-    function syncRecords() {
-      let gradedCount = 0;
-      let runningTotal = 0;
-      let topScore = 0;
-
-      recordRows.forEach((row) => {
-        const caInput = row.querySelector(".ca-score");
-        const projectInput = row.querySelector(".project-score");
-        const examInput = row.querySelector(".exam-score");
-
-        const ca = clampScore(caInput.value, 30);
-        const project = clampScore(projectInput.value, 20);
-        const exam = clampScore(examInput.value, 50);
-
-        caInput.value = ca;
-        projectInput.value = project;
-        examInput.value = exam;
-
-        const total = ca + project + exam;
-        const totalCell = row.querySelector(".total-score");
-        const gradeCell = row.querySelector(".result-pill");
-        const remarkCell = row.querySelector(".remark-text");
-        const gradeMeta = gradeForScore(total);
-
-        totalCell.textContent = String(total);
-        gradeCell.textContent = gradeMeta.label;
-        gradeCell.className = "result-pill " + gradeMeta.className;
-        remarkCell.textContent = gradeMeta.remark;
-
-        const isComplete = caInput.value !== "" && projectInput.value !== "" && examInput.value !== "";
-        if (isComplete) {
-          gradedCount += 1;
-          runningTotal += total;
-          topScore = Math.max(topScore, total);
-        }
-      });
-
-      const pending = recordRows.length - gradedCount;
-      const average = gradedCount ? Math.round(runningTotal / gradedCount) : 0;
-
-      gradedCountEl.textContent = String(gradedCount);
-      pendingCountEl.textContent = String(pending);
-      averageScoreEl.textContent = average + "%";
-      topScoreEl.textContent = topScore + "%";
-
-      gradedBarEl.style.width = (gradedCount / recordRows.length) * 100 + "%";
-      averageBarEl.style.width = average + "%";
-      topBarEl.style.width = topScore + "%";
-      pendingBarEl.style.width = (pending / recordRows.length) * 100 + "%";
-    }
-
-    recordRows.forEach((row) => {
-      row.querySelectorAll(".score-input").forEach((input) => {
-        input.addEventListener("input", syncRecords);
-      });
-    });
-
-    document.getElementById("recordsFilterForm").addEventListener("submit", (event) => {
-      event.preventDefault();
-      alert("Academic record book loaded for the selected term, class, and subject.");
-    });
-
-    document.getElementById("saveRecordsBtn").addEventListener("click", () => {
-      syncRecords();
-      alert("Academic record draft saved locally. Backend persistence can be added next.");
-    });
-
-    document.getElementById("publishResultsBtn").addEventListener("click", () => {
-      syncRecords();
-      alert("Results published successfully. This action is ready to connect to your publishing workflow.");
-    });
-
-    document.getElementById("gradebookForm").addEventListener("submit", (event) => {
-      event.preventDefault();
-      syncRecords();
-      alert("Academic records updated successfully.");
-    });
-
-    syncRecords();
-  </script>
+  <script src="navigation.js"></script>
+  <script src="a-r.js"></script>
 </body>
+
 </html>
