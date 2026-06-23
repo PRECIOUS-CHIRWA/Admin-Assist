@@ -1,0 +1,635 @@
+/* ═══════════════════════════════════════════════════════════════
+   Admin Assist — Landing Page Stylesheet
+   Matched to Login Page Design System
+   Colors: Dark Teal bg · Blue primary · Gold accent · White card
+   Fonts : Syne (headings) · DM Sans (body)
+═══════════════════════════════════════════════════════════════ */
+
+/* ── DESIGN TOKENS ── */
+:root {
+  /* From login page */
+  --bg:          #0d2137;   /* deep navy-teal page background */
+  --bg-mid:      #0f2a45;   /* slightly lighter panels */
+  --blue:        #1a56a0;   /* primary button / accent blue */
+  --blue-hover:  #1647880;
+  --blue-light:  #2d6bc4;   /* lighter shade for gradients */
+  --gold:        #e8a020;   /* "AA" icon gold, "Forgot Password" */
+  --gold-light:  #f4b942;
+  --white:       #ffffff;
+  --card-bg:     #ffffff;   /* login uses white cards */
+  --card-text:   #1a2940;   /* dark text on white cards */
+  --muted:       #6b82a0;
+  --border:      rgba(26, 86, 160, 0.2);
+  --border-gold: rgba(232, 160, 32, 0.5);
+
+  /* Typography */
+  --font-display: 'Syne', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+}
+
+/* ── RESET ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: var(--font-body);
+  font-weight: 300;
+  overflow-x: hidden;
+  /* Subtle radial glow like the login page background */
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(26,86,160,0.25) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(13,45,80,0.4) 0%, transparent 60%);
+}
+
+/* Noise overlay — matches login page texture */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 999;
+  opacity: 0.35;
+}
+
+/* ══════════════════════════════
+   NAVBAR
+══════════════════════════════ */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6vw;
+  height: 64px;
+  background: rgba(13, 33, 55, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Logo — mirrors the "AA" icon style from login */
+.logo {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  color: var(--white);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logo::before {
+  content: 'AA';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, var(--blue), var(--blue-light));
+  color: var(--gold);
+  font-size: 0.75rem;
+  font-weight: 800;
+  border-radius: 8px;
+  border: 2px solid var(--gold);
+  letter-spacing: 0;
+  flex-shrink: 0;
+}
+
+.logo span { color: var(--gold); }
+
+nav ul {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+nav ul a {
+  color: rgba(255,255,255,0.65);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 400;
+  transition: color 0.2s;
+}
+
+nav ul a:hover { color: var(--white); }
+
+/* Nav CTA — matches the Login button style */
+.nav-cta {
+  background: linear-gradient(135deg, var(--blue), var(--blue-light)) !important;
+  color: var(--white) !important;
+  font-weight: 500 !important;
+  padding: 0.45rem 1.1rem !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(255,255,255,0.1);
+  transition: opacity 0.2s, transform 0.2s !important;
+  box-shadow: 0 2px 12px rgba(26,86,160,0.4);
+}
+
+.nav-cta:hover { opacity: 0.9; transform: translateY(-1px); }
+
+/* ══════════════════════════════
+   HERO
+══════════════════════════════ */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 8rem 6vw 5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Floating blobs — match the teal/blue bg of login */
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.14;
+  animation: blobDrift 14s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+.blob-1 { width: 650px; height: 650px; background: var(--blue-light); top: -200px; left: -220px; animation-delay: 0s; }
+.blob-2 { width: 500px; height: 500px; background: #0a3a6e; top: 25%; right: -200px; animation-delay: -5s; }
+.blob-3 { width: 400px; height: 400px; background: var(--gold); bottom: -120px; left: 35%; opacity: 0.07; animation-delay: -10s; }
+
+@keyframes blobDrift {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(24px, 18px) scale(1.04); }
+}
+
+/* Badge — styled like the gold border on the login card */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(232, 160, 32, 0.1);
+  border: 1px solid var(--border-gold);
+  color: var(--gold-light);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.38rem 1rem;
+  border-radius: 100px;
+  margin-bottom: 2rem;
+  animation: fadeUp 0.7s ease both;
+}
+
+.badge::before {
+  content: '●';
+  font-size: 0.45rem;
+  animation: pulse 2s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2.6rem, 6.5vw, 5rem);
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+  max-width: 800px;
+  margin-bottom: 1.4rem;
+  animation: fadeUp 0.7s ease 0.1s both;
+}
+
+/* Accent word uses gold — matches login's "AA" gold */
+h1 .accent {
+  color: var(--gold);
+  position: relative;
+}
+
+h1 .accent::after {
+  content: '';
+  position: absolute;
+  bottom: 4px; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+  border-radius: 2px;
+  opacity: 0.6;
+}
+
+.hero-sub {
+  font-size: 1.05rem;
+  color: rgba(255,255,255,0.6);
+  max-width: 500px;
+  line-height: 1.8;
+  margin-bottom: 2.5rem;
+  animation: fadeUp 0.7s ease 0.2s both;
+}
+
+.hero-ctas {
+  display: flex;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  animation: fadeUp 0.7s ease 0.3s both;
+}
+
+/* Primary button — exact match to the "Login" button */
+.btn-primary {
+  background: linear-gradient(135deg, var(--blue), var(--blue-light));
+  color: var(--white);
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.95rem;
+  padding: 0.8rem 2rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+  box-shadow: 0 4px 20px rgba(26,86,160,0.4);
+  display: inline-block;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(26,86,160,0.5);
+  opacity: 0.95;
+}
+
+/* Ghost button */
+.btn-ghost {
+  background: transparent;
+  color: rgba(255,255,255,0.8);
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 0.95rem;
+  padding: 0.8rem 2rem;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+  display: inline-block;
+}
+
+.btn-ghost:hover {
+  border-color: var(--gold);
+  color: var(--gold-light);
+  background: rgba(232,160,32,0.06);
+}
+
+/* Stats strip */
+.stats-strip {
+  display: flex;
+  gap: 0;
+  margin-top: 4.5rem;
+  animation: fadeUp 0.7s ease 0.4s both;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.stat {
+  text-align: center;
+  padding: 1.2rem 2.5rem;
+  border-right: 1px solid var(--border);
+}
+
+.stat:last-child { border-right: none; }
+
+.stat-num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.8rem;
+  color: var(--gold-light);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 0.3rem;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ══════════════════════════════
+   SECTIONS (shared)
+══════════════════════════════ */
+section {
+  padding: 6rem 6vw;
+}
+
+.section-tag {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--gold-light);
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.9rem, 3.8vw, 2.8rem);
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+  margin-bottom: 0.9rem;
+}
+
+.section-sub {
+  color: rgba(255,255,255,0.5);
+  font-size: 0.95rem;
+  max-width: 460px;
+  line-height: 1.75;
+  margin-bottom: 3rem;
+}
+
+/* ══════════════════════════════
+   FEATURES
+══════════════════════════════ */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 1.2rem;
+}
+
+/* Feature cards — white card style matching login */
+.feature-card {
+  background: var(--white);
+  color: var(--card-text);
+  border-radius: 14px;
+  padding: 2rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  /* Gold top border like login card */
+  border-top: 3px solid var(--gold);
+  transition: transform 0.25s, box-shadow 0.25s;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+  position: relative;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+}
+
+.feature-icon {
+  width: 46px; height: 46px;
+  background: linear-gradient(135deg, rgba(26,86,160,0.12), rgba(26,86,160,0.06));
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  margin-bottom: 1.1rem;
+  border: 1px solid rgba(26,86,160,0.15);
+}
+
+.feature-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--card-text);
+  margin-bottom: 0.5rem;
+}
+
+.feature-desc {
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.65;
+}
+
+/* ══════════════════════════════
+   HOW IT WORKS
+══════════════════════════════ */
+.how-section {
+  background: rgba(255,255,255,0.025);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 2rem;
+  margin-top: 2.5rem;
+}
+
+.step {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.8rem;
+  position: relative;
+  transition: border-color 0.25s, background 0.25s;
+}
+
+.step:hover {
+  border-color: rgba(232,160,32,0.4);
+  background: rgba(232,160,32,0.04);
+}
+
+.step-num {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 2.5rem;
+  /* Blue like the login button */
+  color: rgba(26,86,160,0.25);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.step-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  color: var(--white);
+}
+
+.step-desc {
+  color: rgba(255,255,255,0.5);
+  font-size: 0.83rem;
+  line-height: 1.65;
+}
+
+/* ══════════════════════════════
+   ROLES
+══════════════════════════════ */
+.roles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.2rem;
+  margin-top: 2.5rem;
+}
+
+/* White card — login style */
+.role-card {
+  background: var(--white);
+  color: var(--card-text);
+  border-radius: 14px;
+  padding: 2rem;
+  text-align: center;
+  border-top: 3px solid var(--blue);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+
+.role-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+}
+
+/* First card gets gold top — like the login card border */
+.role-card:first-child { border-top-color: var(--gold); }
+
+.role-avatar {
+  width: 60px; height: 60px;
+  background: linear-gradient(135deg, var(--blue), var(--blue-light));
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.7rem;
+  margin: 0 auto 1rem;
+  box-shadow: 0 4px 16px rgba(26,86,160,0.3);
+}
+
+.role-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--card-text);
+  margin-bottom: 1rem;
+}
+
+.role-perms {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.role-perms li {
+  font-size: 0.8rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  text-align: left;
+}
+
+.role-perms li::before {
+  content: '✓';
+  color: var(--blue);
+  font-weight: 700;
+  font-size: 0.72rem;
+  flex-shrink: 0;
+}
+
+/* ══════════════════════════════
+   CTA SECTION
+══════════════════════════════ */
+.cta-section {
+  text-align: center;
+  padding: 8rem 6vw;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Radial glow — matches login page bg */
+.cta-section::before {
+  content: '';
+  position: absolute;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(26,86,160,0.18), transparent 65%);
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* CTA card — white card like the login form */
+.cta-section > * { position: relative; z-index: 1; }
+
+.cta-inner {
+  display: inline-block;
+  background: var(--white);
+  border-radius: 20px;
+  padding: 3.5rem 4rem;
+  /* Gold top border — login card signature */
+  border-top: 4px solid var(--gold);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+  max-width: 560px;
+  width: 100%;
+}
+
+.cta-section h2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  letter-spacing: -0.025em;
+  color: var(--card-text);
+  margin-bottom: 0.9rem;
+  line-height: 1.1;
+}
+
+.cta-section p {
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin-bottom: 2rem;
+  line-height: 1.7;
+}
+
+/* ══════════════════════════════
+   FOOTER
+══════════════════════════════ */
+footer {
+  background: rgba(10, 25, 45, 0.9);
+  border-top: 1px solid var(--border);
+  padding: 1.8rem 6vw;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.35);
+}
+
+footer a {
+  color: rgba(255,255,255,0.45);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+footer a:hover { color: var(--gold-light); }
+
+/* ══════════════════════════════
+   RESPONSIVE
+══════════════════════════════ */
+@media (max-width: 900px) {
+  .roles { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 700px) {
+  nav ul { display: none; }
+  .stats-strip { flex-wrap: wrap; }
+  .stat { flex: 1 1 45%; border-right: none; border-bottom: 1px solid var(--border); }
+  .stat:last-child { border-bottom: none; }
+  .cta-inner { padding: 2.5rem 1.5rem; }
+}

@@ -1,151 +1,274 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Enrollment - Admin Assist</title>
-  <link rel="stylesheet" href="enroll.css">
+  <meta name="description" content="Enroll a new student at Admin Assist school management system.">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="students.css">
+  <link rel="stylesheet" href="navigation.css">
 </head>
 
-<body>
+<body data-page="enroll-student">
+  <!-- HEADER -->
   <header>
     <div class="logo">Admin Assist</div>
+    <div class="user-profile">
+      <span id="headerUserName">…</span>
+      <span id="roleBadge" class="role-badge"></span>
+      <div class="user-avatar" id="headerAvatar">?</div>
+      <button id="logoutBtn">Logout</button>
+    </div>
   </header>
 
   <div class="main-container">
     <div class="breadcrumb">
-      <a href="dashboard.html">Enrollment</a> > <span>Enter Student Information</span>
+      <a href="dashboard.html">Dashboard</a> &gt; <span>Student Enrollment</span>
     </div>
 
-    <h1 class="page-title">Student Enrollment</h1>
-    <p class="page-subtitle">Enter Student Information</p>
+    <!-- PAGE HEADING -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Student Enrollment</h1>
+        <p class="page-subtitle">Complete all three steps to enrol a new student.</p>
+      </div>
+    </div>
 
-    <div class="content-wrapper">
-      <div class="form-section">
-        <form id="enrollmentForm">
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+      <div class="progress-header">
+        <span class="progress-title">Step 1 of 3</span>
+      </div>
+      <div class="progress-bar-wrapper">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="progress-steps">
+        <div class="progress-step active" id="step-indicator-1">
+          <div class="step-indicator">1</div>
+          <span class="step-label">Personal Info</span>
+        </div>
+        <div class="progress-step" id="step-indicator-2">
+          <div class="step-indicator">2</div>
+          <span class="step-label">Academic Info</span>
+        </div>
+        <div class="progress-step" id="step-indicator-3">
+          <div class="step-indicator">3</div>
+          <span class="step-label">Parent / Guardian</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORM WRAPPER -->
+    <div class="form-content">
+      <form id="enrollmentForm" novalidate>
+
+        <!-- ===== STEP 1: PERSONAL INFORMATION ===== -->
+        <div class="form-section active" id="formStep1">
+          <h2 class="form-section-title">Personal Information</h2>
+
           <div class="form-row">
             <div class="form-group">
-              <label for="firstName">First Name</label>
-              <input type="text" id="firstName" name="firstName" placeholder="First Name" required>
+              <label for="firstName">First Name *</label>
+              <input type="text" id="firstName" name="firstName" placeholder="Enter first name" required>
+              <span class="field-error" id="err-firstName"></span>
             </div>
             <div class="form-group">
-              <label for="lastName">Last Name</label>
-              <input type="text" id="lastName" name="lastName" placeholder="Last Name" required>
+              <label for="lastName">Last Name *</label>
+              <input type="text" id="lastName" name="lastName" placeholder="Enter last name" required>
+              <span class="field-error" id="err-lastName"></span>
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label for="dob">Date of Birth</label>
-              <input type="date" id="dob" name="dob" required>
+              <label for="dateOfBirth">Date of Birth *</label>
+              <input type="date" id="dateOfBirth" name="dateOfBirth" required>
+              <span class="field-error" id="err-dateOfBirth"></span>
             </div>
-          </div>
-
-          <div class="form-row">
             <div class="form-group">
-              <label for="admissionNo">Admission Number</label>
-              <input type="text" id="admissionNo" name="admissionNo" placeholder="123 4562" required>
+              <label for="nrcNumber">NRC / Birth Certificate Number</label>
+              <input type="text" id="nrcNumber" name="nrcNumber" placeholder="Optional">
+              <span class="field-error" id="err-nrcNumber"></span>
             </div>
           </div>
 
           <div class="form-row full">
             <div class="form-group">
-              <label>Gender</label>
+              <label>Gender *</label>
               <div class="radio-group">
                 <div class="radio-option">
-                  <input type="radio" id="male" name="gender" value="Male" required>
-                  <label for="male">Male</label>
+                  <input type="radio" id="genderMale" name="gender" value="Male">
+                  <label for="genderMale">Male</label>
                 </div>
                 <div class="radio-option">
-                  <input type="radio" id="female" name="gender" value="Female">
-                  <label for="female">Female</label>
+                  <input type="radio" id="genderFemale" name="gender" value="Female">
+                  <label for="genderFemale">Female</label>
                 </div>
               </div>
+              <span class="field-error" id="err-gender"></span>
+            </div>
+          </div>
+
+          <div class="form-row full">
+            <div class="form-group">
+              <label for="homeAddress">Home Address</label>
+              <textarea id="homeAddress" name="homeAddress" rows="3" placeholder="Enter home address"></textarea>
+              <span class="field-error" id="err-homeAddress"></span>
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label for="grade">Grade</label>
-              <select id="grade" name="grade" required>
-                <option value="" disabled selected>Grade 10</option>
-                <option value="grade-8">Grade 8</option>
-                <option value="grade-9">Grade 9</option>
-                <option value="grade-10">Grade 10</option>
-                <option value="grade-11">Grade 11</option>
-                <option value="grade-12">Grade 12</option>
+              <label for="district">District</label>
+              <input type="text" id="district" name="district" placeholder="e.g. Lusaka">
+              <span class="field-error" id="err-district"></span>
+            </div>
+            <div class="form-group">
+              <label for="province">Province *</label>
+              <select id="province" name="province" required>
+                <option value="">Select a province</option>
+                <option value="Central">Central</option>
+                <option value="Copperbelt">Copperbelt</option>
+                <option value="Eastern">Eastern</option>
+                <option value="Luapula">Luapula</option>
+                <option value="Lusaka">Lusaka</option>
+                <option value="Muchinga">Muchinga</option>
+                <option value="North-Western">North-Western</option>
+                <option value="Northern">Northern</option>
+                <option value="Southern">Southern</option>
+                <option value="Western">Western</option>
               </select>
+              <span class="field-error" id="err-province"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== STEP 2: ACADEMIC INFORMATION ===== -->
+        <div class="form-section" id="formStep2">
+          <h2 class="form-section-title">Academic Information</h2>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="admissionNumber">Admission Number *</label>
+              <input type="text" id="admissionNumber" name="admissionNumber" placeholder="ADM-2025-0001" required>
+              <span class="field-error" id="err-admissionNumber"></span>
+            </div>
+            <div class="form-group">
+              <label for="grade">Grade / Form *</label>
+              <select id="grade" name="grade" required>
+                <option value="">Select a grade</option>
+                <option value="Grade 8">Grade 8</option>
+                <option value="Grade 9">Grade 9</option>
+                <option value="Grade 10">Grade 10</option>
+                <option value="Grade 11">Grade 11</option>
+                <option value="Grade 12">Grade 12</option>
+              </select>
+              <span class="field-error" id="err-grade"></span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="section">Section / Class *</label>
+              <input type="text" id="section" name="section" placeholder="e.g. 10A" required>
+              <span class="field-error" id="err-section"></span>
+            </div>
+            <div class="form-group">
+              <label for="enrollmentDate">Enrollment Date *</label>
+              <input type="date" id="enrollmentDate" name="enrollmentDate" required>
+              <span class="field-error" id="err-enrollmentDate"></span>
             </div>
           </div>
 
           <div class="form-row full">
             <div class="form-group">
-              <label for="address">Address</label>
-              <textarea id="address" name="address" placeholder="Enter student address" required></textarea>
+              <label for="previousSchool">Previous School</label>
+              <input type="text" id="previousSchool" name="previousSchool"
+                placeholder="Optional — previous school name">
+              <span class="field-error" id="err-previousSchool"></span>
             </div>
           </div>
+        </div>
 
-          <div class="form-row full">
+        <!-- ===== STEP 3: PARENT/GUARDIAN INFORMATION ===== -->
+        <div class="form-section" id="formStep3">
+          <h2 class="form-section-title">Parent / Guardian Information</h2>
+
+          <div class="form-row">
             <div class="form-group">
-              <label for="parentName">Parent/Guardian Name</label>
-              <input type="text" id="parentName" name="parentName" placeholder="Enter parent/guardian name" required>
+              <label for="parentGuardianName">Full Name *</label>
+              <input type="text" id="parentGuardianName" name="parentGuardianName"
+                placeholder="Parent or guardian full name" required>
+              <span class="field-error" id="err-parentGuardianName"></span>
             </div>
-          </div>
-
-          <div class="form-row full">
             <div class="form-group">
-              <label for="parentContact">Parent/Guardian Contact</label>
-              <input type="tel" id="parentContact" name="parentContact" placeholder="Enter contact number" required>
+              <label for="relationship">Relationship *</label>
+              <select id="relationship" name="relationship" required>
+                <option value="">Select relationship</option>
+                <option value="Father">Father</option>
+                <option value="Mother">Mother</option>
+                <option value="Guardian">Guardian</option>
+              </select>
+              <span class="field-error" id="err-relationship"></span>
             </div>
           </div>
 
-          <button type="submit" class="submit-btn">Submit Enrollment</button>
-        </form>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="phoneNumber">Phone Number * (+260XXXXXXXXX)</label>
+              <input type="tel" id="phoneNumber" name="phoneNumber" placeholder="+260961234567" required>
+              <span class="field-error" id="err-phoneNumber"></span>
+            </div>
+            <div class="form-group">
+              <label for="email">Email Address</label>
+              <input type="email" id="email" name="email" placeholder="Optional — parent email">
+              <span class="field-error" id="err-email"></span>
+            </div>
+          </div>
+
+          <!-- REVIEW SUMMARY (rendered by JS) -->
+          <div class="section-divider"></div>
+          <h3 class="review-heading">Review Summary</h3>
+          <div id="reviewSummary"></div>
+        </div>
+
+        <!-- FORM NAVIGATION BUTTONS -->
+        <div class="form-nav">
+          <button type="button" id="backBtn" class="btn btn-secondary" disabled>← Back</button>
+          <div class="form-nav-right">
+            <button type="button" id="nextBtn" class="btn btn-primary">Next →</button>
+            <button type="button" id="submitBtn" class="btn btn-primary is-hidden">Submit Enrollment</button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- SUCCESS OVERLAY -->
+  <div class="success-overlay" id="successOverlay">
+    <div class="success-card">
+      <div class="success-icon">✅</div>
+      <div class="success-title">Student Enrolled Successfully!</div>
+      <div class="success-message">
+        Admission Number: <strong class="admission-number">—</strong>
       </div>
-
-      <div class="sidebar">
-        <div class="sidebar-card steps-card">
-          <div class="steps-title">ℹ️ Enrollment Steps</div>
-          <div class="step-item active">
-            <div class="step-number">1</div>
-            <span>Enter Student Information</span>
-          </div>
-          <div class="step-item">
-            <div class="step-number">2</div>
-            <span>Review & Submit</span>
-          </div>
-          <div class="step-item">
-            <div class="step-number">3</div>
-            <span>Pending Approval</span>
-          </div>
-        </div>
-
-        <div class="sidebar-card activity-card">
-          <div class="activity-title">⚡ Recent Activity</div>
-          <div class="activity-list">
-            <div class="activity-item">
-              <strong>1. Enter Student Information</strong>
-              Fill in the student details and submit the enrollment form.
-            </div>
-            <div class="activity-item">
-              <strong>1. Review & Submit</strong>
-              Fill in the student details and submit the enrollment form.
-            </div>
-          </div>
-          <div class="illustration">👨‍🎓</div>
-        </div>
+      <div class="success-actions">
+        <button class="btn btn-secondary btn-enroll-another">Enroll Another Student</button>
+        <button class="btn btn-primary btn-view-list">View Student List</button>
       </div>
     </div>
   </div>
 
-  <script src="auth.js"></script>
-  <script src="auth-guard.js"></script>
-  <script>
-    document.getElementById('enrollmentForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      alert('Enrollment form submitted successfully. This will be connected to the backend for processing.');
-    });
-  </script>
+  <!-- SCRIPTS — auth first, then guard, then page logic -->
+  <script src="auth.js" defer></script>
+  <script src="auth-guard.js" defer></script>
+  <script src="navigation.js" defer></script>
+  <script src="enroll-student.js" defer></script>
 </body>
-</html>
 
+</html>

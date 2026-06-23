@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Admin Assist</title>
+  <link rel="stylesheet" href="login.css">
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-header">
+      <div class="login-logo">AA</div>
+      <h1>Welcome Back!</h1>
+      <p>Sign in to your Admin Assist account</p>
+    </div>
+
+    <div id="error-banner" class="error-banner" role="alert" aria-live="polite"></div>
+
+    <form id="loginForm" novalidate>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email"
+               placeholder="Enter your email" required autocomplete="email">
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="input-wrap">
+          <input type="password" id="password" name="password"
+                 placeholder="Enter your password" required autocomplete="current-password">
+          <button type="button" class="toggle-pw" aria-label="Show password" id="togglePw">👁</button>
+        </div>
+      </div>
+
+      <div class="remember-forgot">
+        <label>
+          <input type="checkbox" name="remember"> Remember Me
+        </label>
+        <a href="#">Forgot Password?</a>
+      </div>
+
+      <button type="submit" class="login-btn" id="loginBtn">Login</button>
+    </form>
+
+    <div class="signup-link">
+      <!-- FIX: was "Frontend/Src/signup.html" — both files are in the same folder -->
+      <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script>
+    document.getElementById("togglePw").addEventListener("click", function () {
+      const pw = document.getElementById("password");
+      const isHidden = pw.type === "password";
+      pw.type = isHidden ? "text" : "password";
+      this.textContent = isHidden ? "🙈" : "👁";
+      this.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+    });
+
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn    = document.getElementById("loginBtn");
+      const banner = document.getElementById("error-banner");
+
+      banner.textContent = "";
+      banner.classList.remove("visible");
+      btn.disabled    = true;
+      btn.textContent = "Signing in…";
+
+      const email    = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+          method:      "POST",
+          headers:     { "Content-Type": "application/json" },
+          credentials: "include",
+          body:        JSON.stringify({ email, password }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Login failed");
+
+        sessionStorage.setItem("accessToken", data.accessToken);
+        sessionStorage.setItem("user", JSON.stringify(data.user));
+
+        // RBAC redirect — send each role to the right landing page
+        const role = data.user?.role;
+        if (role === "admin" || role === "headmaster") {
+          window.location.href = "dashboard.html";
+        } else if (role === "staff") {
+          window.location.href = "dashboard.html";
+        } else {
+          window.location.href = "dashboard.html";
+        }
+      } catch (err) {
+        banner.textContent = err.message;
+        banner.classList.add("visible");
+      } finally {
+        btn.disabled    = false;
+        btn.textContent = "Login";
+      }
+    });
+  </script>
+</body>
+</html>

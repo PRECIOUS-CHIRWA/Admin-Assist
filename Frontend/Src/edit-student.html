@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Student Profile - Admin Assist</title>
+  <meta name="description" content="Edit student information in Admin Assist school management.">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="students.css">
+  <link rel="stylesheet" href="navigation.css">
+</head>
+
+<body data-page="edit-student">
+  <header>
+    <div class="logo">Admin Assist</div>
+    <div class="user-profile">
+      <span id="headerUserName" data-user-name>…</span>
+      <span id="roleBadge" class="role-badge" data-user-role></span>
+      <div class="user-avatar" id="headerAvatar" data-user-initials>?</div>
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <div class="breadcrumb">
+      <a href="dashboard.html">Dashboard</a> &gt; <a href="students.html">Student Directory</a> &gt; <span>Edit
+        Student</span>
+    </div>
+
+    <!-- Page heading — styled via .page-header in students.css, no inline styles -->
+    <div class="page-header">
+      <h1 class="page-title">Edit Student Profile</h1>
+    </div>
+
+    <div class="form-content">
+      <form id="editForm" novalidate>
+
+        <!-- PERSONAL INFORMATION -->
+        <h2 class="form-section-title">Personal Information</h2>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="firstName">First Name *</label>
+            <input type="text" id="firstName" required>
+            <span class="field-error" id="err-firstName"></span>
+          </div>
+          <div class="form-group">
+            <label for="lastName">Last Name *</label>
+            <input type="text" id="lastName" required>
+            <span class="field-error" id="err-lastName"></span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="dateOfBirth">Date of Birth *</label>
+            <input type="date" id="dateOfBirth" required>
+            <span class="field-error" id="err-dateOfBirth"></span>
+          </div>
+          <div class="form-group">
+            <label for="gender">Gender *</label>
+            <select id="gender" required>
+              <option value="">Select gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+            <span class="field-error" id="err-gender"></span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="nrcNumber">NRC / Birth Certificate Number</label>
+            <input type="text" id="nrcNumber">
+            <span class="field-error" id="err-nrcNumber"></span>
+          </div>
+          <div class="form-group">
+            <label for="district">District</label>
+            <input type="text" id="district">
+            <span class="field-error" id="err-district"></span>
+          </div>
+        </div>
+
+        <div class="form-row full">
+          <div class="form-group">
+            <label for="homeAddress">Home Address</label>
+            <textarea id="homeAddress" rows="3"></textarea>
+            <span class="field-error" id="err-homeAddress"></span>
+          </div>
+        </div>
+
+        <div class="form-row full">
+          <div class="form-group">
+            <label for="province">Province *</label>
+            <select id="province" required>
+              <option value="">Select a province</option>
+              <option value="Central">Central</option>
+              <option value="Copperbelt">Copperbelt</option>
+              <option value="Eastern">Eastern</option>
+              <option value="Luapula">Luapula</option>
+              <option value="Lusaka">Lusaka</option>
+              <option value="Muchinga">Muchinga</option>
+              <option value="North-Western">North-Western</option>
+              <option value="Northern">Northern</option>
+              <option value="Southern">Southern</option>
+              <option value="Western">Western</option>
+            </select>
+            <span class="field-error" id="err-province"></span>
+          </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- ACADEMIC INFORMATION -->
+        <h2 class="form-section-title">Academic Information</h2>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="admissionNumber">Admission Number *</label>
+            <input type="text" id="admissionNumber" required>
+            <span class="field-error" id="err-admissionNumber"></span>
+          </div>
+          <div class="form-group">
+            <label for="grade">Grade *</label>
+            <select id="grade" required>
+              <option value="">Select a grade</option>
+              <option value="Grade 8">Grade 8</option>
+              <option value="Grade 9">Grade 9</option>
+              <option value="Grade 10">Grade 10</option>
+              <option value="Grade 11">Grade 11</option>
+              <option value="Grade 12">Grade 12</option>
+            </select>
+            <span class="field-error" id="err-grade"></span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="section">Section / Class *</label>
+            <input type="text" id="section" required>
+            <span class="field-error" id="err-section"></span>
+          </div>
+          <div class="form-group">
+            <label for="enrollmentDate">Enrollment Date *</label>
+            <input type="date" id="enrollmentDate" required>
+            <span class="field-error" id="err-enrollmentDate"></span>
+          </div>
+        </div>
+
+        <div class="form-row full">
+          <div class="form-group">
+            <label for="previousSchool">Previous School</label>
+            <input type="text" id="previousSchool">
+            <span class="field-error" id="err-previousSchool"></span>
+          </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- PARENT/GUARDIAN INFORMATION -->
+        <h2 class="form-section-title">Parent / Guardian Information</h2>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="parentGuardianName">Parent / Guardian Full Name *</label>
+            <input type="text" id="parentGuardianName" required>
+            <span class="field-error" id="err-parentGuardianName"></span>
+          </div>
+          <div class="form-group">
+            <label for="relationship">Relationship *</label>
+            <select id="relationship" required>
+              <option value="">Select relationship</option>
+              <option value="Father">Father</option>
+              <option value="Mother">Mother</option>
+              <option value="Guardian">Guardian</option>
+            </select>
+            <span class="field-error" id="err-relationship"></span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="phoneNumber">Phone Number * (+260XXXXXXXXX)</label>
+            <input type="tel" id="phoneNumber" required>
+            <span class="field-error" id="err-phoneNumber"></span>
+          </div>
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email">
+            <span class="field-error" id="err-email"></span>
+          </div>
+        </div>
+
+        <!-- ACTION BUTTONS — styled via students.css, no inline styles -->
+        <div class="form-nav">
+          <button type="button" id="cancelBtn" class="btn btn-secondary">Cancel</button>
+          <button type="button" id="saveBtn" class="btn btn-primary">Save Changes</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- External scripts only — no inline logic -->
+  <script src="auth.js" defer></script>
+  <script src="auth-guard.js" defer></script>
+  <script src="students.js" defer></script>
+  <script src="navigation.js"></script>
+  <script src="edit-student-page.js" defer></script>
+</body>
+
+</html>

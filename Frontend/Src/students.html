@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Directory - Admin Assist</title>
+  <meta name="description" content="Browse and manage enrolled students in Admin Assist.">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="students.css">
+  <link rel="stylesheet" href="navigation.css">
+</head>
+
+<body data-page="student-list">
+  <header>
+    <div class="logo">Admin Assist</div>
+    <div class="user-profile">
+      <span id="headerUserName" data-user-name>…</span>
+      <span id="roleBadge" class="role-badge" data-user-role></span>
+      <div class="user-avatar" id="headerAvatar" data-user-initials>?</div>
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <div class="breadcrumb">
+      <a href="dashboard.html">Dashboard</a> &gt; <span>Student Directory</span>
+    </div>
+
+    <!-- Page heading — styled via students.css .page-header, no inline styles -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Student Directory</h1>
+        <p class="page-subtitle">Manage all enrolled students</p>
+      </div>
+      <button id="addStudentBtn" class="btn-add">+ Add New Student</button>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="table-controls">
+      <div class="search-box">
+        <input type="text" id="searchStudents" placeholder="Search by name, admission number, or grade...">
+      </div>
+      <div class="filters">
+        <select id="filterGrade">
+          <option value="">All Grades</option>
+          <option value="Grade 8">Grade 8</option>
+          <option value="Grade 9">Grade 9</option>
+          <option value="Grade 10">Grade 10</option>
+          <option value="Grade 11">Grade 11</option>
+          <option value="Grade 12">Grade 12</option>
+        </select>
+        <select id="filterStatus">
+          <option value="">All Statuses</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+          <option value="Suspended">Suspended</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Admission No</th>
+            <th>Full Name</th>
+            <th>Grade</th>
+            <th>Section</th>
+            <th>Gender</th>
+            <th>Enrollment Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Populated by students.js — skeleton shown while loading -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- PAGINATION -->
+    <div id="pagination"></div>
+  </div>
+
+  <!-- External scripts only — no inline logic -->
+  <script src="auth.js" defer></script>
+  <script src="auth-guard.js" defer></script>
+  <script src="students.js" defer></script>
+  <script src="navigation.js"></script>
+  <script src="students-page.js" defer></script>
+</body>
+
+</html>

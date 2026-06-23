@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Email - Admin Assist</title>
+  <link rel="stylesheet" href="login.css">
+  <link rel="stylesheet" href="verify-email.css">
+</head>
+
+<body>
+  <div class="login-container verify-panel">
+    <div class="login-header">
+      <div class="login-logo">AA</div>
+      <h1>Email Verification</h1>
+      <p>Activating your Admin Assist account</p>
+    </div>
+
+    <div id="verifyStatus" class="verify-status">
+      <div class="spinner"></div>
+      <span>Checking your verification link...</span>
+    </div>
+
+    <div class="verify-actions">
+      <a class="login-btn" href="login.html">Go to Login</a>
+      <a class="verify-link" href="signup.html">Create another account</a>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script src="verify-email.js"></script>
+</body>
+
+</html>

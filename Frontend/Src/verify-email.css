@@ -1,0 +1,60 @@
+.verify-panel {
+    text-align: center;
+}
+
+.verify-status {
+    margin: 1rem 0 1.4rem;
+    padding: 0.9rem 1rem;
+    border-radius: 8px;
+    background: #f3f6fb;
+    color: #25324a;
+    line-height: 1.5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
+    gap: 0.8rem;
+}
+
+.verify-status.success {
+    background: #eaf7ef;
+    color: #17633a;
+}
+
+.verify-status.error {
+    background: #fdecec;
+    color: #9f1d1d;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.verify-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.verify-link {
+    color: #0f4c81;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.countdown {
+    font-size: 0.85em;
+    margin-top: 0.5rem;
+    opacity: 0.8;
+}

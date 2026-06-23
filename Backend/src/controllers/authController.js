@@ -1,19 +1,19 @@
-const crypto     = require("crypto");
+const crypto = require("crypto");
 const { promisify } = require("util");
-const jwt        = require("jsonwebtoken");
-const pool       = require("../config/db");
+const jwt = require("jsonwebtoken");
+const pool = require("../config/db");
 
 const scrypt = promisify(crypto.scrypt);
-const EMAIL_PATTERN  = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const ALLOWED_ROLES  = new Set(["admin", "staff", "user", "headmaster"]);
-const DEFAULT_ROLE   = "user";
-const ACCESS_TTL     = "15m";
-const REFRESH_TTL    = "7d";
-const MAX_ATTEMPTS   = 5;
-const LOCKOUT_MS     = 15 * 60 * 1000;   // 15 minutes
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ALLOWED_ROLES = new Set(["admin", "staff", "user", "headmaster"]);
+const DEFAULT_ROLE = "user";
+const ACCESS_TTL = "15m";
+const REFRESH_TTL = "7d";
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 15 * 60 * 1000;   // 15 minutes
 
-const normalizeEmail  = (email) => String(email || "").trim().toLowerCase();
-const isValidPassword = (pw)    => typeof pw === "string" && pw.length >= 8;
+const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
+const isValidPassword = (pw) => typeof pw === "string" && pw.length >= 8;
 
 // ─── Password helpers ──────────────
 const hashPassword = async (password) => {
@@ -25,8 +25,8 @@ const hashPassword = async (password) => {
 const verifyPassword = async (password, stored) => {
     if (!stored || !stored.startsWith("scrypt$")) return false;
     const [, salt, original] = stored.split("$");
-    const originalBuf  = Buffer.from(original, "hex");
-    const suppliedBuf  = await scrypt(password, salt, originalBuf.length);
+    const originalBuf = Buffer.from(original, "hex");
+    const suppliedBuf = await scrypt(password, salt, originalBuf.length);
     return crypto.timingSafeEqual(originalBuf, suppliedBuf);
 };
 
@@ -35,8 +35,8 @@ const createTokens = (user) => {
     const secret = process.env.JWT_SECRET;
     if (!secret) throw new Error("JWT_SECRET environment variable is not set");
 
-    const payload      = { sub: user.id, email: user.email, role: user.role };
-    const accessToken  = jwt.sign(payload,          secret, { expiresIn: ACCESS_TTL });
+    const payload = { sub: user.id, email: user.email, role: user.role };
+    const accessToken = jwt.sign(payload, secret, { expiresIn: ACCESS_TTL });
     const refreshToken = jwt.sign({ sub: user.id }, secret, { expiresIn: REFRESH_TTL });
 
     return { accessToken, refreshToken };
@@ -48,18 +48,18 @@ const hashToken = (token) =>
 
 const cookieOptions = () => ({
     httpOnly: true,
-    secure:   process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge:   7 * 24 * 60 * 60 * 1000,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
 });
 
 // ─── Signup ─────────────────────
 const signup = async (req, res) => {
     try {
-        const name     = String(req.body.name || "").trim();
-        const email    = normalizeEmail(req.body.email);
+        const name = String(req.body.name || "").trim();
+        const email = normalizeEmail(req.body.email);
         const password = req.body.password;
-        const role     = String(req.body.role || DEFAULT_ROLE).trim().toLowerCase();
+        const role = String(req.body.role || DEFAULT_ROLE).trim().toLowerCase();
 
         if (!name || !email || !password)
             return res.status(400).json({ error: "Name, email, and password are required" });
@@ -84,7 +84,7 @@ const signup = async (req, res) => {
 
         res.status(201).json({
             message: "User signed up successfully",
-            user:    { id: result.insertId, name, email, role },
+            user: { id: result.insertId, name, email, role },
         });
     } catch (err) {
         if (err.code === "ER_DUP_ENTRY")
@@ -97,7 +97,7 @@ const signup = async (req, res) => {
 // ─── Login ──────────────────────
 const login = async (req, res) => {
     try {
-        const email    = normalizeEmail(req.body.email);
+        const email = normalizeEmail(req.body.email);
         const password = req.body.password;
 
         if (!email || !password)
@@ -135,7 +135,7 @@ const login = async (req, res) => {
 
         //  Wrong password — increment failed attempts, lock if threshold reached
         if (!passwordValid) {
-            const attempts    = user.failed_attempts + 1;
+            const attempts = user.failed_attempts + 1;
             const lockedUntil = attempts >= MAX_ATTEMPTS
                 ? new Date(Date.now() + LOCKOUT_MS)
                 : null;
@@ -171,7 +171,7 @@ const login = async (req, res) => {
         res.cookie("refreshToken", refreshToken, cookieOptions());
 
         res.status(200).json({
-            message:     "User logged in successfully",
+            message: "User logged in successfully",
             accessToken,
             user: { id: user.id, name: user.name, email: user.email, role: user.role },
         });
@@ -185,7 +185,7 @@ const login = async (req, res) => {
 const getMe = async (req, res) => {
     try {
         const [rows] = await pool.execute(
-            "SELECT id, name, email, role, created_at FROM users WHERE id = ? LIMIT 1",
+            "SELECT id, name as fullName, email, role, created_at FROM users WHERE id = ? LIMIT 1",
             [req.user.sub]
         );
         if (!rows[0]) return res.status(404).json({ error: "User not found" });
@@ -211,7 +211,7 @@ const logout = async (req, res) => {
 
         res.clearCookie("refreshToken", {
             httpOnly: true,
-            secure:   process.env.NODE_ENV === "production",
+            secure: process.env.NODE_ENV === "production",
             sameSite: "strict",
         });
 
