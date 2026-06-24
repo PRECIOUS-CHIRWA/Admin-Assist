@@ -49,7 +49,7 @@
         <div class="stat-head">
           <div>
             <div class="stat-label">Total Learners</div>
-            <div class="stat-value" id="totalStudents">8</div>
+            <div class="stat-value" id="totalStudents">—</div>
           </div>
           <div class="stat-icon">👥</div>
         </div>
@@ -63,7 +63,7 @@
         <div class="stat-head">
           <div>
             <div class="stat-label">Present</div>
-            <div class="stat-value" id="presentCount">5</div>
+            <div class="stat-value" id="presentCount">—</div>
           </div>
           <div class="stat-icon">✅</div>
         </div>
@@ -77,7 +77,7 @@
         <div class="stat-head">
           <div>
             <div class="stat-label">Late Arrivals</div>
-            <div class="stat-value" id="lateCount">2</div>
+            <div class="stat-value" id="lateCount">—</div>
           </div>
           <div class="stat-icon">⏰</div>
         </div>
@@ -91,7 +91,7 @@
         <div class="stat-head">
           <div>
             <div class="stat-label">Absent or Excused</div>
-            <div class="stat-value" id="absentCount">1</div>
+            <div class="stat-value" id="absentCount">—</div>
           </div>
           <div class="stat-icon">📌</div>
         </div>
@@ -164,8 +164,8 @@
               </p>
             </div>
             <div class="chip-row">
-              <span class="chip">Homeroom: Mrs. Chileshe</span>
-              <span class="chip teal">Room 14</span>
+              <span class="chip">—</span>
+              <span class="chip teal">—</span>
             </div>
           </div>
 
@@ -180,142 +180,20 @@
                     <th>Note</th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr>
-                    <td>AA-1001</td>
-                    <td>
-                      <div class="student-name">Natasha Banda</div>
-                      <div class="student-meta">Guardian: M. Banda</div>
+                <tbody id="gradebook-tbody">
+                  <!-- Sprint 4: academic records will be loaded from the API -->
+                  <!-- GET /api/academic-records?grade=&subject=&term= -->
+                  <tr id="gradebook-empty-row">
+                    <td colspan="8" style="
+        text-align: center;
+        padding: 48px 24px;
+        color: #64748b;
+        font-size: 14px;
+        font-style: italic;
+    ">
+                      No records loaded. Select a term, class, and subject above, then click
+                      &ldquo;Load Record Book&rdquo;.
                     </td>
-                    <td>
-                      <select class="attendance-status" name="status-1">
-                        <option selected>Present</option>
-                        <option>Late</option>
-                        <option>Absent</option>
-                        <option>Excused</option>
-                      </select>
-                    </td>
-                    <td><input class="attendance-status note-input" type="text" value="On time"
-                        aria-label="Attendance note for Natasha Banda"></td>
-                  </tr>
-                  <tr>
-                    <td>AA-1002</td>
-                    <td>
-                      <div class="student-name">Luyando Phiri</div>
-                      <div class="student-meta">Guardian: T. Phiri</div>
-                    </td>
-                    <td>
-                      <select class="attendance-status" name="status-2">
-                        <option>Present</option>
-                        <option selected>Late</option>
-                        <option>Absent</option>
-                        <option>Excused</option>
-                      </select>
-                    </td>
-                    <td><input class="attendance-status note-input" type="text" value="Arrived after assembly"
-                        aria-label="Attendance note for Luyando Phiri"></td>
-                  </tr>
-                  <tr>
-                    <td>AA-1003</td>
-                    <td>
-                      <div class="student-name">Mwaka Tembo</div>
-                      <div class="student-meta">Guardian: J. Tembo</div>
-                    </td>
-                    <td>
-                      <select class="attendance-status" name="status-3">
-                        <option selected>Present</option>
-                        <option>Late</option>
-                        <option>Absent</option>
-                        <option>Excused</option>
-                      </select>
-                    </td>
-                    <td><input class="attendance-status note-input" type="text"
-                        value="Participating in science fair prep" aria-label="Attendance note for Mwaka Tembo"></td>
-                  </tr>
-                  <tr>
-                    <td>AA-1004</td>
-                    <td>
-                      <div class="student-name">Chanda Mwila</div>
-                      <div class="student-meta">Guardian: P. Mwila</div>
-                    </td>
-                    <td>
-                      <select class="attendance-status" name="status-4">
-                        <option>Present</option>
-                        <option>Late</option>
-                        <option selected>Absent</option>
-                        <option>Excused</option>
-                      </select>
-                    </td>
-                    <td><input class="attendance-status note-input" type="text" value="Call pending"
-                        aria-label="Attendance note for Chanda Mwila"></td>
-                  </tr>
-                  <tr>
-                    <td>AA-1005</td>
-                    <td>
-                      <div class="student-name">Taonga Zulu</div>
-                      <div class="student-meta">Guardian: A. Zulu</div>
-                    </td>
-                    <td>
-                      <select class="attendance-status" name="status-5">
-                        <option selected>Present</option>
-                        <option>Late</option>
-                        <option>Absent</option>
-                        <option>Excused</option>
-                      </select>
-                    </td>
-                    <td><input class="attendance-status note-input" type="text" value="On time"
-                        aria-label="Attendance note for Taonga Zulu"></td>
-                  </tr>
-                  <tr>
-                    <td>AA-1006</td>
-                    <td>
-                      <div class="student-name">Mubanga Lungu</div>
-                      <div class="student-meta">Guardian: R. Lungu</div>
-                    </td>
-                    <td>
-                      <select class="attendance-status" name="status-6">
-                        <option>Present</option>
-                        <option selected>Late</option>
-                        <option>Absent</option>
-                        <option>Excused</option>
-                      </select>
-                    </td>
-                    <td><input class="attendance-status note-input" type="text" value="School bus delay"
-                        aria-label="Attendance note for Mubanga Lungu"></td>
-                  </tr>
-                  <tr>
-                    <td>AA-1007</td>
-                    <td>
-                      <div class="student-name">Lusekelo Sinyangwe</div>
-                      <div class="student-meta">Guardian: C. Sinyangwe</div>
-                    </td>
-                    <td>
-                      <select class="attendance-status" name="status-7">
-                        <option selected>Present</option>
-                        <option>Late</option>
-                        <option>Absent</option>
-                        <option>Excused</option>
-                      </select>
-                    </td>
-                    <td><input class="attendance-status note-input" type="text" value="Library prefect"
-                        aria-label="Attendance note for Lusekelo Sinyangwe"></td>
-                  </tr>
-                  <tr>
-                    <td>AA-1008</td>
-                    <td>
-                      <div class="student-name">Misozi Nawa</div>
-                      <div class="student-meta">Guardian: F. Nawa</div>
-                    </td>
-                    <td>
-                      <select class="attendance-status" name="status-8">
-                        <option selected>Present</option>
-                        <option>Late</option>
-                        <option>Absent</option>
-                        <option>Excused</option>
-                      </select>
-                    </td>
-                    <td><input class="attendance-status note-input" type="text" value="On time"
-                        aria-label="Attendance note for Misozi Nawa"></td>
                   </tr>
                 </tbody>
               </table>
