@@ -1,11 +1,27 @@
 const pool = require("../config/db");
 
-// ─── Translators: database snake_case ⇄ API camelCase ──────────────────────
+// ─── Audit logging helper ─────────────────────────────────────────────────────
+const _auditLog = async (actorId, action, entityType, entityId, details = {}) => {
+    try {
+        await pool.execute(
+            `INSERT INTO audit_log (actor_id, action, entity_type, entity_id, details)
+             VALUES (?, ?, ?, ?, ?)`,
+            [actorId, action, entityType, entityId, JSON.stringify(details)]
+        );
+    } catch (err) {
+        // Silently skip if audit_log table hasn't been migrated yet
+        if (err.code !== "ER_NO_SUCH_TABLE") {
+            console.error("auditLog write error:", err.message);
+        }
+    }
+};
+
+// ─── Translators ─────────────────────────────────────────────────────────────
 const formatDate = (value) => {
     if (!value) return null;
     const date = value instanceof Date ? value : new Date(value);
     if (Number.isNaN(date.getTime())) return null;
-    return date.toISOString().split("T")[0];   // -> "2012-05-15"
+    return date.toISOString().split("T")[0];
 };
 
 const toApiShape = (row) => ({
@@ -39,12 +55,12 @@ const REQUIRED_FIELDS = [
 
 const PHONE_PATTERN = /^\+260\d{9}$/;
 
+// ─── List students ────────────────────────────────────────────────────────────
 const listStudents = async (req, res) => {
     try {
         const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
         const limit = Math.max(parseInt(req.query.limit, 10) || 10, 1);
         const offset = (page - 1) * limit;
-
         const search = String(req.query.search || "").trim();
         const grade = String(req.query.grade || "").trim();
         const status = String(req.query.status || "").trim();
@@ -60,16 +76,15 @@ const listStudents = async (req, res) => {
         if (grade) { conditions.push("grade = ?"); params.push(grade); }
         if (status) { conditions.push("status = ?"); params.push(status); }
 
-        const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+        const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
         const [countRows] = await pool.execute(
-            `SELECT COUNT(*) AS total FROM students ${whereClause}`,
-            params
+            `SELECT COUNT(*) AS total FROM students ${where}`, params
         );
         const total = countRows[0].total;
 
         const [rows] = await pool.execute(
-            `SELECT * FROM students ${whereClause} ORDER BY id DESC LIMIT ? OFFSET ?`,
+            `SELECT * FROM students ${where} ORDER BY id DESC LIMIT ? OFFSET ?`,
             [...params, limit, offset]
         );
 
@@ -80,14 +95,13 @@ const listStudents = async (req, res) => {
     }
 };
 
+// ─── Get by ID ────────────────────────────────────────────────────────────────
 const getStudentById = async (req, res) => {
     try {
         const [rows] = await pool.execute(
-            "SELECT * FROM students WHERE id = ? LIMIT 1",
-            [req.params.id]
+            "SELECT * FROM students WHERE id = ? LIMIT 1", [req.params.id]
         );
         if (!rows[0]) return res.status(404).json({ error: "Student not found" });
-
         res.json(toApiShape(rows[0]));
     } catch (err) {
         console.error("getStudentById error:", err.message);
@@ -95,11 +109,12 @@ const getStudentById = async (req, res) => {
     }
 };
 
+// ─── Create student ───────────────────────────────────────────────────────────
 const createStudent = async (req, res) => {
     try {
         const body = req.body;
 
-        const missing = REQUIRED_FIELDS.filter((field) => !body[field]);
+        const missing = REQUIRED_FIELDS.filter(f => !body[f]);
         if (missing.length) {
             return res.status(400).json({ error: `Missing required fields: ${missing.join(", ")}` });
         }
@@ -108,7 +123,12 @@ const createStudent = async (req, res) => {
             return res.status(400).json({ error: "Phone number must be in format +260XXXXXXXXX" });
         }
 
-        const age = new Date().getFullYear() - new Date(body.dateOfBirth).getFullYear();
+        // Age validation using full birthday (not just year) for accuracy
+        const dob = new Date(body.dateOfBirth);
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const m = today.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
         if (age < 10) {
             return res.status(400).json({ error: "Student must be at least 10 years old" });
         }
@@ -121,12 +141,23 @@ const createStudent = async (req, res) => {
                 phone_number, email, status
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                body.admissionNumber, body.firstName, body.lastName, body.dateOfBirth, body.gender,
-                body.nrcNumber || null, body.homeAddress || null, body.district || null, body.province,
-                body.grade, body.section, body.enrollmentDate, body.previousSchool || null,
-                body.parentGuardianName, body.relationship, body.phoneNumber, body.email || null,
+                body.admissionNumber, body.firstName, body.lastName,
+                body.dateOfBirth, body.gender,
+                body.nrcNumber || null, body.homeAddress || null,
+                body.district || null, body.province,
+                body.grade, body.section, body.enrollmentDate,
+                body.previousSchool || null, body.parentGuardianName,
+                body.relationship, body.phoneNumber, body.email || null,
                 body.status || "Active",
             ]
+        );
+
+        // Write to audit log (non-blocking — won't crash enrollment if table is missing)
+        await _auditLog(
+            req.user.sub,
+            `Enrolled student ${body.firstName} ${body.lastName} (${body.admissionNumber})`,
+            "student", result.insertId,
+            { admissionNumber: body.admissionNumber }
         );
 
         res.status(201).json({
@@ -145,11 +176,12 @@ const createStudent = async (req, res) => {
     }
 };
 
+// ─── Update student ───────────────────────────────────────────────────────────
 const updateStudent = async (req, res) => {
     try {
         const body = req.body;
 
-        const missing = REQUIRED_FIELDS.filter((field) => !body[field]);
+        const missing = REQUIRED_FIELDS.filter(f => !body[f]);
         if (missing.length) {
             return res.status(400).json({ error: `Missing required fields: ${missing.join(", ")}` });
         }
@@ -160,16 +192,21 @@ const updateStudent = async (req, res) => {
 
         const [result] = await pool.execute(
             `UPDATE students SET
-                admission_number = ?, first_name = ?, last_name = ?, date_of_birth = ?, gender = ?,
-                nrc_number = ?, home_address = ?, district = ?, province = ?, grade = ?, section = ?,
-                enrollment_date = ?, previous_school = ?, parent_guardian_name = ?, relationship = ?,
+                admission_number = ?, first_name = ?, last_name = ?,
+                date_of_birth = ?, gender = ?,
+                nrc_number = ?, home_address = ?, district = ?, province = ?,
+                grade = ?, section = ?, enrollment_date = ?,
+                previous_school = ?, parent_guardian_name = ?, relationship = ?,
                 phone_number = ?, email = ?, status = ?
              WHERE id = ?`,
             [
-                body.admissionNumber, body.firstName, body.lastName, body.dateOfBirth, body.gender,
-                body.nrcNumber || null, body.homeAddress || null, body.district || null, body.province,
-                body.grade, body.section, body.enrollmentDate, body.previousSchool || null,
-                body.parentGuardianName, body.relationship, body.phoneNumber, body.email || null,
+                body.admissionNumber, body.firstName, body.lastName,
+                body.dateOfBirth, body.gender,
+                body.nrcNumber || null, body.homeAddress || null,
+                body.district || null, body.province,
+                body.grade, body.section, body.enrollmentDate,
+                body.previousSchool || null, body.parentGuardianName,
+                body.relationship, body.phoneNumber, body.email || null,
                 body.status || "Active",
                 req.params.id,
             ]
@@ -179,7 +216,11 @@ const updateStudent = async (req, res) => {
             return res.status(404).json({ error: "Student not found" });
         }
 
-        const [rows] = await pool.execute("SELECT * FROM students WHERE id = ? LIMIT 1", [req.params.id]);
+        await _auditLog(req.user.sub, `Updated student record`, "student", req.params.id, {});
+
+        const [rows] = await pool.execute(
+            "SELECT * FROM students WHERE id = ? LIMIT 1", [req.params.id]
+        );
         res.json({ message: "Student updated successfully", student: toApiShape(rows[0]) });
     } catch (err) {
         if (err.code === "ER_DUP_ENTRY") {
@@ -190,22 +231,24 @@ const updateStudent = async (req, res) => {
     }
 };
 
+// ─── Delete (soft) ────────────────────────────────────────────────────────────
 const deleteStudent = async (req, res) => {
     try {
         const [result] = await pool.execute(
-            "UPDATE students SET status = 'Inactive' WHERE id = ?",
-            [req.params.id]
+            "UPDATE students SET status = 'Inactive' WHERE id = ?", [req.params.id]
         );
-
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: "Student not found" });
         }
-
-        res.json({ message: "Student marked as inactive" });
+        await _auditLog(req.user.sub, `Deactivated student record`, "student", req.params.id, {});
+        res.json({ message: "Student record deactivated successfully" });
     } catch (err) {
         console.error("deleteStudent error:", err.message);
         res.status(500).json({ error: "Something went wrong while deleting the student" });
     }
 };
 
-module.exports = { listStudents, getStudentById, createStudent, updateStudent, deleteStudent };
+module.exports = {
+    listStudents, getStudentById, createStudent,
+    updateStudent, deleteStudent,
+};
