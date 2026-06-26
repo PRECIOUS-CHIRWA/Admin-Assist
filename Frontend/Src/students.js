@@ -46,7 +46,7 @@ async function createStudent(studentData) {
     });
     if (!res.ok) {
       const error = await res.json();
-      throw new Error(error.message || 'Failed to create student');
+      throw new Error(error.error || error.message || 'Failed to create student');
     }
     return await res.json();
   } catch (err) {
@@ -66,7 +66,7 @@ async function updateStudent(studentId, studentData) {
     });
     if (!res.ok) {
       const error = await res.json();
-      throw new Error(error.message || 'Failed to update student');
+      throw new Error(error.error || error.message || 'Failed to update student');
     }
     return await res.json();
   } catch (err) {
@@ -83,7 +83,7 @@ async function deleteStudent(studentId) {
     const res = await authFetch(`${API_BASE}/students/${studentId}`, {
       method: 'DELETE',
     });
-    if (!res.ok) throw new Error('Failed to delete student');
+    if (!res.ok) throw new Error(error.error || error.message || 'Failed to delete student');
     return await res.json();
   } catch (err) {
     showToast(err.message, 'error');
@@ -183,6 +183,7 @@ function generateAdmissionNumber() {
 
   const admInput = document.getElementById('admissionNumber');
   if (admInput) {
+    admInput.value = suggestion;
     admInput.placeholder = suggestion;
     formState.data.admissionNumber = suggestion;
   }
@@ -238,33 +239,35 @@ function validateCurrentStep() {
   return true;
 }
 
-/**
- * Show error on a field
- */
-function showFieldError(fieldName, errorMsg) {
-  const field = document.getElementById(fieldName) || document.querySelector(`[name="${fieldName}"]`);
-  if (!field) return;
 
-  field.classList.add('error');
-  let errorEl = field.nextElementSibling;
-  if (!errorEl || !errorEl.classList.contains('error-message')) {
-    errorEl = document.createElement('div');
-    errorEl.classList.add('error-message');
-    field.parentNode.appendChild(errorEl);
+function showFieldError(fieldName, errorMsg) {
+  // Use the pre-existing span element (id="err-{fieldName}") if it exists
+  const errorSpan = document.getElementById('err-' + fieldName);
+  if (errorSpan) {
+    errorSpan.textContent = errorMsg;
+    errorSpan.style.display = 'block';
   }
-  errorEl.textContent = errorMsg;
+  // Add the error highlight class to the input / select / textarea
+  const field = document.getElementById(fieldName) ||
+    document.querySelector('[name="' + fieldName + '"]');
+  if (field && field.type !== 'radio') {
+    field.classList.add('error');
+  }
 }
 
 /**
  * Clear all error messages
  */
 function clearErrorMessages() {
-  document.querySelectorAll('.form-group input.error, .form-group select.error').forEach(field => {
-    field.classList.remove('error');
+  // Clear pre-existing field-error spans
+  document.querySelectorAll('.field-error').forEach(el => {
+    el.textContent = '';
+    el.style.display = 'none';
   });
-  document.querySelectorAll('.error-message').forEach(el => {
-    el.remove();
-  });
+  // Remove error highlight class from inputs
+  document.querySelectorAll(
+    '.form-group input.error, .form-group select.error, .form-group textarea.error'
+  ).forEach(field => field.classList.remove('error'));
 }
 
 /**
