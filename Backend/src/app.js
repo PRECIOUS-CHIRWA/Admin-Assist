@@ -8,6 +8,7 @@ require("dotenv").config({ quiet: true });
 const studentRoutes = require("./routes/studentRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const panelRoutes = require("./routes/panelRoutes");
+const userRoutes = require("./routes/userRoutes");
 
 const app = express();
 
@@ -79,6 +80,7 @@ app.use("/api", generalLimiter);
 
 app.use("/api/students", studentRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/users", userRoutes);
 app.use("/api", panelRoutes);
 
 // Health check — useful for deployment platforms to confirm the server is up

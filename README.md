@@ -61,4 +61,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-Made with ❤ by [PRECIOUS-CHIRWA](https://github.com/PRECIOUS-CHIRWA)
+Made with care by [PRECIOUS-CHIRWA](https://github.com/PRECIOUS-CHIRWA)

@@ -323,13 +323,35 @@ function updateProgressBar() {
   });
 
   // Update button states
-  const nextBtn = document.getElementById('nextBtn');
-  const backBtn = document.getElementById('backBtn');
-  const submitBtn = document.getElementById('submitBtn');
-
+  // FIND these three lines inside updateProgressBar():
   if (nextBtn) nextBtn.style.display = formState.currentStep < formState.totalSteps ? 'block' : 'none';
   if (backBtn) backBtn.disabled = formState.currentStep === 1;
   if (submitBtn) submitBtn.style.display = formState.currentStep === formState.totalSteps ? 'block' : 'none';
+
+  // REPLACE WITH:
+  if (nextBtn) {
+    // Toggle visibility using class, not inline style, so !important on
+    // other classes doesn't interfere
+    if (formState.currentStep < formState.totalSteps) {
+      nextBtn.classList.remove('is-hidden');
+    } else {
+      nextBtn.classList.add('is-hidden');
+    }
+  }
+
+  if (backBtn) {
+    backBtn.disabled = formState.currentStep === 1;
+  }
+
+  if (submitBtn) {
+    // submitBtn starts with class is-hidden; remove it on step 3,
+    // add it back on steps 1 and 2
+    if (formState.currentStep === formState.totalSteps) {
+      submitBtn.classList.remove('is-hidden');
+    } else {
+      submitBtn.classList.add('is-hidden');
+    }
+  }
 }
 
 /**
@@ -471,8 +493,13 @@ async function submitEnrollment() {
   const result = await createStudent(studentData);
 
   if (result) {
+    // Refresh enrollment stats so the new student shows in the cards
+    if (typeof _loadEnrollmentStats === 'function') {
+      _loadEnrollmentStats();
+    }
     showSuccessOverlay(result.admissionNumber);
   } else {
+    // Re-enable the button; createStudent already showed a toast
     if (submitBtn) {
       submitBtn.disabled = false;
       submitBtn.textContent = 'Submit Enrollment';
