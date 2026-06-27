@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - Admin Assist</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="students.css">
+    <link rel="stylesheet" href="navigation.css">
+    <link rel="stylesheet" href="update-user-details.css">
+</head>
+
+<body data-page="update-user-details">
+
+    <!-- ─── HEADER ──────────────────────────────────────────────────────────── -->
+    <header>
+        <div class="logo">Admin Assist</div>
+        <div class="user-profile">
+            <div class="user-avatar" id="headerAvatar">?</div>
+            <span id="headerUserName">…</span>
+            <span id="roleBadge" class="role-badge"></span>
+            <button id="logoutBtn">Logout</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+
+        <div class="breadcrumb">
+            <a href="dashboard.html">Dashboard</a> &gt; <span>My Profile</span>
+        </div>
+
+        <div class="profile-page-header">
+            <!-- Large avatar -->
+            <div class="profile-page-avatar" id="pageAvatar">?</div>
+            <div class="profile-page-meta">
+                <h1 class="profile-page-name" id="pageName">Loading…</h1>
+                <span class="profile-page-role" id="pageRole"></span>
+                <span class="profile-page-email" id="pageEmail"></span>
+            </div>
+        </div>
+
+        <!-- ─── NOTIFICATION BANNER ────────────────────────────────────────────── -->
+        <div class="profile-banner" id="profileBanner" role="alert" aria-live="polite"></div>
+
+        <!-- ─── TWO-COLUMN LAYOUT ─────────────────────────────────────────────── -->
+        <div class="profile-grid">
+
+            <!-- ══════ LEFT COLUMN ══════ -->
+            <div class="profile-column">
+
+                <!-- Card: Personal Information -->
+                <section class="profile-card" aria-labelledby="personalInfoTitle">
+                    <h2 class="profile-card-title" id="personalInfoTitle">Personal Information</h2>
+
+                    <form id="profileForm" novalidate>
+                        <div class="profile-field">
+                            <label for="profileName">Full Name <span class="required-mark">*</span></label>
+                            <input type="text" id="profileName" name="name" placeholder="Your full name" required
+                                autocomplete="name">
+                            <span class="field-error" id="err-profileName" role="alert"></span>
+                        </div>
+
+                        <div class="profile-field">
+                            <label for="profileEmail">Email Address <span class="required-mark">*</span></label>
+                            <input type="email" id="profileEmail" name="email" placeholder="your@email.com" required
+                                autocomplete="email">
+                            <span class="field-error" id="err-profileEmail" role="alert"></span>
+                        </div>
+
+                        <div class="profile-field">
+                            <label>Current Role</label>
+                            <div class="profile-readonly-field" id="profileCurrentRole">—</div>
+                            <small class="profile-field-hint">
+                                Role can only be changed by an administrator.
+                                Use the role request section below to apply for a change.
+                            </small>
+                        </div>
+
+                        <div class="profile-field">
+                            <label>Member Since</label>
+                            <div class="profile-readonly-field" id="profileCreatedAt">—</div>
+                        </div>
+
+                        <div class="profile-field">
+                            <label>Last Login</label>
+                            <div class="profile-readonly-field" id="profileLastLogin">—</div>
+                        </div>
+
+                        <div class="profile-actions">
+                            <button type="submit" class="btn btn-primary" id="saveProfileBtn">
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- Card: Change Password -->
+                <section class="profile-card" aria-labelledby="passwordTitle">
+                    <h2 class="profile-card-title" id="passwordTitle">Change Password</h2>
+
+                    <form id="passwordForm" novalidate>
+                        <div class="profile-field">
+                            <label for="currentPassword">Current Password <span class="required-mark">*</span></label>
+                            <div class="pw-input-wrap">
+                                <input type="password" id="currentPassword" name="currentPassword"
+                                    placeholder="Enter your current password" autocomplete="current-password" required>
+                                <button type="button" class="pw-toggle-btn" data-target="currentPassword"
+                                    aria-label="Toggle current password visibility">👁</button>
+                            </div>
+                            <span class="field-error" id="err-currentPassword" role="alert"></span>
+                        </div>
+
+                        <div class="profile-field">
+                            <label for="newPassword">New Password <span class="required-mark">*</span></label>
+                            <div class="pw-input-wrap">
+                                <input type="password" id="newPassword" name="newPassword"
+                                    placeholder="At least 8 characters" minlength="8" autocomplete="new-password"
+                                    required>
+                                <button type="button" class="pw-toggle-btn" data-target="newPassword"
+                                    aria-label="Toggle new password visibility">👁</button>
+                            </div>
+                            <span class="field-error" id="err-newPassword" role="alert"></span>
+                        </div>
+
+                        <div class="profile-field">
+                            <label for="confirmPassword">Confirm New Password <span
+                                    class="required-mark">*</span></label>
+                            <div class="pw-input-wrap">
+                                <input type="password" id="confirmPassword" name="confirmPassword"
+                                    placeholder="Repeat your new password" minlength="8" autocomplete="new-password"
+                                    required>
+                                <button type="button" class="pw-toggle-btn" data-target="confirmPassword"
+                                    aria-label="Toggle confirm password visibility">👁</button>
+                            </div>
+                            <span class="field-error" id="err-confirmPassword" role="alert"></span>
+                        </div>
+
+                        <div class="profile-actions">
+                            <button type="submit" class="btn btn-primary" id="changePasswordBtn">
+                                Update Password
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+            </div><!-- /profile-column left -->
+
+            <!-- ══════ RIGHT COLUMN ══════ -->
+            <div class="profile-column">
+
+                <!-- Card: Role Change Request -->
+                <section class="profile-card" aria-labelledby="roleRequestTitle">
+                    <h2 class="profile-card-title" id="roleRequestTitle">Request Role Change</h2>
+
+                    <p class="profile-section-desc">
+                        You cannot change your own role directly. Submit a request below
+                        and a System Administrator or Principal will review it.
+                    </p>
+
+                    <!-- Pending request status — shown if one exists -->
+                    <div class="pending-request-box" id="pendingRequestBox" style="display:none;">
+                        <div class="pending-request-label">Pending Request</div>
+                        <div class="pending-request-detail" id="pendingRequestDetail"></div>
+                    </div>
+
+                    <form id="roleRequestForm" novalidate>
+                        <div class="profile-field">
+                            <label for="requestedRole">Requested Role <span class="required-mark">*</span></label>
+                            <select id="requestedRole" name="requestedRole" required>
+                                <option value="">Select a role to request</option>
+                                <option value="staff">Staff</option>
+                                <option value="headmaster">Head Master</option>
+                                <option value="admin">Administrator</option>
+                                <option value="user">User</option>
+                            </select>
+                            <span class="field-error" id="err-requestedRole" role="alert"></span>
+                        </div>
+
+                        <div class="profile-field">
+                            <label for="roleReason">Reason for Request</label>
+                            <textarea id="roleReason" name="reason" rows="4"
+                                placeholder="Briefly explain why you need this role…"></textarea>
+                            <small class="profile-field-hint">
+                                Optional but recommended. A clear reason speeds up the review.
+                            </small>
+                        </div>
+
+                        <div class="profile-actions">
+                            <button type="submit" class="btn btn-primary" id="submitRoleRequestBtn">
+                                Submit Request
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- Card: Account Actions -->
+                <section class="profile-card profile-card--danger" aria-labelledby="actionsTitle">
+                    <h2 class="profile-card-title" id="actionsTitle">Account</h2>
+
+                    <p class="profile-section-desc">
+                        Signing out ends your current session on this device.
+                    </p>
+
+                    <div class="profile-actions">
+                        <button type="button" class="btn btn-outline-danger" id="profileSignOutBtn">
+                            Sign Out
+                        </button>
+                    </div>
+                </section>
+
+            </div><!-- /profile-column right -->
+
+        </div><!-- /profile-grid -->
+    </div><!-- /main-container -->
+
+    <!-- ─── SCRIPTS ──────────────────────────────────────────────────────────── -->
+    <script src="auth.js" defer></script>
+    <script src="auth-guard.js" defer></script>
+    <script src="navigation.js" defer></script>
+    <script src="update-user-details.js" defer></script>
+</body>
+
+</html>

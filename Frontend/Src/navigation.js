@@ -266,6 +266,7 @@
     background: rgba(255,255,255,.04);
     border-bottom: 1px solid rgba(255,255,255,.07);
 }
+
 .sb-avatar {
     width: 40px; height: 40px; border-radius: 50%;
     background: linear-gradient(135deg, #d4af37 0%, #f0c674 100%);
@@ -287,6 +288,20 @@
 .sb-nav {
     list-style: none; padding: 8px 0; margin: 0; flex: 1;
 }
+
+/* ── Sidebar user card hover (signals it's clickable) ── */
+.sb-user:hover {
+    background: rgba(255,255,255,.07) !important;
+    transition: background .15s !important;
+}
+.sb-user::after {
+    content: '✎';
+    margin-left: auto;
+    font-size: 13px;
+    color: rgba(255,255,255,.3);
+    padding-right: 4px;
+}
+
 .sb-link {
     display: flex; align-items: center; gap: 12px;
     padding: 11px 20px;
@@ -553,6 +568,27 @@
                 setTimeout(_closeSidebar, 80);
             });
         });
+
+        // ── User card in sidebar → navigate to profile page ──────────────────────────
+        // Runs inside _wireEvents() after all other event binding is done.
+        var userCard = document.querySelector('.sb-user');
+        if (userCard) {
+            userCard.style.cursor = 'pointer';
+            userCard.tabIndex = 0;
+            userCard.setAttribute('role', 'link');
+            userCard.setAttribute('aria-label', 'View or edit your profile');
+            userCard.setAttribute('title', 'Manage your profile');
+
+            userCard.addEventListener('click', function () {
+                window.location.href = 'update-user-details.html';
+            });
+            userCard.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    window.location.href = 'update-user-details.html';
+                }
+            });
+        }
     }
 
     /* ─────────────────────────────────────────────────────────────────
