@@ -42,7 +42,6 @@ if (process.env.NODE_ENV !== "production") {
 
 app.use(cors({
     origin: (origin, callback) => {
-        // Allow requests with no origin (e.g. curl, Postman during development)
         if (!origin) return callback(null, true);
         if (allowedOrigins.includes(origin)) return callback(null, true);
         callback(new Error(`CORS: Origin '${origin}' is not allowed`));
