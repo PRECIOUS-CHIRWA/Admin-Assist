@@ -88,7 +88,7 @@ app.use("/api", generalLimiter);
 
 app.use("/api/students", studentRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/users", userRoutes);
+//app.use("/api/users", userRoutes);
 app.use("/api", panelRoutes);
 
 
