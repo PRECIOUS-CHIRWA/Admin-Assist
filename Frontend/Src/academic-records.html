@@ -2,396 +2,158 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Academic Records - Admin Assist</title>
-  <link rel="stylesheet" href="admin-pages.css">
-  <link rel="stylesheet" href="navigation.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Attendance Management | Admin Assist</title>
+  <link rel="stylesheet" href="theme.css" />
+  <link rel="stylesheet" href="navigation.css" />
+  <link rel="stylesheet" href="slide-panels.css" />
+  <link rel="stylesheet" href="attendance-management.css" />
 </head>
 
-<body>
-  <header class="app-header">
-    <div class="logo-group">
-      <div class="logo-mark">AA</div>
-      <div class="logo-copy">
-        <div class="logo">Admin Assist</div>
-        <span>School administration workspace</span>
-      </div>
-    </div>
-    <div class="user-profile">
-      <div class="user-meta">
-        <strong>Admin User</strong>
-        <span>Academic Records Desk</span>
-      </div>
-      <div class="user-avatar">A</div>
-    </div>
-  </header>
+<body data-page="attendance-management">
+  <div id="navigation-root"></div>
 
-  <main class="main-container">
-    <div class="breadcrumb">
-      <a href="dashboard.html">Dashboard</a> / <span>Academic Records</span>
-    </div>
-
-    <section class="page-intro">
+  <main class="aa-main">
+    <header class="aa-page-header">
       <div>
-        <h1 class="page-title">Academic Records</h1>
-        <p class="page-subtitle">Maintain subject marks, calculate totals automatically, and prepare the term record
-          book with a cleaner grading workflow.</p>
+        <p class="aa-kicker">Attendance</p>
+        <h1>Attendance Management</h1>
+        <p class="aa-subtitle">Take attendance for a class, review past sessions, and manage records.</p>
       </div>
-      <div class="page-actions">
-        <a class="ghost-btn" href="dashboard.html">Back to Dashboard</a>
-        <button type="button" class="secondary-btn" id="publishResultsBtn">Publish Results</button>
+      <div class="aa-header-actions">
+        <a class="aa-btn aa-btn-secondary" href="attendance-history.html">View History</a>
+        <a class="aa-btn aa-btn-secondary" href="attendance-summary.html">Summary</a>
+        <button class="aa-btn aa-btn-primary" id="openTakeAttendanceBtn" type="button">+ Take Attendance</button>
       </div>
+    </header>
+
+    <section class="aa-filter-bar">
+      <div class="aa-filter-field">
+        <label for="filterClass">Class</label>
+        <select id="filterClass">
+          <option value="">All Classes</option>
+        </select>
+      </div>
+      <div class="aa-filter-field">
+        <label for="filterTerm">Term</label>
+        <select id="filterTerm">
+          <option value="">All Terms</option>
+        </select>
+      </div>
+      <div class="aa-filter-field">
+        <label for="filterFromDate">From</label>
+        <input type="date" id="filterFromDate" />
+      </div>
+      <div class="aa-filter-field">
+        <label for="filterToDate">To</label>
+        <input type="date" id="filterToDate" />
+      </div>
+      <button class="aa-btn aa-btn-ghost" id="clearFiltersBtn" type="button">Clear</button>
     </section>
 
-    <section class="stats-grid">
-      <article class="stat-card blue">
-        <div class="stat-head">
-          <div>
-            <div class="stat-label">Students Graded</div>
-            <div class="stat-value" id="gradedCount">6</div>
-          </div>
-          <div class="stat-icon">📘</div>
-        </div>
-        <div class="progress-track">
-          <div class="progress-fill blue" id="gradedBar" style="width: 100%;"></div>
-        </div>
-        <p class="stat-footnote">Records captured for the active Mathematics assessment.</p>
-      </article>
-
-      <article class="stat-card teal">
-        <div class="stat-head">
-          <div>
-            <div class="stat-label">Term Average</div>
-            <div class="stat-value" id="averageScore">74%</div>
-          </div>
-          <div class="stat-icon">📈</div>
-        </div>
-        <div class="progress-track">
-          <div class="progress-fill teal" id="averageBar" style="width: 74%;"></div>
-        </div>
-        <p class="stat-footnote">Average score updates as marks are edited below.</p>
-      </article>
-
-      <article class="stat-card gold">
-        <div class="stat-head">
-          <div>
-            <div class="stat-label">Top Result</div>
-            <div class="stat-value" id="topScore">88%</div>
-          </div>
-          <div class="stat-icon">🏅</div>
-        </div>
-        <div class="progress-track">
-          <div class="progress-fill gold" id="topBar" style="width: 88%;"></div>
-        </div>
-        <p class="stat-footnote">Best current performance in the loaded register.</p>
-      </article>
-
-      <article class="stat-card orange">
-        <div class="stat-head">
-          <div>
-            <div class="stat-label">Pending Review</div>
-            <div class="stat-value" id="pendingCount">0</div>
-          </div>
-          <div class="stat-icon">🧾</div>
-        </div>
-        <div class="progress-track">
-          <div class="progress-fill orange" id="pendingBar" style="width: 0%;"></div>
-        </div>
-        <p class="stat-footnote">Learners with incomplete marks stay in review status.</p>
-      </article>
-    </section>
-
-    <section class="content-grid">
-      <div class="stack">
-        <section class="panel highlight">
-          <div class="panel-header">
-            <div>
-              <h2 class="panel-title">Assessment Filters</h2>
-              <p class="panel-subtitle">Choose the term, class, and subject before capturing or reviewing marks.</p>
-            </div>
-            <div class="eyebrow">Weighting: CA 30 | Project 20 | Exam 50</div>
-          </div>
-
-          <form id="recordsFilterForm">
-            <div class="control-grid three">
-              <div class="field">
-                <label for="recordsTerm">Term</label>
-                <select id="recordsTerm" name="recordsTerm">
-                  <option>Term 1</option>
-                  <option selected>Term 2</option>
-                  <option>Term 3</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="recordsGrade">Grade</label>
-                <select id="recordsGrade" name="recordsGrade">
-                  <option>Grade 8</option>
-                  <option>Grade 9</option>
-                  <option selected>Grade 10</option>
-                  <option>Grade 11</option>
-                  <option>Grade 12</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="recordsStream">Stream</label>
-                <select id="recordsStream" name="recordsStream">
-                  <option>Red</option>
-                  <option selected>Blue</option>
-                  <option>Gold</option>
-                  <option>Green</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="recordsSubject">Subject</label>
-                <select id="recordsSubject" name="recordsSubject">
-                  <option selected>Mathematics</option>
-                  <option>English</option>
-                  <option>Biology</option>
-                  <option>Computer Studies</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="assessmentType">Assessment Type</label>
-                <select id="assessmentType" name="assessmentType">
-                  <option selected>Mid-Term Assessment</option>
-                  <option>End of Term Exam</option>
-                  <option>Continuous Assessment</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="teacherName">Teacher</label>
-                <input type="text" id="teacherName" name="teacherName" value="Mrs. Chileshe">
-              </div>
-            </div>
-
-            <div class="toolbar-actions">
-              <p class="inline-note">Auto-calculation stays on so totals and grade bands adjust immediately as you type.
-              </p>
-              <button type="submit" class="primary-btn">Load Record Book</button>
-            </div>
-          </form>
-        </section>
-
-        <section class="panel">
-          <div class="panel-header">
-            <div>
-              <h2 class="panel-title">Gradebook</h2>
-              <p class="panel-subtitle">Capture continuous assessment, project, and exam scores for each learner.</p>
-            </div>
-            <div class="chip-row">
-              <span class="chip">Subject: Mathematics</span>
-              <span class="chip gold">Term 2</span>
-            </div>
-          </div>
-
-          <form id="gradebookForm">
-            <div class="data-table-wrapper">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Admission No.</th>
-                    <th>Learner</th>
-                    <th>CA / 30</th>
-                    <th>Project / 20</th>
-                    <th>Exam / 50</th>
-                    <th>Total</th>
-                    <th>Grade</th>
-                    <th>Remark</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr class="record-row">
-                    <td>AA-1001</td>
-                    <td>
-                      <div class="student-name">Natasha Banda</div>
-                      <div class="student-meta">Consistent class participation</div>
-                    </td>
-                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="24"
-                        aria-label="Continuous assessment for Natasha Banda"></td>
-                    <td><input class="score-input project-score" type="number" min="0" max="20" value="18"
-                        aria-label="Project score for Natasha Banda"></td>
-                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="41"
-                        aria-label="Exam score for Natasha Banda"></td>
-                    <td class="total-score">83</td>
-                    <td><span class="result-pill grade-a">A</span></td>
-                    <td class="remark-text">Excellent</td>
-                  </tr>
-                  <tr class="record-row">
-                    <td>AA-1002</td>
-                    <td>
-                      <div class="student-name">Luyando Phiri</div>
-                      <div class="student-meta">Improving after tutoring support</div>
-                    </td>
-                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="20"
-                        aria-label="Continuous assessment for Luyando Phiri"></td>
-                    <td><input class="score-input project-score" type="number" min="0" max="20" value="15"
-                        aria-label="Project score for Luyando Phiri"></td>
-                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="35"
-                        aria-label="Exam score for Luyando Phiri"></td>
-                    <td class="total-score">70</td>
-                    <td><span class="result-pill grade-b">B</span></td>
-                    <td class="remark-text">Very Good</td>
-                  </tr>
-                  <tr class="record-row">
-                    <td>AA-1003</td>
-                    <td>
-                      <div class="student-name">Mwaka Tembo</div>
-                      <div class="student-meta">Strong in calculations and review tasks</div>
-                    </td>
-                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="26"
-                        aria-label="Continuous assessment for Mwaka Tembo"></td>
-                    <td><input class="score-input project-score" type="number" min="0" max="20" value="17"
-                        aria-label="Project score for Mwaka Tembo"></td>
-                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="45"
-                        aria-label="Exam score for Mwaka Tembo"></td>
-                    <td class="total-score">88</td>
-                    <td><span class="result-pill grade-a">A</span></td>
-                    <td class="remark-text">Excellent</td>
-                  </tr>
-                  <tr class="record-row">
-                    <td>AA-1004</td>
-                    <td>
-                      <div class="student-name">Chanda Mwila</div>
-                      <div class="student-meta">Needs more confidence during timed exams</div>
-                    </td>
-                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="17"
-                        aria-label="Continuous assessment for Chanda Mwila"></td>
-                    <td><input class="score-input project-score" type="number" min="0" max="20" value="12"
-                        aria-label="Project score for Chanda Mwila"></td>
-                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="28"
-                        aria-label="Exam score for Chanda Mwila"></td>
-                    <td class="total-score">57</td>
-                    <td><span class="result-pill grade-c">C</span></td>
-                    <td class="remark-text">Satisfactory</td>
-                  </tr>
-                  <tr class="record-row">
-                    <td>AA-1005</td>
-                    <td>
-                      <div class="student-name">Taonga Zulu</div>
-                      <div class="student-meta">Dependable and ready for extension work</div>
-                    </td>
-                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="22"
-                        aria-label="Continuous assessment for Taonga Zulu"></td>
-                    <td><input class="score-input project-score" type="number" min="0" max="20" value="16"
-                        aria-label="Project score for Taonga Zulu"></td>
-                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="37"
-                        aria-label="Exam score for Taonga Zulu"></td>
-                    <td class="total-score">75</td>
-                    <td><span class="result-pill grade-b">B</span></td>
-                    <td class="remark-text">Very Good</td>
-                  </tr>
-                  <tr class="record-row">
-                    <td>AA-1006</td>
-                    <td>
-                      <div class="student-name">Mubanga Lungu</div>
-                      <div class="student-meta">Progress is steady with revision support</div>
-                    </td>
-                    <td><input class="score-input ca-score" type="number" min="0" max="30" value="19"
-                        aria-label="Continuous assessment for Mubanga Lungu"></td>
-                    <td><input class="score-input project-score" type="number" min="0" max="20" value="13"
-                        aria-label="Project score for Mubanga Lungu"></td>
-                    <td><input class="score-input exam-score" type="number" min="0" max="50" value="31"
-                        aria-label="Exam score for Mubanga Lungu"></td>
-                    <td class="total-score">63</td>
-                    <td><span class="result-pill grade-c">C</span></td>
-                    <td class="remark-text">Satisfactory</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div class="action-row">
-              <p class="inline-note">Draft saves are useful while departmental moderation is still in progress.</p>
-              <div class="page-actions">
-                <button type="button" class="ghost-btn" id="saveRecordsBtn">Save Draft</button>
-                <button type="submit" class="primary-btn">Update Academic Records</button>
-              </div>
-            </div>
-          </form>
-        </section>
+    <section class="aa-card">
+      <div class="aa-card-header">
+        <h2>Recent Sessions</h2>
+        <span class="aa-badge" id="sessionCountBadge">0 sessions</span>
       </div>
 
-      <aside class="sidebar-stack">
-        <section class="sidebar-card gradient">
-          <h2 class="sidebar-title">Grading Scale</h2>
-          <div class="legend-list">
-            <div class="legend-item">
-              <div class="legend-copy">
-                <strong>A</strong>
-                <span>80 to 100: Excellent mastery and independent application.</span>
-              </div>
-            </div>
-            <div class="legend-item">
-              <div class="legend-copy">
-                <strong>B</strong>
-                <span>70 to 79: Strong understanding with minor support needed.</span>
-              </div>
-            </div>
-            <div class="legend-item">
-              <div class="legend-copy">
-                <strong>C</strong>
-                <span>50 to 69: Meets expectation with room to improve.</span>
-              </div>
-            </div>
-            <div class="legend-item">
-              <div class="legend-copy">
-                <strong>D or F</strong>
-                <span>Below 50: Intervention and remediation are recommended.</span>
-              </div>
-            </div>
-          </div>
-        </section>
+      <div id="sessionsEmptyState" class="aa-empty-state" hidden>
+        <h3>No attendance sessions yet</h3>
+        <p>Click "Take Attendance" to record attendance for a class.</p>
+      </div>
 
-        <section class="sidebar-card">
-          <h2 class="sidebar-title">Moderation Checklist</h2>
-          <div class="simple-list">
-            <div class="simple-item">
-              <div class="simple-copy">
-                <strong>Verify class list</strong>
-                <span>Confirm no transfer or absentee learner is missing from the register.</span>
-              </div>
-            </div>
-            <div class="simple-item">
-              <div class="simple-copy">
-                <strong>Check score ranges</strong>
-                <span>Marks outside the allowed weighting are flagged automatically.</span>
-              </div>
-            </div>
-            <div class="simple-item">
-              <div class="simple-copy">
-                <strong>Publish after review</strong>
-                <span>Only publish once the department head signs off the assessment window.</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="sidebar-card">
-          <h2 class="sidebar-title">Teacher Notes</h2>
-          <div class="simple-list">
-            <div class="simple-item">
-              <div class="simple-copy">
-                <strong>Class trend</strong>
-                <span>Most learners improved in algebra after the last revision clinic.</span>
-              </div>
-            </div>
-            <div class="simple-item">
-              <div class="simple-copy">
-                <strong>Intervention group</strong>
-                <span>Focus on exam pacing for learners below the 60% threshold.</span>
-              </div>
-            </div>
-          </div>
-        </section>
-      </aside>
+      <div class="aa-table-wrap">
+        <table class="aa-table" id="sessionsTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Class</th>
+              <th>Period</th>
+              <th>Teacher</th>
+              <th>Present</th>
+              <th>Absent</th>
+              <th>Late</th>
+              <th>Excused</th>
+              <th>Rate</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="sessionsTableBody"></tbody>
+        </table>
+      </div>
     </section>
   </main>
+
+  <!-- ─── Take Attendance Modal ─────────────────────────────────────────── -->
+  <div class="aa-modal-backdrop" id="takeAttendanceModal" hidden>
+    <div class="aa-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="aa-modal-header">
+        <h2 id="modalTitle">Take Attendance</h2>
+        <button class="aa-modal-close" id="closeModalBtn" type="button" aria-label="Close">&times;</button>
+      </div>
+
+      <div class="aa-modal-step" id="step1">
+        <p class="aa-modal-step-label">Step 1 — Select Class &amp; Date</p>
+        <div class="aa-form-grid">
+          <div class="aa-form-field">
+            <label for="sessionClass">Class *</label>
+            <select id="sessionClass" required></select>
+          </div>
+          <div class="aa-form-field">
+            <label for="sessionTerm">Term *</label>
+            <select id="sessionTerm" required></select>
+          </div>
+          <div class="aa-form-field">
+            <label for="sessionDate">Date *</label>
+            <input type="date" id="sessionDate" required />
+          </div>
+          <div class="aa-form-field">
+            <label for="sessionPeriod">Period</label>
+            <input type="text" id="sessionPeriod" placeholder="e.g. Period 1, General" value="General" />
+          </div>
+          <div class="aa-form-field">
+            <label for="sessionSubject">Subject (optional)</label>
+            <select id="sessionSubject">
+              <option value="">General Roll Call</option>
+            </select>
+          </div>
+        </div>
+        <div class="aa-modal-actions">
+          <button class="aa-btn aa-btn-primary" id="loadRosterBtn" type="button">Load Class Roster</button>
+        </div>
+      </div>
+
+      <div class="aa-modal-step" id="step2" hidden>
+        <p class="aa-modal-step-label">Step 2 — Mark Each Student</p>
+        <div class="aa-roster-toolbar">
+          <button class="aa-chip" type="button" data-bulk="present">Mark All Present</button>
+          <button class="aa-chip" type="button" data-bulk="absent">Mark All Absent</button>
+        </div>
+        <div class="aa-roster-list" id="rosterList"></div>
+        <div class="aa-modal-actions">
+          <button class="aa-btn aa-btn-ghost" id="backToStep1Btn" type="button">← Back</button>
+          <button class="aa-btn aa-btn-primary" id="submitAttendanceBtn" type="button">Submit Attendance</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── View Session Modal ────────────────────────────────────────────── -->
+  <div class="aa-modal-backdrop" id="viewSessionModal" hidden>
+    <div class="aa-modal" role="dialog" aria-modal="true">
+      <div class="aa-modal-header">
+        <h2>Session Details</h2>
+        <button class="aa-modal-close" id="closeViewModalBtn" type="button" aria-label="Close">&times;</button>
+      </div>
+      <div id="viewSessionContent"></div>
+    </div>
+  </div>
 
   <script src="auth.js"></script>
   <script src="auth-guard.js"></script>
   <script src="navigation.js"></script>
-  <script src="a-r.js"></script>
+  <script src="attendance-management.js"></script>
 </body>
 
 </html>
