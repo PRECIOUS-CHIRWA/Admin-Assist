@@ -10,6 +10,14 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const panelRoutes = require("./routes/panelRoutes");
 const userRoutes = require("./routes/userRoutes");
 
+
+const attendanceRoutes = require("./src/routes/attendance");
+/*const subjectsRoutes   = require("./src/routes/subjects");
+const resultsRoutes    = require("./src/routes/results");
+const reportsRoutes    = require("./src/routes/reports");
+const analyticsRoutes  = require("./src/routes/analytics");
+const searchRoutes     = require("./src/routes/search");*/
+
 const app = express();
 
 // ─── Security Headers ────────────────────────────────────────────────────────
@@ -82,6 +90,14 @@ app.use("/api/students", studentRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api", panelRoutes);
+
+
+app.use("/api/attendance", attendanceRoutes);
+// app.use("/api/subjects", subjectsRoutes);
+// app.use("/api/results", resultsRoutes)
+// app.use("/api/reports", reportsRoutes);
+// app.use("/api/analytics", analyticsRoutes);
+// app.use("/api/search", searchRoutes);
 
 // Health check — useful for deployment platforms to confirm the server is up
 app.get("/", (req, res) => {
