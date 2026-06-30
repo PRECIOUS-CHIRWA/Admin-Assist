@@ -11,12 +11,12 @@ const panelRoutes = require("./routes/panelRoutes");
 const userRoutes = require("./routes/userRoutes");
 
 
-const attendanceRoutes = require("./src/routes/attendance");
-/*const subjectsRoutes   = require("./src/routes/subjects");
-const resultsRoutes    = require("./src/routes/results");
-const reportsRoutes    = require("./src/routes/reports");
-const analyticsRoutes  = require("./src/routes/analytics");
-const searchRoutes     = require("./src/routes/search");*/
+const attendanceRoutes = require("./routes/attendanceRoutes");
+/*const subjectsRoutes = require("./routes/subjectsRoutes");
+const resultsRoutes = require("./routes/resultsRoutes");
+const reportsRoutes = require("./routes/reportsRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
+const searchRoutes = require("./routes/searchRoutes");*/
 
 const app = express();
 
