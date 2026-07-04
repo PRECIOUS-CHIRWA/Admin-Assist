@@ -1,214 +1,224 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Admin Assist is a modern student information system for secondary schools in Zambia.">
   <title>Admin Assist | Student Information System</title>
   <script>
-    // Enforce trailing slash on directory URL to prevent broken relative links on GitHub Pages
     if (window.location.pathname.split('/').pop().indexOf('.') === -1 && !window.location.pathname.endsWith('/')) {
       window.location.replace(window.location.pathname + '/' + window.location.search + window.location.hash);
     }
   </script>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap"
-    rel="stylesheet">
   <link rel="stylesheet" href="index.css">
 </head>
-
 <body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
 
-  <!-- NAV -->
-  <nav>
-    <a href="#" class="logo">Admin<span>Assist</span></a>
-    <ul>
-      <li><a href="#features">Features</a></li>
-      <li><a href="#how">How It Works</a></li>
-      <li><a href="#roles">Roles</a></li>
-      <li><a href="#contact">Contact</a></li>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="Admin Assist home">
+      <span class="brand-mark" aria-hidden="true">AA</span>
+      <span class="brand-text">
+        <span class="brand-kicker">Student Information System</span>
+        <span class="brand-name">Admin Assist</span>
+      </span>
+    </a>
 
-      <li><a href="#cta" class="nav-cta">Get Started</a></li>
-    </ul>
-  </nav>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+      <span class="sr-only">Toggle navigation</span>
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
 
-  <!-- HERO -->
-  <section class="hero">
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-    <div class="blob blob-3"></div>
+    <nav class="site-nav" id="site-nav" aria-label="Primary navigation">
+      <a class="nav-link" href="#top">Home</a>
+      <a class="nav-link" href="#features">Features</a>
+      <a class="nav-link" href="#about">About</a>
+      <a class="nav-link" href="#contact">Contact</a>
+      <a class="nav-link nav-cta" href="./Frontend/Src/login.html">Login</a>
+    </nav>
+  </header>
 
-
-
-    <h1>School Admin, <span class="accent">Simplified</span><br>for Zambia</h1>
-    <p class="hero-sub">Admin Assist replaces paper registers and physical files with a fast, secure, web-based Student
-      Information System built for Zambian secondary schools.</p>
-
-    <div class="hero-ctas">
-      <a href="#cta" class="btn-primary">Request Access →</a>
-      <a href="#features" class="btn-ghost">Explore Features</a>
-    </div>
-
-    <div class="stats-strip">
-      <div class="stat">
-        <div class="stat-num">5,000+</div>
-        <div class="stat-label">Student Records</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num">500</div>
-        <div class="stat-label">Concurrent Users</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num">99%</div>
-        <div class="stat-label">Uptime Target</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num">&lt;2s</div>
-        <div class="stat-label">Response Time</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- FEATURES -->
-  <section id="features">
-    <div class="section-tag">Core Modules</div>
-    <h2 class="section-title">Everything a school<br>needs, nothing it doesn't</h2>
-    <p class="section-sub">Built around the exact operational challenges of Zambian secondary schools — offline-capable,
-      lightweight, and secure.</p>
-
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon">🔐</div>
-        <div class="feature-title">Role-Based Access Control</div>
-        <p class="feature-desc">Secure login with distinct dashboards for Administrators, Teachers, and Students.
-          Unauthorized access is blocked and redirected automatically.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🎓</div>
-        <div class="feature-title">Student Enrollment & Profiles</div>
-        <p class="feature-desc">Full CRUD operations for student records — name, ID, contact details, enrollment date,
-          and class assignment — all in one place.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📋</div>
-        <div class="feature-title">Attendance Tracking</div>
-        <p class="feature-desc">Mark daily attendance per class with Present / Absent / Late options. Generate automatic
-          monthly summaries for any section.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📝</div>
-        <div class="feature-title">Academic Results & Grades</div>
-        <p class="feature-desc">Enter exam scores per subject and term. Averages are calculated automatically. Teachers
-          access only their own class data.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📄</div>
-        <div class="feature-title">Report Generation</div>
-        <p class="feature-desc">Export printable transcripts, attendance sheets, and enrollment statistics in seconds —
-          eliminating manual compilation work.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- HOW IT WORKS -->
-  <section class="how-section" id="how">
-    <div class="section-tag">Getting Started</div>
-    <h2 class="section-title">Up and running in minutes</h2>
-    <p class="section-sub">No special hardware required. Runs on low-cost local servers and is compatible with Chrome
-      and Edge browsers.</p>
-
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">01</div>
-        <div class="step-title">School Onboarding</div>
-        <p class="step-desc">Register your institution and configure class structures, subjects, and the academic
-          calendar.</p>
-      </div>
-      <div class="step">
-        <div class="step-num">02</div>
-        <div class="step-title">Create User Accounts</div>
-        <p class="step-desc">Admin creates accounts for Teachers and Students. Roles are assigned automatically with the
-          right permissions.</p>
-      </div>
-      <div class="step">
-        <div class="step-num">03</div>
-        <div class="step-title">Enroll Students</div>
-        <p class="step-desc">Bulk import or step-by-step enrollment form. Data is validated in real time before saving
-          to the database.</p>
-      </div>
-      <div class="step">
-        <div class="step-num">04</div>
-        <div class="step-title">Day-to-Day Operations</div>
-        <p class="step-desc">Teachers record attendance and results. Admins monitor dashboards and generate reports for
-          school management.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ROLES -->
-  <section id="roles">
-    <div class="section-tag">User Roles</div>
-    <h2 class="section-title">Designed for everyone<br>in your institution</h2>
-    <p class="section-sub">Three distinct role-based views, each showing only what that user needs — secure by design.
-    </p>
-
-    <div class="roles">
-      <div class="role-card">
-        <div class="role-avatar">🏫</div>
-        <div class="role-name">Administrator</div>
-        <ul class="role-perms">
-          <li>Full dashboard &amp; overview reports</li>
-          <li>Enroll &amp; manage all students</li>
-          <li>Create and manage user accounts</li>
-          <li>Generate &amp; export all reports</li>
-          <li>Audit logs &amp; system settings</li>
+  <main id="main-content">
+    <section class="hero" id="top">
+      <div class="hero-copy">
+        <p class="eyebrow">Trusted by modern secondary schools</p>
+        <h1>Bring clarity to every school day.</h1>
+        <p class="hero-text">
+          Admin Assist helps principals, administrators, teachers, and staff manage admissions, attendance,
+          results, and reporting from one secure platform built for Zambian schools.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="./Frontend/Src/login.html">Get Started</a>
+          <a class="btn btn-secondary" href="./Frontend/Src/login.html">Login</a>
+        </div>
+        <ul class="hero-points" aria-label="Key platform benefits">
+          <li>Secure role-based access</li>
+          <li>Fast student record management</li>
+          <li>Clean, mobile-ready workflows</li>
         </ul>
       </div>
-      <div class="role-card">
-        <div class="role-avatar">👩‍🏫</div>
-        <div class="role-name">Teacher</div>
-        <ul class="role-perms">
-          <li>Class-specific attendance</li>
-          <li>Enter &amp; update exam results</li>
-          <li>View student profiles (read only)</li>
-          <li>Generate class-level reports</li>
-          <li>No access to other classes</li>
-        </ul>
-      </div>
-      <div class="role-card">
-        <div class="role-avatar">🧑‍🎓</div>
-        <div class="role-name">Student</div>
-        <ul class="role-perms">
-          <li>View own profile &amp; records</li>
-          <li>Check attendance history</li>
-          <li>View exam results by term</li>
-          <li>Download personal transcript</li>
-          <li>Cannot access other records</li>
-        </ul>
-      </div>
-    </div>
-  </section>
 
-  <!-- CTA -->
-  <section class="cta-section" id="cta">
-    <div class="cta-inner">
-      <h2>Ready to go paperless?</h2>
-      <p>Join schools across Zambia modernizing their student records with Admin Assist.</p>
-      <div class="hero-ctas" style="justify-content:center;">
-        <a href="./Src/login.html" class="btn-primary">Login to Your Account →</a>
-        <a href="#features" class="btn-ghost">Learn More</a>
+      <div class="hero-preview" aria-hidden="true">
+        <div class="preview-window">
+          <div class="preview-toolbar">
+            <span></span><span></span><span></span>
+          </div>
+          <div class="preview-body">
+            <div class="preview-side">
+              <div class="preview-card preview-card--highlight">
+                <p class="window-label">Daily overview</p>
+                <h2>Attendance at a glance</h2>
+                <div class="metric-row">
+                  <div>
+                    <strong>94%</strong>
+                    <span>Present</span>
+                  </div>
+                  <div>
+                    <strong>12</strong>
+                    <span>Pending</span>
+                  </div>
+                </div>
+              </div>
+              <div class="preview-card">
+                <p class="window-label">Recent activity</p>
+                <ul class="preview-list">
+                  <li>Enrollment complete</li>
+                  <li>Results updated</li>
+                  <li>Report exported</li>
+                </ul>
+              </div>
+            </div>
+            <div class="preview-main">
+              <div class="preview-card preview-card--stat">
+                <p class="window-label">School operations</p>
+                <div class="stat-pill">5,000+ records</div>
+                <div class="stat-pill">24/7 access</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- FOOTER -->
-  <footer>
-    <div>© 2025 Admin Assist · The Copperbelt University</div>
-    <div style="display:flex;gap:1.5rem;">
-      <a href="mailto:adminassist@gmail.com" id="contact">Email: adminassist@gmail.com</a>
-    </div>
+    <section class="section" id="about">
+      <div class="section-heading">
+        <p class="section-tag">Why schools choose Admin Assist</p>
+        <h2>Professional tools for the work that matters.</h2>
+        <p>
+          Built for the realities of school administration, the platform replaces scattered paperwork with a
+          dependable digital workflow that stays clear, secure, and easy to use.
+        </p>
+      </div>
+
+      <div class="about-grid">
+        <article class="info-card">
+          <h3>Reliable by design</h3>
+          <p>Keep student records, attendance, and outcomes in one secure place without adding friction to daily tasks.</p>
+        </article>
+        <article class="info-card">
+          <h3>Built for collaboration</h3>
+          <p>Give principals, teachers, and administrative staff the right visibility without compromising data control.</p>
+        </article>
+        <article class="info-card">
+          <h3>Ready for growth</h3>
+          <p>Scale from a single school office to a larger institution with consistent processes and reporting.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="features">
+      <div class="section-heading">
+        <p class="section-tag">Core modules</p>
+        <h2>Every essential school function, neatly organized.</h2>
+        <p>
+          From student enrollment to report generation, each module is built to feel consistent, fast, and clear.
+        </p>
+      </div>
+
+      <div class="feature-grid">
+        <article class="feature-card">
+          <div class="feature-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 3l7 4v5c0 4.2-2.7 7.8-7 9-4.3-1.2-7-4.8-7-9V7l7-4z"/></svg>
+          </div>
+          <h3>Secure role-based access</h3>
+          <p>Protect every part of the system with clear permissions for administrators, teachers, and students.</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M5 6h14v10H5zM8 3h8v3H8z"/></svg>
+          </div>
+          <h3>Student enrollment</h3>
+          <p>Capture learner details, class placements, and profile information in one structured workflow.</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M6 4h12v16H6zM9 8h6M9 12h6M9 16h4"/></svg>
+          </div>
+          <h3>Attendance management</h3>
+          <p>Track daily attendance with the right status options and keep records ready for review at any time.</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M5 19V8h4v11H5zm5-4V5h4v10h-4zm5 2v-6h4v6h-4z"/></svg>
+          </div>
+          <h3>Academic results</h3>
+          <p>Record exam outcomes and generate clear grade summaries without manual calculations.</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M6 5h12v14H6zM9 9h6M9 13h6"/></svg>
+          </div>
+          <h3>Report generation</h3>
+          <p>Export attendance sheets, transcripts, and school summaries quickly for administration use.</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 18h16M7 15V8m5 7V4m5 11v-5"/></svg>
+          </div>
+          <h3>Analytics dashboard</h3>
+          <p>Monitor school activity, trends, and key records from a dashboard designed for quick decisions.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section contact-section" id="contact">
+      <div class="contact-card">
+        <div>
+          <p class="section-tag">Contact</p>
+          <h2>Ready to bring your school operations online?</h2>
+          <p>
+            Whether you are preparing for rollout or reviewing your institution’s needs, the Admin Assist team can help.
+          </p>
+        </div>
+        <a class="btn btn-primary" href="mailto:adminassist@gmail.com">Contact the team</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>© 2025 Admin Assist</span>
+    <a href="mailto:adminassist@gmail.com">adminassist@gmail.com</a>
   </footer>
 
-</body>
+  <script>
+    const toggleButton = document.querySelector('.nav-toggle');
+    const nav = document.querySelector('.site-nav');
 
+    if (toggleButton && nav) {
+      toggleButton.addEventListener('click', () => {
+        const isOpen = nav.classList.toggle('is-open');
+        toggleButton.setAttribute('aria-expanded', String(isOpen));
+      });
+
+      nav.querySelectorAll('a').forEach((link) => {
+        link.addEventListener('click', () => {
+          nav.classList.remove('is-open');
+          toggleButton.setAttribute('aria-expanded', 'false');
+        });
+      });
+    }
+  </script>
+</body>
 </html>
