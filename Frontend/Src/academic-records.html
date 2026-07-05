@@ -4,29 +4,39 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Attendance Management | Admin Assist</title>
+  <title>Academic Records | Admin Assist</title>
   <link rel="stylesheet" href="theme.css" />
   <link rel="stylesheet" href="navigation.css" />
   <link rel="stylesheet" href="slide-panels.css" />
-  <link rel="stylesheet" href="attendance-management.css" />
+  <link rel="stylesheet" href="aa-shared.css" />
 </head>
 
-<body data-page="attendance-management">
+<body data-page="academic-records">
   <div id="navigation-root"></div>
 
   <main class="aa-main">
     <header class="aa-page-header">
       <div>
-        <p class="aa-kicker">Attendance</p>
-        <h1>Attendance Management</h1>
-        <p class="aa-subtitle">Take attendance for a class, review past sessions, and manage records.</p>
+        <p class="aa-kicker">Academics</p>
+        <h1>Academic Records</h1>
+        <p class="aa-subtitle">Record and manage student results using the ECZ grading scale.</p>
       </div>
       <div class="aa-header-actions">
-        <a class="aa-btn aa-btn-secondary" href="attendance-history.html">View History</a>
-        <a class="aa-btn aa-btn-secondary" href="attendance-summary.html">Summary</a>
-        <button class="aa-btn aa-btn-primary" id="openTakeAttendanceBtn" type="button">+ Take Attendance</button>
+        <a class="aa-btn aa-btn-secondary" href="student-transcript.html">View Transcripts</a>
+        <button class="aa-btn aa-btn-primary" id="addResultBtn" type="button">+ Add Result</button>
       </div>
     </header>
+
+    <div class="aa-stats-grid">
+      <div class="aa-stat-card aa-accent"><span class="aa-stat-label">Total Entries</span><span class="aa-stat-value"
+          id="statTotal">—</span></div>
+      <div class="aa-stat-card aa-accent"><span class="aa-stat-label">Class Average</span><span class="aa-stat-value"
+          id="statAvg">—</span></div>
+      <div class="aa-stat-card aa-accent"><span class="aa-stat-label">Pass Rate</span><span class="aa-stat-value"
+          id="statPass">—</span></div>
+      <div class="aa-stat-card aa-accent"><span class="aa-stat-label">Failures</span><span class="aa-stat-value"
+          id="statFail">—</span></div>
+    </div>
 
     <section class="aa-filter-bar">
       <div class="aa-filter-field">
@@ -36,124 +46,123 @@
         </select>
       </div>
       <div class="aa-filter-field">
+        <label for="filterSubject">Subject</label>
+        <select id="filterSubject">
+          <option value="">All Subjects</option>
+        </select>
+      </div>
+      <div class="aa-filter-field">
         <label for="filterTerm">Term</label>
         <select id="filterTerm">
           <option value="">All Terms</option>
         </select>
       </div>
-      <div class="aa-filter-field">
-        <label for="filterFromDate">From</label>
-        <input type="date" id="filterFromDate" />
-      </div>
-      <div class="aa-filter-field">
-        <label for="filterToDate">To</label>
-        <input type="date" id="filterToDate" />
-      </div>
-      <button class="aa-btn aa-btn-ghost" id="clearFiltersBtn" type="button">Clear</button>
+      <button class="aa-btn aa-btn-ghost" id="clearBtn" type="button">Clear</button>
     </section>
 
     <section class="aa-card">
       <div class="aa-card-header">
-        <h2>Recent Sessions</h2>
-        <span class="aa-badge" id="sessionCountBadge">0 sessions</span>
+        <h2>Results</h2>
+        <span class="aa-badge" id="countBadge">0 results</span>
       </div>
 
-      <div id="sessionsEmptyState" class="aa-empty-state" hidden>
-        <h3>No attendance sessions yet</h3>
-        <p>Click "Take Attendance" to record attendance for a class.</p>
+      <div class="aa-empty-state" id="emptyState" hidden>
+        <h3>No results recorded yet</h3>
+        <p>Click "Add Result" to enter the first student result.</p>
+        <button class="aa-btn aa-btn-primary" id="addResultBtnEmpty" type="button">+ Add Result</button>
       </div>
 
       <div class="aa-table-wrap">
-        <table class="aa-table" id="sessionsTable">
+        <table class="aa-table" id="resultsTable">
           <thead>
             <tr>
-              <th>Date</th>
+              <th>Student</th>
+              <th>Adm No</th>
               <th>Class</th>
-              <th>Period</th>
-              <th>Teacher</th>
-              <th>Present</th>
-              <th>Absent</th>
-              <th>Late</th>
-              <th>Excused</th>
-              <th>Rate</th>
+              <th>Subject</th>
+              <th>Test</th>
+              <th>Assign</th>
+              <th>Exam</th>
+              <th>Total</th>
+              <th>%</th>
+              <th>Grade</th>
+              <th>Position</th>
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody id="sessionsTableBody"></tbody>
+          <tbody id="tableBody"></tbody>
         </table>
       </div>
     </section>
   </main>
 
-  <!-- ─── Take Attendance Modal ─────────────────────────────────────────── -->
-  <div class="aa-modal-backdrop" id="takeAttendanceModal" hidden>
-    <div class="aa-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <div class="aa-modal-header">
-        <h2 id="modalTitle">Take Attendance</h2>
-        <button class="aa-modal-close" id="closeModalBtn" type="button" aria-label="Close">&times;</button>
-      </div>
-
-      <div class="aa-modal-step" id="step1">
-        <p class="aa-modal-step-label">Step 1 — Select Class &amp; Date</p>
-        <div class="aa-form-grid">
-          <div class="aa-form-field">
-            <label for="sessionClass">Class *</label>
-            <select id="sessionClass" required></select>
-          </div>
-          <div class="aa-form-field">
-            <label for="sessionTerm">Term *</label>
-            <select id="sessionTerm" required></select>
-          </div>
-          <div class="aa-form-field">
-            <label for="sessionDate">Date *</label>
-            <input type="date" id="sessionDate" required />
-          </div>
-          <div class="aa-form-field">
-            <label for="sessionPeriod">Period</label>
-            <input type="text" id="sessionPeriod" placeholder="e.g. Period 1, General" value="General" />
-          </div>
-          <div class="aa-form-field">
-            <label for="sessionSubject">Subject (optional)</label>
-            <select id="sessionSubject">
-              <option value="">General Roll Call</option>
-            </select>
-          </div>
-        </div>
-        <div class="aa-modal-actions">
-          <button class="aa-btn aa-btn-primary" id="loadRosterBtn" type="button">Load Class Roster</button>
-        </div>
-      </div>
-
-      <div class="aa-modal-step" id="step2" hidden>
-        <p class="aa-modal-step-label">Step 2 — Mark Each Student</p>
-        <div class="aa-roster-toolbar">
-          <button class="aa-chip" type="button" data-bulk="present">Mark All Present</button>
-          <button class="aa-chip" type="button" data-bulk="absent">Mark All Absent</button>
-        </div>
-        <div class="aa-roster-list" id="rosterList"></div>
-        <div class="aa-modal-actions">
-          <button class="aa-btn aa-btn-ghost" id="backToStep1Btn" type="button">← Back</button>
-          <button class="aa-btn aa-btn-primary" id="submitAttendanceBtn" type="button">Submit Attendance</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ─── View Session Modal ────────────────────────────────────────────── -->
-  <div class="aa-modal-backdrop" id="viewSessionModal" hidden>
+  <!-- Add/Edit Result Modal -->
+  <div class="aa-modal-backdrop" id="resultModal" hidden>
     <div class="aa-modal" role="dialog" aria-modal="true">
       <div class="aa-modal-header">
-        <h2>Session Details</h2>
-        <button class="aa-modal-close" id="closeViewModalBtn" type="button" aria-label="Close">&times;</button>
+        <h2 id="modalTitle">Add Result</h2>
+        <button class="aa-modal-close" id="closeModalBtn" type="button" aria-label="Close">&times;</button>
       </div>
-      <div id="viewSessionContent"></div>
+      <div class="aa-modal-body">
+        <input type="hidden" id="editingId" />
+        <div class="aa-form-grid">
+          <div class="aa-form-field">
+            <label for="fStudent">Student *</label>
+            <select id="fStudent" required>
+              <option value="">Select Student…</option>
+            </select>
+          </div>
+          <div class="aa-form-field">
+            <label for="fSubject">Subject *</label>
+            <select id="fSubject" required>
+              <option value="">Select Subject…</option>
+            </select>
+          </div>
+          <div class="aa-form-field">
+            <label for="fClass">Class *</label>
+            <select id="fClass" required>
+              <option value="">Select Class…</option>
+            </select>
+          </div>
+          <div class="aa-form-field">
+            <label for="fTerm">Term *</label>
+            <select id="fTerm" required>
+              <option value="">Select Term…</option>
+            </select>
+          </div>
+          <div class="aa-form-field">
+            <label for="fTest">Test Mark (max 30)</label>
+            <input type="number" id="fTest" min="0" max="30" step="0.5" placeholder="0" />
+          </div>
+          <div class="aa-form-field">
+            <label for="fAssign">Assignment Mark (max 20)</label>
+            <input type="number" id="fAssign" min="0" max="20" step="0.5" placeholder="0" />
+          </div>
+          <div class="aa-form-field">
+            <label for="fExam">Exam Mark (max 50)</label>
+            <input type="number" id="fExam" min="0" max="50" step="0.5" placeholder="0" />
+          </div>
+          <div class="aa-form-field">
+            <label>Auto-Calculated Total</label>
+            <input type="text" id="fTotalPreview" readonly style="background:var(--aa-bg)" placeholder="—" />
+          </div>
+          <div class="aa-form-field aa-form-field-full">
+            <label for="fComment">Teacher Comment (optional)</label>
+            <textarea id="fComment" placeholder="Optional remarks…"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="aa-modal-actions">
+        <button class="aa-btn aa-btn-ghost" id="cancelModalBtn" type="button">Cancel</button>
+        <button class="aa-btn aa-btn-primary" id="saveResultBtn" type="button">Save Result</button>
+      </div>
     </div>
   </div>
 
   <script src="auth.js"></script>
   <script src="auth-guard.js"></script>
   <script src="navigation.js"></script>
-  <script src="attendance-management.js"></script>
+  <script src="academic-records.js"></script>
 </body>
 
 </html>
