@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Attendance Reports | Admin Assist</title>
+    <link rel="stylesheet" href="theme.css" />
+    <link rel="stylesheet" href="navigation.css" />
+    <link rel="stylesheet" href="slide-panels.css" />
+    <link rel="stylesheet" href="aa-shared.css" />
+</head>
+
+<body data-page="attendance-reports">
+    <div id="navigation-root"></div>
+
+    <main class="aa-main">
+        <header class="aa-page-header">
+            <div>
+                <p class="aa-kicker">Attendance</p>
+                <h1>Attendance Reports</h1>
+                <p class="aa-subtitle">Download attendance data as CSV for printing or sharing.</p>
+            </div>
+            <div class="aa-header-actions">
+                <a class="aa-btn aa-btn-secondary" href="attendance-summary.html">← Summary</a>
+            </div>
+        </header>
+
+        <!-- Filter controls -->
+        <section class="aa-filter-bar">
+            <div class="aa-filter-field">
+                <label for="filterClass">Class</label>
+                <select id="filterClass">
+                    <option value="">All Classes</option>
+                </select>
+            </div>
+            <div class="aa-filter-field">
+                <label for="filterTerm">Term</label>
+                <select id="filterTerm">
+                    <option value="">All Terms</option>
+                </select>
+            </div>
+            <div class="aa-filter-field">
+                <label for="filterYear">Academic Year</label>
+                <select id="filterYear">
+                    <option value="">All Years</option>
+                </select>
+            </div>
+        </section>
+
+        <div class="aa-stats-grid">
+            <div class="aa-card" style="margin-bottom:0">
+                <h3 style="font-size:.95rem;color:var(--aa-navy);margin:0 0 .5rem">Attendance Summary CSV</h3>
+                <p style="font-size:.85rem;color:var(--aa-text-muted);margin:0 0 1rem">Per-student totals: present,
+                    absent, late, excused, and attendance rate.</p>
+                <button class="aa-btn aa-btn-primary" id="dlSummaryBtn" type="button">⬇ Download CSV</button>
+            </div>
+            <div class="aa-card" style="margin-bottom:0">
+                <h3 style="font-size:.95rem;color:var(--aa-navy);margin:0 0 .5rem">Full Session Report CSV</h3>
+                <p style="font-size:.85rem;color:var(--aa-text-muted);margin:0 0 1rem">All sessions including date,
+                    period, teacher, and per-status counts.</p>
+                <button class="aa-btn aa-btn-primary" id="dlSessionsBtn" type="button">⬇ Download CSV</button>
+            </div>
+        </div>
+
+        <div id="statusMsg" class="aa-alert aa-alert-info" hidden></div>
+    </main>
+
+    <script src="auth.js"></script>
+    <script src="auth-guard.js"></script>
+    <script src="navigation.js"></script>
+    <script src="a-r.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,122 @@
+/* attendance-management.css — Roster UI & session-specific styles */
+
+/* ─── Roster list ────────────────────────────────────────────── */
+.aa-roster-list {
+    max-height: 52vh;
+    overflow-y: auto;
+    border: 1px solid var(--aa-border);
+    border-radius: var(--aa-radius);
+    margin-bottom: 1rem;
+}
+
+.aa-roster-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .75rem 1rem;
+    border-bottom: 1px solid var(--aa-border);
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.aa-roster-row:last-child {
+    border-bottom: none;
+}
+
+.aa-roster-row:nth-child(even) {
+    background: #fafbfc;
+}
+
+.aa-roster-name {
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+    min-width: 160px;
+}
+
+.aa-roster-name strong {
+    font-size: .875rem;
+    color: var(--aa-navy);
+}
+
+.aa-roster-name span {
+    font-size: .75rem;
+    color: var(--aa-text-muted);
+}
+
+/* ─── Status radio buttons ───────────────────────────────────── */
+.aa-roster-statuses {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+
+.aa-status-radio {
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    cursor: pointer;
+}
+
+.aa-status-radio input {
+    display: none;
+}
+
+.aa-status-radio span {
+    padding: .25rem .65rem;
+    border-radius: 999px;
+    font-size: .75rem;
+    font-weight: 600;
+    border: 1.5px solid var(--aa-border-dark);
+    background: var(--aa-white);
+    color: var(--aa-text-muted);
+    transition: all .12s;
+    text-transform: capitalize;
+    cursor: pointer;
+}
+
+.aa-status-radio input:checked+span {
+    border-color: transparent;
+    color: var(--aa-white);
+}
+
+.aa-status-radio-present input:checked+span {
+    background: #10b981;
+}
+
+.aa-status-radio-absent input:checked+span {
+    background: #ef4444;
+}
+
+.aa-status-radio-late input:checked+span {
+    background: #f59e0b;
+}
+
+.aa-status-radio-excused input:checked+span {
+    background: #3b82f6;
+}
+
+.aa-status-radio span:hover {
+    border-color: var(--aa-navy);
+}
+
+/* ─── Roster toolbar ─────────────────────────────────────────── */
+.aa-roster-toolbar {
+    display: flex;
+    gap: .5rem;
+    margin-bottom: .75rem;
+    flex-wrap: wrap;
+}
+
+/* ─── Session stats in card header ──────────────────────────── */
+.aa-session-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: .8rem;
+    color: var(--aa-text-muted);
+    flex-wrap: wrap;
+}
+
+.aa-session-meta strong {
+    color: var(--aa-text);
+}
