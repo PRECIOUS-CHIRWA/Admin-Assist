@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Attendance Summary | Admin Assist</title>
+    <link rel="stylesheet" href="theme.css" />
+    <link rel="stylesheet" href="navigation.css" />
+    <link rel="stylesheet" href="slide-panels.css" />
+    <link rel="stylesheet" href="aa-shared.css" />
+</head>
+
+<body data-page="attendance-summary">
+    <div id="navigation-root"></div>
+
+    <main class="aa-main">
+        <header class="aa-page-header">
+            <div>
+                <p class="aa-kicker">Attendance</p>
+                <h1>Attendance Summary</h1>
+                <p class="aa-subtitle">Per-student attendance rates. Students below 75% are flagged.</p>
+            </div>
+            <div class="aa-header-actions">
+                <a class="aa-btn aa-btn-secondary" href="attendance-reports.html">Export CSV</a>
+                <a class="aa-btn aa-btn-secondary" href="attendance-management.html">← Attendance</a>
+            </div>
+        </header>
+
+        <div class="aa-stats-grid" id="statsGrid">
+            <div class="aa-stat-card aa-accent">
+                <span class="aa-stat-label">Total Students</span>
+                <span class="aa-stat-value" id="statTotal">—</span>
+            </div>
+            <div class="aa-stat-card aa-accent">
+                <span class="aa-stat-label">Average Rate</span>
+                <span class="aa-stat-value" id="statAvg">—</span>
+            </div>
+            <div class="aa-stat-card aa-accent">
+                <span class="aa-stat-label">At Risk (&lt;75%)</span>
+                <span class="aa-stat-value" id="statAtRisk">—</span>
+            </div>
+            <div class="aa-stat-card aa-accent">
+                <span class="aa-stat-label">Excellent (≥90%)</span>
+                <span class="aa-stat-value" id="statExcellent">—</span>
+            </div>
+        </div>
+
+        <section class="aa-filter-bar">
+            <div class="aa-filter-field">
+                <label for="filterClass">Class</label>
+                <select id="filterClass">
+                    <option value="">All Classes</option>
+                </select>
+            </div>
+            <div class="aa-filter-field">
+                <label for="filterTerm">Term</label>
+                <select id="filterTerm">
+                    <option value="">All Terms</option>
+                </select>
+            </div>
+            <div class="aa-filter-field">
+                <label for="filterYear">Academic Year</label>
+                <select id="filterYear">
+                    <option value="">All Years</option>
+                </select>
+            </div>
+            <button class="aa-btn aa-btn-ghost" id="clearBtn" type="button">Clear</button>
+        </section>
+
+        <section class="aa-card">
+            <div class="aa-card-header">
+                <h2>Student Attendance Rates</h2>
+                <span class="aa-badge" id="countBadge">0 students</span>
+            </div>
+
+            <div class="aa-empty-state" id="emptyState" hidden>
+                <h3>No data found</h3>
+                <p>Try adjusting the filters or take attendance first.</p>
+            </div>
+
+            <div class="aa-table-wrap">
+                <table class="aa-table" id="summaryTable">
+                    <thead>
+                        <tr>
+                            <th>Adm No</th>
+                            <th>Student</th>
+                            <th>Class</th>
+                            <th>Sessions</th>
+                            <th>Present</th>
+                            <th>Absent</th>
+                            <th>Late</th>
+                            <th>Excused</th>
+                            <th>Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="auth.js"></script>
+    <script src="auth-guard.js"></script>
+    <script src="navigation.js"></script>
+    <script src="a-s.js"></script>
+</body>
+
+</html>

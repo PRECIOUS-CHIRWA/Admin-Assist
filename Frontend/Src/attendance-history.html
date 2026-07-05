@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Attendance History | Admin Assist</title>
+    <link rel="stylesheet" href="theme.css" />
+    <link rel="stylesheet" href="navigation.css" />
+    <link rel="stylesheet" href="slide-panels.css" />
+    <link rel="stylesheet" href="aa-shared.css" />
+</head>
+
+<body data-page="attendance-history">
+    <div id="navigation-root"></div>
+
+    <main class="aa-main">
+        <header class="aa-page-header">
+            <div>
+                <p class="aa-kicker">Attendance</p>
+                <h1>Attendance History</h1>
+                <p class="aa-subtitle">Browse all recorded attendance sessions.</p>
+            </div>
+            <div class="aa-header-actions">
+                <a class="aa-btn aa-btn-secondary" href="attendance-management.html">← Back to Attendance</a>
+            </div>
+        </header>
+
+        <section class="aa-filter-bar">
+            <div class="aa-filter-field">
+                <label for="filterClass">Class</label>
+                <select id="filterClass">
+                    <option value="">All Classes</option>
+                </select>
+            </div>
+            <div class="aa-filter-field">
+                <label for="filterTerm">Term</label>
+                <select id="filterTerm">
+                    <option value="">All Terms</option>
+                </select>
+            </div>
+            <div class="aa-filter-field">
+                <label for="filterFrom">From Date</label>
+                <input type="date" id="filterFrom" />
+            </div>
+            <div class="aa-filter-field">
+                <label for="filterTo">To Date</label>
+                <input type="date" id="filterTo" />
+            </div>
+            <button class="aa-btn aa-btn-ghost" id="clearFiltersBtn" type="button">Clear</button>
+        </section>
+
+        <section class="aa-card">
+            <div class="aa-card-header">
+                <h2>Sessions</h2>
+                <span class="aa-badge" id="countBadge">0 sessions</span>
+            </div>
+
+            <div class="aa-empty-state" id="emptyState" hidden>
+                <h3>No sessions found</h3>
+                <p>Try adjusting the filters, or go take attendance.</p>
+                <a class="aa-btn aa-btn-primary" href="attendance-management.html">Take Attendance</a>
+            </div>
+
+            <div class="aa-table-wrap">
+                <table class="aa-table" id="historyTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Class</th>
+                            <th>Period</th>
+                            <th>Teacher</th>
+                            <th>Total</th>
+                            <th>Present</th>
+                            <th>Absent</th>
+                            <th>Rate</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Session Detail Modal -->
+    <div class="aa-modal-backdrop" id="detailModal" hidden>
+        <div class="aa-modal aa-modal-lg" role="dialog" aria-modal="true">
+            <div class="aa-modal-header">
+                <h2>Session Details</h2>
+                <button class="aa-modal-close" id="closeDetailBtn" type="button" aria-label="Close">&times;</button>
+            </div>
+            <div class="aa-modal-body" id="detailContent"></div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="auth-guard.js"></script>
+    <script src="navigation.js"></script>
+    <script src="a-h.js"></script>
+</body>
+
+</html>
