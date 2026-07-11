@@ -92,7 +92,7 @@ app.use("/api", panelRoutes);
 
 
 app.use("/api/attendance", attendanceRoutes);
-app.use("/api/subjects", subjectsRoutes);
+app.use("/api/subject", subjectRoutes);
 app.use("/api/results", resultsRoutes)
 // app.use("/api/reports", reportsRoutes);
 // app.use("/api/analytics", analyticsRoutes);
