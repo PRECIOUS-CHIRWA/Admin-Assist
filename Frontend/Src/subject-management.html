@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Subject Management | Admin Assist</title>
+    <link rel="stylesheet" href="theme.css" />
+    <link rel="stylesheet" href="navigation.css" />
+    <link rel="stylesheet" href="slide-panels.css" />
+    <link rel="stylesheet" href="aa-shared.css" />
+</head>
+
+<body data-page="subject-management">
+    <div id="navigation-root"></div>
+
+    <main class="aa-main">
+        <header class="aa-page-header">
+            <div>
+                <p class="aa-kicker">Academics</p>
+                <h1>Subject Management</h1>
+                <p class="aa-subtitle">Manage the subject registry and assign teachers to classes.</p>
+            </div>
+            <div class="aa-header-actions">
+                <button class="aa-btn aa-btn-secondary" id="assignBtn" type="button">+ Assign Teacher</button>
+                <button class="aa-btn aa-btn-primary" id="addSubjectBtn" type="button">+ Add Subject</button>
+            </div>
+        </header>
+
+        <div class="aa-detail-grid">
+            <!-- Subjects list -->
+            <section class="aa-card" style="margin-bottom:0">
+                <div class="aa-card-header">
+                    <h2>Subjects</h2>
+                    <span class="aa-badge" id="subjectCount">0</span>
+                </div>
+                <div class="aa-empty-state" id="subjectEmpty" hidden>
+                    <h3>No subjects yet</h3>
+                    <p>Add the first subject using the button above.</p>
+                </div>
+                <div class="aa-table-wrap">
+                    <table class="aa-table" id="subjectTable">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Assignments</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subjectBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Teacher assignments -->
+            <section class="aa-card" style="margin-bottom:0">
+                <div class="aa-card-header">
+                    <h2>Teacher Assignments</h2>
+                    <span class="aa-badge" id="assignCount">0</span>
+                </div>
+                <div class="aa-filter-bar" style="border:none;padding:0;box-shadow:none;margin-bottom:1rem">
+                    <div class="aa-filter-field">
+                        <label for="filterAssignClass">Class</label>
+                        <select id="filterAssignClass">
+                            <option value="">All Classes</option>
+                        </select>
+                    </div>
+                    <div class="aa-filter-field">
+                        <label for="filterAssignYear">Year</label>
+                        <select id="filterAssignYear">
+                            <option value="">All Years</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="aa-empty-state" id="assignEmpty" hidden>
+                    <h3>No assignments</h3>
+                    <p>Use "Assign Teacher" to link a teacher to a subject and class.</p>
+                </div>
+                <div class="aa-table-wrap">
+                    <table class="aa-table" id="assignTable">
+                        <thead>
+                            <tr>
+                                <th>Teacher</th>
+                                <th>Subject</th>
+                                <th>Class</th>
+                                <th>Year</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assignBody"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Subject Modal -->
+    <div class="aa-modal-backdrop" id="subjectModal" hidden>
+        <div class="aa-modal aa-modal-sm" role="dialog" aria-modal="true">
+            <div class="aa-modal-header">
+                <h2 id="subjectModalTitle">Add Subject</h2>
+                <button class="aa-modal-close" id="closeSubjectModal" type="button">&times;</button>
+            </div>
+            <div class="aa-modal-body">
+                <input type="hidden" id="editSubjectId" />
+                <div class="aa-form-grid">
+                    <div class="aa-form-field">
+                        <label for="fCode">Subject Code *</label>
+                        <input type="text" id="fCode" placeholder="e.g. ENG" maxlength="10"
+                            style="text-transform:uppercase" />
+                    </div>
+                    <div class="aa-form-field">
+                        <label for="fName">Subject Name *</label>
+                        <input type="text" id="fName" placeholder="e.g. English Language" />
+                    </div>
+                    <div class="aa-form-field aa-form-field-full">
+                        <label for="fDesc">Description</label>
+                        <textarea id="fDesc" placeholder="Optional description…"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="aa-modal-actions">
+                <button class="aa-btn aa-btn-ghost" id="cancelSubjectBtn" type="button">Cancel</button>
+                <button class="aa-btn aa-btn-primary" id="saveSubjectBtn" type="button">Save Subject</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Teacher Modal -->
+    <div class="aa-modal-backdrop" id="assignModal" hidden>
+        <div class="aa-modal aa-modal-sm" role="dialog" aria-modal="true">
+            <div class="aa-modal-header">
+                <h2>Assign Teacher</h2>
+                <button class="aa-modal-close" id="closeAssignModal" type="button">&times;</button>
+            </div>
+            <div class="aa-modal-body">
+                <div class="aa-form-grid">
+                    <div class="aa-form-field">
+                        <label for="aTeacher">Teacher *</label>
+                        <select id="aTeacher">
+                            <option value="">Select Teacher…</option>
+                        </select>
+                    </div>
+                    <div class="aa-form-field">
+                        <label for="aSubject">Subject *</label>
+                        <select id="aSubject">
+                            <option value="">Select Subject…</option>
+                        </select>
+                    </div>
+                    <div class="aa-form-field">
+                        <label for="aClass">Class *</label>
+                        <select id="aClass">
+                            <option value="">Select Class…</option>
+                        </select>
+                    </div>
+                    <div class="aa-form-field">
+                        <label for="aYear">Academic Year *</label>
+                        <select id="aYear">
+                            <option value="">Select Year…</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="aa-modal-actions">
+                <button class="aa-btn aa-btn-ghost" id="cancelAssignBtn" type="button">Cancel</button>
+                <button class="aa-btn aa-btn-primary" id="saveAssignBtn" type="button">Assign</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="auth-guard.js"></script>
+    <script src="navigation.js"></script>
+    <script src="subject-management.js"></script>
+</body>
+
+</html>
