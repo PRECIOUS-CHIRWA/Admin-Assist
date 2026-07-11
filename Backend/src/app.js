@@ -12,7 +12,7 @@ const panelRoutes = require("./routes/panelRoutes");
 
 
 const attendanceRoutes = require("./routes/attendanceRoutes");
-const subjectsRoutes = require("./routes/subjectsRoutes");
+const subjectsRoutes = require("./routes/subjectRoutes");
 const resultsRoutes = require("./routes/resultsRoutes");
 /*const reportsRoutes = require("./routes/reportsRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
