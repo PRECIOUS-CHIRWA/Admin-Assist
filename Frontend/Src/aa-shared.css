@@ -34,7 +34,7 @@
 
 /* ─── Layout ─────────────────────────────────────────────────── */
 .aa-main {
-    margin-left: var(--nav-width);
+    margin-left: 0;
     padding: 2rem 2.5rem;
     min-height: 100vh;
     background: var(--aa-bg);
@@ -766,7 +766,6 @@
 /* ─── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .aa-main {
-        margin-left: 0;
         padding: 1rem;
     }
 

@@ -9,6 +9,7 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   loadDashboardStats();
+  loadAttendanceStats();
   loadRecentActivity();
   _wireCardClicks();
 });
@@ -94,6 +95,41 @@ function _wireCardClicks() {
     });
     card.style.cursor = "pointer";
   });
+}
+
+
+/**
+ * loadAttendanceStats()
+ * Pulls today's attendance rate and recent trend from Sprint 3 analytics endpoint.
+ * Fills [data-attendance-stat] elements if they exist on the page.
+ */
+async function loadAttendanceStats() {
+  try {
+    const res = await authFetch(`${API_BASE}/attendance/analytics`);
+    if (!res || !res.ok) return;
+
+    const data = await res.json();
+    const overall = data.overall || {};
+
+    // Fill any element tagged data-attendance-stat
+    const statMap = {
+      attendanceRate: overall.attendance_rate ?? '—',
+      presentToday: overall.present ?? '—',
+      absentToday: overall.absent ?? '—',
+      totalSessions: overall.total ?? '—',
+    };
+
+    document.querySelectorAll("[data-attendance-stat]").forEach(el => {
+      const key = el.dataset.attendanceStat;
+      if (statMap[key] !== undefined) {
+        el.textContent = typeof statMap[key] === 'number'
+          ? Number(statMap[key]).toLocaleString()
+          : statMap[key];
+      }
+    });
+  } catch (err) {
+    console.warn("loadAttendanceStats:", err.message);
+  }
 }
 
 function _esc(str) {

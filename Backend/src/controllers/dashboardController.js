@@ -45,7 +45,7 @@ const getRecentActivity = async (req, res) => {
 
         const [rows] = await pool.execute(
             `SELECT al.id, al.action, al.entity_type, al.entity_id, al.details, al.created_at,
-                    u.fullName AS actorName, u.role AS actorRole
+                    u.name AS actorName, u.role AS actorRole
              FROM audit_log al
              LEFT JOIN users u ON u.id = al.actor_id
              ORDER BY al.created_at DESC
@@ -58,13 +58,13 @@ const getRecentActivity = async (req, res) => {
             entityType: row.entity_type,
             entityId: row.entity_id,
             details: row.details,
-            actorName: row.actor_name,
-            actorRole: row.actor_role,
+            actorName: row.actorName,
+            actorRole: row.actorRole,
             createdAt: row.created_at,
             description: buildDescription(row),
         }));
 
-        res.json({ activities });
+        res.json(activities);
     } catch (err) {
         console.error("getRecentActivity error:", err.message);
         res.status(500).json({ error: "Failed to load recent activity" });

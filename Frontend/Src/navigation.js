@@ -32,42 +32,26 @@
        roles: ['admin'] means only admins see this link.
     ───────────────────────────────────────────────────────────────── */
     var NAV_LINKS = [
-        {
-            href: 'dashboard.html',
-            label: 'Dashboard',
-            icon: '🏠',
-            roles: []
-        },
-        {
-            href: 'students.html',
-            label: 'Student Directory',
-            icon: '👥',
-            roles: []
-        },
-        {
-            href: 'enroll-student.html',
-            label: 'Enroll Student',
-            icon: '📝',
-            roles: ['admin', 'headmaster', 'staff']
-        },
-        {
-            href: 'attendance-management.html',
-            label: 'Attendance',
-            icon: '📊',
-            roles: []
-        },
-        {
-            href: 'academic-records.html',
-            label: 'Academic Records',
-            icon: '📄',
-            roles: []
-        },
-        {
-            href: 'generate-report.html',
-            label: 'Reports',
-            icon: '📈',
-            roles: ['admin', 'headmaster']
-        }
+        // ── Core ───────────────────────────────────────────────────────────
+        { href: 'dashboard.html', label: 'Dashboard', icon: '🏠', roles: [] },
+        { href: 'students.html', label: 'Student Directory', icon: '👥', roles: [] },
+        { href: 'enroll-student.html', label: 'Enroll Student', icon: '📝', roles: ['admin', 'headmaster', 'staff'] },
+        // ── Attendance (Sprint 3) ───────────────────────────────────────────
+        { section: 'Attendance' },
+        { href: 'attendance-management.html', label: 'Take Attendance', icon: '📋', roles: [] },
+        { href: 'attendance-history.html', label: 'Session History', icon: '📅', roles: [] },
+        { href: 'attendance-summary.html', label: 'Summary', icon: '📊', roles: [] },
+        { href: 'attendance-reports.html', label: 'Export CSV', icon: '⬇', roles: ['admin', 'headmaster', 'teacher'] },
+        // ── Academics (Sprint 4) ────────────────────────────────────────────
+        { section: 'Academics' },
+        { href: 'academic-records.html', label: 'Academic Records', icon: '📄', roles: [] },
+        { href: 'subject-management.html', label: 'Subjects', icon: '📚', roles: ['admin', 'headmaster'] },
+        { href: 'student-transcript.html', label: 'Transcripts', icon: '🎓', roles: [] },
+        // ── Reports & Analytics (Sprint 5) ──────────────────────────────────
+        { section: 'Reports & Analytics' },
+        { href: 'reports-dashboard.html', label: 'Reports', icon: '📈', roles: ['admin', 'headmaster', 'teacher'] },
+        { href: 'analytics-dashboard.html', label: 'Analytics', icon: '📉', roles: ['admin', 'headmaster'] },
+        { href: 'student-search.html', label: 'Student Search', icon: '🔍', roles: [] },
     ];
 
     /* ─────────────────────────────────────────────────────────────────
@@ -162,9 +146,12 @@
     function _injectSidebar() {
         if (document.getElementById('app-sidebar')) return;
 
-        // Build nav link HTML
+        // Build nav link HTML (supports section dividers)
         var linksHtml = NAV_LINKS.map(function (l) {
-            var roleAttr = l.roles.length
+            if (l.section) {
+                return '<li class="sb-section-header" aria-hidden="true">' + l.section + '</li>';
+            }
+            var roleAttr = l.roles && l.roles.length
                 ? ' data-roles="' + l.roles.join(' ') + '"'
                 : '';
             return '<li class="sb-item"' + roleAttr + '>' +
@@ -318,6 +305,14 @@
 }
 .sb-link:focus-visible { outline: 2px solid #d4af37; outline-offset: -2px; }
 .sb-icon { font-size: 17px; width: 22px; text-align: center; flex-shrink: 0; }
+
+/* ── Section headers in sidebar nav ─────────────────── */
+.sb-section-header {
+    padding: 16px 20px 4px;
+    font-size: 10px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: rgba(255,255,255,.35);
+    pointer-events: none; user-select: none;
+}
 
 /* ── Sidebar footer / logout ─────────────────────────── */
 .sb-footer {
