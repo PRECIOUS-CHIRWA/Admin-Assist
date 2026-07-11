@@ -12,9 +12,9 @@ const panelRoutes = require("./routes/panelRoutes");
 
 
 const attendanceRoutes = require("./routes/attendanceRoutes");
-/*const subjectsRoutes = require("./routes/subjectsRoutes");
+const subjectsRoutes = require("./routes/subjectsRoutes");
 const resultsRoutes = require("./routes/resultsRoutes");
-const reportsRoutes = require("./routes/reportsRoutes");
+/*const reportsRoutes = require("./routes/reportsRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const searchRoutes = require("./routes/searchRoutes");*/
 
@@ -92,8 +92,8 @@ app.use("/api", panelRoutes);
 
 
 app.use("/api/attendance", attendanceRoutes);
-// app.use("/api/subjects", subjectsRoutes);
-// app.use("/api/results", resultsRoutes)
+app.use("/api/subjects", subjectsRoutes);
+app.use("/api/results", resultsRoutes)
 // app.use("/api/reports", reportsRoutes);
 // app.use("/api/analytics", analyticsRoutes);
 // app.use("/api/search", searchRoutes);
