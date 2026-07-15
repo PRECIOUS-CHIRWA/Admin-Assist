@@ -30,7 +30,7 @@
   --border-gold: rgba(232, 160, 32, 0.5);
 
   /* Typography */
-  --font-display: 'Syne', sans-serif;
+  --font-display: "Manrope", "Segoe UI", Roboto, sans-serif;
   --font-body: 'DM Sans', sans-serif;
 }
 
