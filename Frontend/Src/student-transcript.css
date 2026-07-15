@@ -1,0 +1,55 @@
+        .transcript-header {
+            background: var(--aa-navy);
+            color: var(--aa-white);
+            border-radius: var(--aa-radius-lg) var(--aa-radius-lg) 0 0;
+            padding: 1.5rem 2rem;
+            margin: -1.5rem -1.5rem 1.5rem;
+        }
+
+        .transcript-header h2 {
+            margin: 0 0 .25rem;
+            font-size: 1.2rem;
+        }
+
+        .transcript-header p {
+            margin: 0;
+            opacity: .8;
+            font-size: .875rem;
+        }
+
+        .transcript-term {
+            margin-bottom: 1.5rem;
+        }
+
+        .transcript-term h3 {
+            font-size: .9rem;
+            font-weight: 700;
+            color: var(--aa-copper);
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            margin: 0 0 .75rem;
+            border-bottom: 2px solid var(--aa-copper-light);
+            padding-bottom: .4rem;
+        }
+
+        .transcript-avg {
+            text-align: right;
+            font-size: .875rem;
+            font-weight: 600;
+            color: var(--aa-text-muted);
+            margin-top: .5rem;
+        }
+
+        @media print {
+
+            .aa-header-actions,
+            .aa-filter-bar,
+            #navigation-root,
+            .aa-page-header .aa-btn {
+                display: none !important;
+            }
+
+            .aa-main {
+                margin-left: 0;
+            }
+        }
