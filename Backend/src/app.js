@@ -94,7 +94,7 @@ app.use("/api", panelRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/subjects", subjectsRoutes);
 app.use("/api/results", resultsRoutes)
-app.use("/api/reports", reportsRoutes);
+app.use("/api/reports", reportRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/search", searchRoutes);
 
