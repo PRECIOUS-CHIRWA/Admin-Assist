@@ -1,0 +1,116 @@
+ .aa-chart-card {
+     background: var(--aa-white);
+     border: 1px solid var(--aa-border);
+     border-radius: var(--aa-radius-lg);
+     padding: 1.5rem;
+     box-shadow: var(--aa-shadow);
+ }
+
+ .aa-chart-card h3 {
+     font-size: .95rem;
+     font-weight: 600;
+     color: var(--aa-navy);
+     margin: 0 0 1rem;
+ }
+
+ .aa-charts-grid {
+     display: grid;
+     grid-template-columns: 1fr 1fr;
+     gap: 1.25rem;
+     margin-top: 1.25rem;
+ }
+
+ .aa-chart-card.aa-full {
+     grid-column: 1 / -1;
+ }
+
+ @media (max-width: 768px) {
+     .aa-charts-grid {
+         grid-template-columns: 1fr;
+     }
+ }
+
+ .aa-bar-row {
+     display: flex;
+     align-items: center;
+     gap: .75rem;
+     margin-bottom: .6rem;
+     font-size: .825rem;
+ }
+
+ .aa-bar-label {
+     width: 130px;
+     flex-shrink: 0;
+     color: var(--aa-text);
+     white-space: nowrap;
+     overflow: hidden;
+     text-overflow: ellipsis;
+ }
+
+ .aa-bar-track {
+     flex: 1;
+     background: var(--aa-bg);
+     border-radius: 999px;
+     height: 10px;
+     overflow: hidden;
+ }
+
+ .aa-bar-fill {
+     height: 100%;
+     border-radius: 999px;
+     background: var(--aa-copper);
+     transition: width .5s ease;
+ }
+
+ .aa-bar-value {
+     width: 50px;
+     text-align: right;
+     color: var(--aa-text-muted);
+     font-weight: 600;
+ }
+
+ .aa-donut-wrap {
+     display: flex;
+     gap: 1.5rem;
+     align-items: center;
+     flex-wrap: wrap;
+ }
+
+ .aa-donut-legend {
+     display: flex;
+     flex-direction: column;
+     gap: .5rem;
+ }
+
+ .aa-donut-legend-item {
+     display: flex;
+     align-items: center;
+     gap: .5rem;
+     font-size: .825rem;
+ }
+
+ .aa-donut-dot {
+     width: 10px;
+     height: 10px;
+     border-radius: 50%;
+     flex-shrink: 0;
+ }
+
+ .aa-performers-list {
+     display: flex;
+     flex-direction: column;
+     gap: .5rem;
+ }
+
+ .aa-performer-row {
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     padding: .5rem 0;
+     border-bottom: 1px solid var(--aa-border);
+     font-size: .85rem;
+ }
+
+ .aa-performer-row:last-child {
+     border-bottom: none;
+ }

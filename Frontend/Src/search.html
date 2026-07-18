@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Search | Admin Assist</title>
+    <link rel="stylesheet" href="aa-shared.css" />
+    <link rel="stylesheet" href="navigation.css" />
+    <link rel="stylesheet" href="search.css" />
+</head>
+
+<body data-page="student-search">
+    <div id="navigation-root"></div>
+
+    <main class="aa-main">
+        <header class="aa-page-header">
+            <div>
+                <p class="aa-kicker">Reports &amp; Analytics</p>
+                <h1>Student Search</h1>
+                <p class="aa-subtitle">Find students, classes, or subjects instantly.</p>
+            </div>
+        </header>
+
+        <!-- Hero search bar -->
+        <div class="aa-search-hero">
+            <h2>Search the school database</h2>
+            <div class="aa-search-hero-bar">
+                <input class="aa-search-hero-input" type="search" id="searchInput"
+                    placeholder="Student name, admission number, class, or subject…" autocomplete="off" autofocus />
+                <button class="aa-btn aa-btn-copper" id="searchBtn" type="button">Search</button>
+            </div>
+            <div style="display:flex;gap:1rem;flex-wrap:wrap">
+                <label style="color:rgba(255,255,255,.7);font-size:.825rem">
+                    <input type="radio" name="searchType" value="all" checked style="margin-right:.3rem" /> All
+                </label>
+                <label style="color:rgba(255,255,255,.7);font-size:.825rem">
+                    <input type="radio" name="searchType" value="students" style="margin-right:.3rem" /> Students
+                </label>
+                <label style="color:rgba(255,255,255,.7);font-size:.825rem">
+                    <input type="radio" name="searchType" value="classes" style="margin-right:.3rem" /> Classes
+                </label>
+                <label style="color:rgba(255,255,255,.7);font-size:.825rem">
+                    <input type="radio" name="searchType" value="subjects" style="margin-right:.3rem" /> Subjects
+                </label>
+            </div>
+        </div>
+
+        <!-- Advanced student filters -->
+        <section class="aa-filter-bar" id="advancedFilters">
+            <div class="aa-filter-field">
+                <label for="filterClass">Class</label>
+                <select id="filterClass">
+                    <option value="">All Classes</option>
+                </select>
+            </div>
+            <div class="aa-filter-field">
+                <label for="filterGender">Gender</label>
+                <select id="filterGender">
+                    <option value="">All</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                </select>
+            </div>
+            <button class="aa-btn aa-btn-ghost" id="clearFilters" type="button">Clear Filters</button>
+        </section>
+
+        <!-- Results -->
+        <div id="resultsArea">
+            <div class="aa-empty-state" id="placeholder">
+                <h3>Start typing to search</h3>
+                <p>Results appear as you type.</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="auth.js"></script>
+    <script src="auth-guard.js"></script>
+    <script src="navigation.js"></script>
+    <script src="search.js"></script>
+</body>
+
+</html>

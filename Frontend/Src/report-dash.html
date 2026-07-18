@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reports Dashboard | Admin Assist</title>
+    <link rel="stylesheet" href="aa-shared.css" />
+    <link rel="stylesheet" href="navigation.css" />
+</head>
+
+<body data-page="reports-dashboard">
+    <div id="navigation-root"></div>
+
+    <main class="aa-main">
+        <header class="aa-page-header">
+            <div>
+                <p class="aa-kicker">Reports &amp; Analytics</p>
+                <h1>Reports Dashboard</h1>
+                <p class="aa-subtitle">Generate and download school reports as CSV files.</p>
+            </div>
+            <div class="aa-header-actions">
+                <a class="aa-btn aa-btn-secondary" href="analytics-dashboard.html">View Analytics</a>
+            </div>
+        </header>
+
+        <!-- School Summary KPIs -->
+        <div class="aa-stats-grid" id="summaryGrid">
+            <div class="aa-stat-card aa-accent">
+                <span class="aa-stat-label">Total Students</span>
+                <span class="aa-stat-value" id="kpiStudents">—</span>
+            </div>
+            <div class="aa-stat-card aa-accent">
+                <span class="aa-stat-label">Total Classes</span>
+                <span class="aa-stat-value" id="kpiClasses">—</span>
+            </div>
+            <div class="aa-stat-card aa-accent">
+                <span class="aa-stat-label">Attendance Rate (30d)</span>
+                <span class="aa-stat-value" id="kpiAttendance">—</span>
+            </div>
+            <div class="aa-stat-card aa-accent">
+                <span class="aa-stat-label">Academic Average</span>
+                <span class="aa-stat-value" id="kpiAvg">—</span>
+            </div>
+            <div class="aa-stat-card aa-accent">
+                <span class="aa-stat-label">Pass Rate</span>
+                <span class="aa-stat-value" id="kpiPass">—</span>
+            </div>
+        </div>
+
+        <!-- Filter bar for all downloads -->
+        <section class="aa-filter-bar">
+            <div class="aa-filter-field">
+                <label for="filterClass">Class (optional)</label>
+                <select id="filterClass">
+                    <option value="">All Classes</option>
+                </select>
+            </div>
+            <div class="aa-filter-field">
+                <label for="filterTerm">Term (optional)</label>
+                <select id="filterTerm">
+                    <option value="">All Terms</option>
+                </select>
+            </div>
+            <div class="aa-filter-field">
+                <label for="filterYear">Academic Year</label>
+                <select id="filterYear">
+                    <option value="">All Years</option>
+                </select>
+            </div>
+        </section>
+
+        <div id="statusMsg" class="aa-alert aa-alert-info" hidden></div>
+
+        <!-- Report download cards -->
+        <div class="aa-detail-grid">
+
+            <div class="aa-card" style="margin-bottom:0">
+                <div class="aa-card-header">
+                    <h2>📋 Enrollment Report</h2>
+                </div>
+                <p style="font-size:.875rem;color:var(--aa-text-muted);margin:0 0 1rem">
+                    All enrolled students with class placement, gender, and enrollment date.
+                </p>
+                <button class="aa-btn aa-btn-primary" id="dlEnrollBtn" type="button">⬇ Download Enrollment CSV</button>
+            </div>
+
+            <div class="aa-card" style="margin-bottom:0">
+                <div class="aa-card-header">
+                    <h2>📊 Attendance Report</h2>
+                </div>
+                <p style="font-size:.875rem;color:var(--aa-text-muted);margin:0 0 1rem">
+                    Per-student attendance summary: present, absent, late, excused, and rate.
+                </p>
+                <button class="aa-btn aa-btn-primary" id="dlAttendBtn" type="button">⬇ Download Attendance CSV</button>
+            </div>
+
+            <div class="aa-card" style="margin-bottom:0">
+                <div class="aa-card-header">
+                    <h2>📄 Academic Results Report</h2>
+                </div>
+                <p style="font-size:.875rem;color:var(--aa-text-muted);margin:0 0 1rem">
+                    Student marks, percentages, ECZ grades, and class positions by subject.
+                </p>
+                <button class="aa-btn aa-btn-primary" id="dlAcadBtn" type="button">⬇ Download Academic CSV</button>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="auth.js"></script>
+    <script src="auth-guard.js"></script>
+    <script src="navigation.js"></script>
+    <script src="report-dash.js"></script>
+</body>
+
+</html>
