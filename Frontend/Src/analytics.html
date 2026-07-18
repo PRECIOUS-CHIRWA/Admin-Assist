@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Analytics Dashboard | Admin Assist</title>
+    <link rel="stylesheet" href="aa-shared.css" />
+    <link rel="stylesheet" href="navigation.css" />
+    <link rel="stylesheet" href="analytics.css" />
+</head>
+
+<body data-page="analytics-dashboard">
+    <div id="navigation-root"></div>
+
+    <main class="aa-main">
+        <header class="aa-page-header">
+            <div>
+                <p class="aa-kicker">Reports &amp; Analytics</p>
+                <h1>Analytics Dashboard</h1>
+                <p class="aa-subtitle">School-wide trends, distributions, and performance insights.</p>
+            </div>
+            <div class="aa-header-actions">
+                <div class="aa-filter-field" style="min-width:140px">
+                    <label for="termFilter"
+                        style="font-size:.75rem;font-weight:600;color:var(--aa-text-muted)">Term</label>
+                    <select id="termFilter">
+                        <option value="">All Terms</option>
+                    </select>
+                </div>
+                <div class="aa-filter-field" style="min-width:130px">
+                    <label for="yearFilter"
+                        style="font-size:.75rem;font-weight:600;color:var(--aa-text-muted)">Year</label>
+                    <select id="yearFilter">
+                        <option value="">All Years</option>
+                    </select>
+                </div>
+                <button class="aa-btn aa-btn-secondary" id="refreshBtn" type="button">↻ Refresh</button>
+                <a class="aa-btn aa-btn-secondary" href="reports-dashboard.html">Reports</a>
+            </div>
+        </header>
+
+        <!-- KPI Cards -->
+        <div class="aa-stats-grid">
+            <div class="aa-stat-card aa-accent">
+                <span class="aa-stat-label">Total Students</span>
+                <span class="aa-stat-value" id="kpiStudents">—</span>
+            </div>
+            <div class="aa-stat-card aa-accent">
+                <span class="aa-stat-label">New This Month</span>
+                <span class="aa-stat-value" id="kpiNew">—</span>
+            </div>
+            <div class="aa-stat-card aa-accent">
+                <span class="aa-stat-label">Attendance Today</span>
+                <span class="aa-stat-value" id="kpiAttend">—</span>
+            </div>
+            <div class="aa-stat-card aa-accent">
+                <span class="aa-stat-label">Academic Average</span>
+                <span class="aa-stat-value" id="kpiAvg">—</span>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="aa-charts-grid">
+
+            <!-- Attendance Trend -->
+            <div class="aa-chart-card aa-full">
+                <h3>📅 Attendance Rate — Last 8 Weeks</h3>
+                <canvas id="attendanceChart" height="80"></canvas>
+            </div>
+
+            <!-- Performance by Subject -->
+            <div class="aa-chart-card">
+                <h3>📚 Average Performance by Subject</h3>
+                <div id="subjectBars"></div>
+            </div>
+
+            <!-- Class Distribution -->
+            <div class="aa-chart-card">
+                <h3>🏫 Students per Class</h3>
+                <div id="classBars"></div>
+            </div>
+
+            <!-- Gender Distribution -->
+            <div class="aa-chart-card">
+                <h3>⚥ Gender Distribution</h3>
+                <canvas id="genderChart" width="120" height="120" style="max-width:120px"></canvas>
+                <div class="aa-donut-wrap" style="margin-top:.75rem">
+                    <div class="aa-donut-legend" id="genderLegend"></div>
+                </div>
+            </div>
+
+            <!-- Top Performers -->
+            <div class="aa-chart-card">
+                <h3>🏆 Top 10 Performers</h3>
+                <div class="aa-performers-list" id="topPerformersList"></div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="auth.js"></script>
+    <script src="auth-guard.js"></script>
+    <script src="navigation.js"></script>
+    <script src="analytics.js"></script>
+</body>
+
+</html>
