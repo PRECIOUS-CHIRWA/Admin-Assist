@@ -5,12 +5,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Attendance Management | Admin Assist</title>
+  <meta name="description" content="Take attendance for a class, review past sessions, and manage records in Admin Assist." />
   <link rel="stylesheet" href="theme.css" />
   <link rel="stylesheet" href="navigation.css" />
   <link rel="stylesheet" href="slide-panels.css" />
   <link rel="stylesheet" href="attendance.css" />
   <link rel="stylesheet" href="aa-shared.css" />
-
 </head>
 
 <body data-page="attendance-management">
@@ -87,27 +87,29 @@
     </section>
   </main>
 
-  <!-- ─── Take Attendance Modal ─────────────────────────────────────────── -->
-  <div class="aa-modal-backdrop" id="takeAttendanceModal" hidden>
-    <div class="aa-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <!-- ─── Take Attendance Modal ──────────────────────────────────────────── -->
+  <div class="aa-modal-backdrop" id="takeAttendanceModal" hidden
+       role="dialog" aria-modal="true" aria-labelledby="takeAttModalTitle">
+    <div class="aa-modal">
       <div class="aa-modal-header">
-        <h2 id="modalTitle">Take Attendance</h2>
-        <button class="aa-modal-close" id="closeModalBtn" type="button" aria-label="Close">&times;</button>
+        <h2 id="takeAttModalTitle">Take Attendance</h2>
+        <button class="aa-modal-close" id="closeModalBtn" type="button" aria-label="Close modal">&times;</button>
       </div>
 
+      <!-- Step 1: Select Class & Date -->
       <div class="aa-modal-step" id="step1">
         <p class="aa-modal-step-label">Step 1 — Select Class &amp; Date</p>
         <div class="aa-form-grid">
           <div class="aa-form-field">
-            <label for="sessionClass">Class *</label>
+            <label for="sessionClass">Class <abbr title="required">*</abbr></label>
             <select id="sessionClass" required></select>
           </div>
           <div class="aa-form-field">
-            <label for="sessionTerm">Term *</label>
+            <label for="sessionTerm">Term <abbr title="required">*</abbr></label>
             <select id="sessionTerm" required></select>
           </div>
           <div class="aa-form-field">
-            <label for="sessionDate">Date *</label>
+            <label for="sessionDate">Date <abbr title="required">*</abbr></label>
             <input type="date" id="sessionDate" required />
           </div>
           <div class="aa-form-field">
@@ -115,24 +117,26 @@
             <input type="text" id="sessionPeriod" placeholder="e.g. Period 1, General" value="General" />
           </div>
           <div class="aa-form-field">
-            <label for="sessionSubject">Subject (optional)</label>
+            <label for="sessionSubject">Subject <span style="font-weight:400;color:var(--aa-text-muted)">(optional)</span></label>
             <select id="sessionSubject">
               <option value="">General Roll Call</option>
             </select>
           </div>
         </div>
         <div class="aa-modal-actions">
+          <button class="aa-btn aa-btn-ghost" id="cancelTakeAttBtn" type="button">Cancel</button>
           <button class="aa-btn aa-btn-primary" id="loadRosterBtn" type="button">Load Class Roster</button>
         </div>
       </div>
 
+      <!-- Step 2: Mark Students -->
       <div class="aa-modal-step" id="step2" hidden>
         <p class="aa-modal-step-label">Step 2 — Mark Each Student</p>
         <div class="aa-roster-toolbar">
-          <button class="aa-chip" type="button" data-bulk="present">Mark All Present</button>
-          <button class="aa-chip" type="button" data-bulk="absent">Mark All Absent</button>
+          <button class="aa-chip" type="button" data-bulk="present">✓ Mark All Present</button>
+          <button class="aa-chip" type="button" data-bulk="absent">✗ Mark All Absent</button>
         </div>
-        <div class="aa-roster-list" id="rosterList"></div>
+        <div class="aa-roster-list" id="rosterList" role="list"></div>
         <div class="aa-modal-actions">
           <button class="aa-btn aa-btn-ghost" id="backToStep1Btn" type="button">← Back</button>
           <button class="aa-btn aa-btn-primary" id="submitAttendanceBtn" type="button">Submit Attendance</button>
@@ -141,20 +145,22 @@
     </div>
   </div>
 
-  <!-- ─── View Session Modal ────────────────────────────────────────────── -->
-  <div class="aa-modal-backdrop" id="viewSessionModal" hidden>
-    <div class="aa-modal" role="dialog" aria-modal="true">
+  <!-- ─── View Session Modal ──────────────────────────────────────────────── -->
+  <div class="aa-modal-backdrop" id="viewSessionModal" hidden
+       role="dialog" aria-modal="true" aria-labelledby="viewSessionTitle">
+    <div class="aa-modal aa-modal-lg">
       <div class="aa-modal-header">
-        <h2>Session Details</h2>
-        <button class="aa-modal-close" id="closeViewModalBtn" type="button" aria-label="Close">&times;</button>
+        <h2 id="viewSessionTitle">Session Details</h2>
+        <button class="aa-modal-close" id="closeViewModalBtn" type="button" aria-label="Close modal">&times;</button>
       </div>
-      <div id="viewSessionContent"></div>
+      <div class="aa-modal-body" id="viewSessionContent"></div>
     </div>
   </div>
 
   <script src="auth.js"></script>
   <script src="auth-guard.js"></script>
   <script src="navigation.js"></script>
+  <script src="modal-manager.js"></script>
   <script src="attendance-management.js"></script>
 </body>
 

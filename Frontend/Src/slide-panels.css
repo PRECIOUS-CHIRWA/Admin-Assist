@@ -1,0 +1,132 @@
+/*
+ * slide-panels.css — Admin Assist Slide Panel Components
+ * =======================================================
+ * Provides styles for slide-in drawer panels and slide-up sheet components.
+ * Referenced by Sprint 3-5 pages alongside navigation.css and aa-shared.css.
+ */
+
+/* ─── Slide Panel (generic slide-in drawer) ─────────────────────── */
+.aa-slide-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 420px;
+    max-width: 95vw;
+    height: 100vh;
+    background: var(--aa-white, #fff);
+    box-shadow: -4px 0 24px rgba(0, 0, 0, .12);
+    z-index: 10001; /* above modal-manager (10000) */
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform .3s cubic-bezier(.4, 0, .2, 1);
+    overflow: hidden;
+}
+
+.aa-slide-panel.is-open {
+    transform: translateX(0);
+}
+
+.aa-slide-panel-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .4);
+    z-index: 10000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s ease;
+}
+
+.aa-slide-panel-backdrop.is-visible {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* ─── Slide Panel Header ────────────────────────────────────────── */
+.aa-slide-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--aa-border, #e2e8f0);
+    flex-shrink: 0;
+}
+
+.aa-slide-panel-header h2,
+.aa-slide-panel-header h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--aa-navy, #1a2744);
+    margin: 0;
+}
+
+.aa-slide-panel-close {
+    background: none;
+    border: none;
+    font-size: 1.3rem;
+    color: var(--aa-text-muted, #64748b);
+    cursor: pointer;
+    padding: .2rem .4rem;
+    line-height: 1;
+    border-radius: 4px;
+    transition: background .15s, color .15s;
+}
+
+.aa-slide-panel-close:hover {
+    background: var(--aa-bg, #f4f6f9);
+    color: var(--aa-text, #1a2744);
+}
+
+/* ─── Slide Panel Body ──────────────────────────────────────────── */
+.aa-slide-panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+/* ─── Slide Panel Footer ────────────────────────────────────────── */
+.aa-slide-panel-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--aa-border, #e2e8f0);
+    background: var(--aa-bg, #f4f6f9);
+    flex-shrink: 0;
+}
+
+/* ─── Slide Sheet (bottom sheet on mobile) ──────────────────────── */
+.aa-slide-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--aa-white, #fff);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, .12);
+    z-index: 10001;
+    transform: translateY(100%);
+    transition: transform .3s cubic-bezier(.4, 0, .2, 1);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.aa-slide-sheet.is-open {
+    transform: translateY(0);
+}
+
+.aa-slide-sheet-handle {
+    width: 40px;
+    height: 4px;
+    background: var(--aa-border-dark, #cbd5e1);
+    border-radius: 2px;
+    margin: .75rem auto .5rem;
+}
+
+/* ─── Responsive ────────────────────────────────────────────────── */
+@media (max-width: 540px) {
+    .aa-slide-panel {
+        width: 100%;
+    }
+}

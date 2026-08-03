@@ -552,9 +552,17 @@
         if (closeBtn) closeBtn.addEventListener('click', _closeSidebar);
         if (backdrop) backdrop.addEventListener('click', _closeSidebar);
 
-        // Escape key closes the sidebar
+        // Escape key closes the sidebar ONLY when no modal is open.
+        // ModalManager registers its own capture-phase handler that fires first
+        // and calls e.stopImmediatePropagation(), so this bubbling handler
+        // will never run while a modal is active.
         document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') _closeSidebar();
+            if (e.key !== 'Escape') return;
+            // Guard: if ModalManager exists and has open modals, do nothing here.
+            // (ModalManager's capture listener already handled it.)
+            var mm = window.ModalManager;
+            if (mm && typeof mm._hasOpen === 'function' && mm._hasOpen()) return;
+            _closeSidebar();
         });
 
         // Clicking a nav link closes the sidebar (important on mobile)
