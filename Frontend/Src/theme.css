@@ -1,0 +1,109 @@
+/*
+ * theme.css — Admin Assist Global Theme Layer
+ * ============================================
+ * Provides: Google Fonts, CSS reset, root variables, and base body styles.
+ * Loaded first on all Sprint 3-5 pages so every subsequent stylesheet
+ * inherits a clean, consistent typographic and colour foundation.
+ */
+
+/* ─── Google Fonts ──────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ─── CSS Reset ─────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* ─── Root Design Tokens ────────────────────────────────────────── */
+/* Mirrors the tokens in aa-shared.css — defining here ensures they're
+   available even if aa-shared.css hasn't loaded yet.               */
+:root {
+    /* Brand */
+    --aa-navy:          #1a2744;
+    --aa-navy-light:    #253563;
+    --aa-copper:        #c8923a;
+    --aa-copper-light:  #f5e6d0;
+    --aa-copper-pale:   #fdf6ec;
+    --aa-white:         #ffffff;
+
+    /* Surfaces */
+    --aa-bg:            #f4f6f9;
+    --aa-border:        #e2e8f0;
+    --aa-border-dark:   #cbd5e1;
+
+    /* Text */
+    --aa-text:          #1a2744;
+    --aa-text-muted:    #64748b;
+    --aa-text-light:    #94a3b8;
+
+    /* Semantic */
+    --aa-success:       #10b981;
+    --aa-success-bg:    #ecfdf5;
+    --aa-warning:       #f59e0b;
+    --aa-warning-bg:    #fffbeb;
+    --aa-danger:        #ef4444;
+    --aa-danger-bg:     #fef2f2;
+    --aa-info:          #3b82f6;
+    --aa-info-bg:       #eff6ff;
+
+    /* Layout */
+    --nav-width:        260px;
+    --aa-radius:        8px;
+    --aa-radius-lg:     12px;
+    --aa-shadow:        0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --aa-shadow-md:     0 4px 12px rgba(0,0,0,.08);
+    --aa-shadow-lg:     0 8px 30px rgba(0,0,0,.12);
+}
+
+/* ─── Base Body ─────────────────────────────────────────────────── */
+html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                 Roboto, Oxygen, Ubuntu, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--aa-text);
+    background: var(--aa-bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Typography baseline ───────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--aa-navy);
+}
+
+a {
+    color: var(--aa-navy);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--aa-copper);
+}
+
+button, input, select, textarea {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+img, svg {
+    display: block;
+    max-width: 100%;
+}
+
+/* ─── Scroll lock (used by modal-manager.js) ────────────────────── */
+body.aa-modal-open {
+    overflow: hidden !important;
+}

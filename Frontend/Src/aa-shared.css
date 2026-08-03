@@ -351,16 +351,24 @@
 }
 
 /* ─── Modals ─────────────────────────────────────────────────── */
+/* NOTE: modal-manager.js overrides z-index to 10000 via injected   */
+/* styles, which always wins above the sidebar (z-index 9999).      */
 .aa-modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, .45);
+    background: rgba(0, 0, 0, .50);
     display: flex;
     align-items: flex-start;
     justify-content: center;
     padding: 2rem 1rem;
-    z-index: 1000;
+    z-index: 10000;           /* above sidebar (9999) */
     overflow-y: auto;
+    pointer-events: all;      /* ensure clicks are never swallowed */
+}
+
+.aa-modal-backdrop[hidden] {
+    display: none !important;
+    pointer-events: none !important;
 }
 
 .aa-modal {
@@ -368,8 +376,9 @@
     border-radius: var(--aa-radius-lg);
     width: 100%;
     max-width: 680px;
-    box-shadow: var(--aa-shadow-md);
+    box-shadow: 0 8px 30px rgba(0,0,0,.16), 0 2px 8px rgba(0,0,0,.08);
     flex-shrink: 0;
+    pointer-events: all;      /* ensure inner clicks register */
 }
 
 .aa-modal-lg {
@@ -404,11 +413,17 @@
     padding: .2rem .4rem;
     line-height: 1;
     border-radius: 4px;
+    transition: background .15s, color .15s;
 }
 
 .aa-modal-close:hover {
     background: var(--aa-bg);
     color: var(--aa-text);
+}
+
+.aa-modal-close:focus-visible {
+    outline: 2px solid var(--aa-navy);
+    outline-offset: 2px;
 }
 
 .aa-modal-step {
