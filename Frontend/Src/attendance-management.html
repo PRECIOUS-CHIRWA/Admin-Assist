@@ -30,7 +30,14 @@
       </div>
     </header>
 
+    <!-- ─── Session Filter Bar ──────────────────────────────────────────────── -->
     <section class="aa-filter-bar">
+      <div class="aa-filter-field">
+        <label for="filterYear">Year</label>
+        <select id="filterYear">
+          <option value="">All Years</option>
+        </select>
+      </div>
       <div class="aa-filter-field">
         <label for="filterClass">Class</label>
         <select id="filterClass">
@@ -96,36 +103,59 @@
         <button class="aa-modal-close" id="closeModalBtn" type="button" aria-label="Close modal">&times;</button>
       </div>
 
-      <!-- Step 1: Select Class & Date -->
+      <!-- Step 1: Select Academic Year → Term → Class → Date -->
       <div class="aa-modal-step" id="step1">
         <p class="aa-modal-step-label">Step 1 — Select Class &amp; Date</p>
         <div class="aa-form-grid">
+
           <div class="aa-form-field">
-            <label for="sessionClass">Class <abbr title="required">*</abbr></label>
-            <select id="sessionClass" required></select>
+            <label for="sessionYear">Academic Year <abbr title="required">*</abbr></label>
+            <select id="sessionYear" required>
+              <option value="">— Select Year —</option>
+            </select>
           </div>
+
           <div class="aa-form-field">
-            <label for="sessionTerm">Term <abbr title="required">*</abbr></label>
-            <select id="sessionTerm" required></select>
+            <label for="sessionTerm">School Term <abbr title="required">*</abbr></label>
+            <select id="sessionTerm" required>
+              <option value="">— Select Year First —</option>
+            </select>
           </div>
+
           <div class="aa-form-field">
-            <label for="sessionDate">Date <abbr title="required">*</abbr></label>
+            <label for="sessionClass">Grade / Class <abbr title="required">*</abbr></label>
+            <select id="sessionClass" required>
+              <option value="">— Select Class —</option>
+            </select>
+          </div>
+
+          <div class="aa-form-field">
+            <label for="sessionDate">Attendance Date <abbr title="required">*</abbr></label>
             <input type="date" id="sessionDate" required />
           </div>
+
           <div class="aa-form-field">
             <label for="sessionPeriod">Period</label>
             <input type="text" id="sessionPeriod" placeholder="e.g. Period 1, General" value="General" />
           </div>
+
           <div class="aa-form-field">
             <label for="sessionSubject">Subject <span style="font-weight:400;color:var(--aa-text-muted)">(optional)</span></label>
             <select id="sessionSubject">
               <option value="">General Roll Call</option>
             </select>
           </div>
+
         </div>
+
+        <!-- Class info banner (shown after class is selected) -->
+        <div id="classInfoBanner" class="aa-alert aa-alert-info" hidden>
+          <span id="classInfoText"></span>
+        </div>
+
         <div class="aa-modal-actions">
           <button class="aa-btn aa-btn-ghost" id="cancelTakeAttBtn" type="button">Cancel</button>
-          <button class="aa-btn aa-btn-primary" id="loadRosterBtn" type="button">Load Class Roster</button>
+          <button class="aa-btn aa-btn-primary" id="loadRosterBtn" type="button">Load Register</button>
         </div>
       </div>
 

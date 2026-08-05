@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reports Dashboard | Admin Assist</title>
+    <meta name="description" content="Generate and download school reports as PDF, CSV, or Excel files." />
+    <link rel="stylesheet" href="aa-shared.css" />
+    <link rel="stylesheet" href="navigation.css" />
+
+    <style>
+        /* ─── Reports Dashboard styles ──────────────────────────────────────── */
+        .rpt-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.25rem;
+            margin-top: 1.25rem;
+        }
+
+        .rpt-card {
+            background: var(--aa-surface);
+            border: 1px solid var(--aa-border);
+            border-radius: .75rem;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: .75rem;
+            transition: box-shadow .2s, transform .2s;
+        }
+
+        .rpt-card:hover {
+            box-shadow: 0 4px 20px rgba(0,0,0,.12);
+            transform: translateY(-2px);
+        }
+
+        .rpt-card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: .75rem;
+        }
+
+        .rpt-icon {
+            font-size: 1.75rem;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .rpt-card-header div h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0 0 .2rem;
+            color: var(--aa-text);
+        }
+
+        .rpt-card-header div p {
+            font-size: .8125rem;
+            color: var(--aa-text-muted);
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .rpt-card-actions {
+            display: flex;
+            gap: .5rem;
+            flex-wrap: wrap;
+        }
+
+        .rpt-card-actions .aa-btn {
+            flex: 1;
+            min-width: 100px;
+            font-size: .8125rem;
+            padding: .45rem .75rem;
+            text-align: center;
+        }
+
+        .rpt-section-title {
+            font-size: .75rem;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: var(--aa-text-muted);
+            margin: 1.5rem 0 .25rem;
+            padding-bottom: .5rem;
+            border-bottom: 1px solid var(--aa-border);
+        }
+
+        .rpt-badge-new {
+            display: inline-block;
+            background: var(--aa-accent);
+            color: #fff;
+            font-size: .65rem;
+            font-weight: 700;
+            padding: .1rem .4rem;
+            border-radius: 999px;
+            vertical-align: middle;
+            margin-left: .4rem;
+        }
+
+        #statusMsg {
+            margin-bottom: 1rem;
+        }
+
+        .rpt-at-risk { border-left: 3px solid #dc2626; }
+        .rpt-top     { border-left: 3px solid #16a34a; }
+    </style>
+</head>
+
+<body data-page="reports-dashboard">
+    <div id="navigation-root"></div>
+
+    <main class="aa-main">
+        <header class="aa-page-header">
+            <div>
+                <p class="aa-kicker">Reports &amp; Analytics</p>
+                <h1>Reports Dashboard</h1>
+                <p class="aa-subtitle">Generate school reports and download as PDF or CSV.</p>
+            </div>
+            <div class="aa-header-actions">
+                <a class="aa-btn aa-btn-secondary" href="analytics-dashboard.html">📉 Analytics</a>
+                <a class="aa-btn aa-btn-secondary" href="student-transcript.html">🎓 Transcripts</a>
+            </div>
+        </header>
+
+        <!-- School Summary KPIs -->
+        <div class="aa-stats-grid" id="summaryGrid">
+            <div class="aa-stat-card aa-accent">
+                <span class="aa-stat-label">Total Students</span>
+                <span class="aa-stat-value" id="kpiStudents">—</span>
+            </div>
+            <div class="aa-stat-card aa-accent">
+                <span class="aa-stat-label">Total Classes</span>
+                <span class="aa-stat-value" id="kpiClasses">—</span>
+            </div>
+            <div class="aa-stat-card aa-accent">
+                <span class="aa-stat-label">Attendance Rate (30d)</span>
+                <span class="aa-stat-value" id="kpiAttendance">—</span>
+            </div>
+            <div class="aa-stat-card aa-accent">
+                <span class="aa-stat-label">Academic Average</span>
+                <span class="aa-stat-value" id="kpiAvg">—</span>
+            </div>
+            <div class="aa-stat-card aa-accent">
+                <span class="aa-stat-label">Pass Rate</span>
+                <span class="aa-stat-value" id="kpiPass">—</span>
+            </div>
+        </div>
+
+        <!-- Global filter bar -->
+        <section class="aa-filter-bar" style="margin-top:1.5rem">
+            <div class="aa-filter-field">
+                <label for="filterClass">Class <span style="font-weight:400;color:var(--aa-text-muted)">(optional)</span></label>
+                <select id="filterClass">
+                    <option value="">All Classes</option>
+                </select>
+            </div>
+            <div class="aa-filter-field">
+                <label for="filterTerm">Term <span style="font-weight:400;color:var(--aa-text-muted)">(optional)</span></label>
+                <select id="filterTerm">
+                    <option value="">All Terms</option>
+                </select>
+            </div>
+            <div class="aa-filter-field">
+                <label for="filterYear">Academic Year</label>
+                <select id="filterYear">
+                    <option value="">All Years</option>
+                </select>
+            </div>
+        </section>
+
+        <div id="statusMsg" class="aa-alert aa-alert-info" hidden></div>
+
+        <!-- Standard Reports -->
+        <p class="rpt-section-title">Standard Reports</p>
+        <div class="rpt-grid">
+
+            <div class="rpt-card">
+                <div class="rpt-card-header">
+                    <span class="rpt-icon">📋</span>
+                    <div>
+                        <h3>Enrollment Report</h3>
+                        <p>All enrolled students with class placement, gender, and enrollment date.</p>
+                    </div>
+                </div>
+                <div class="rpt-card-actions">
+                    <button class="aa-btn aa-btn-primary" id="dlEnrollCsvBtn" type="button">⬇ CSV</button>
+                    <button class="aa-btn aa-btn-secondary" id="dlEnrollPdfBtn" type="button">🖨 PDF</button>
+                </div>
+            </div>
+
+            <div class="rpt-card">
+                <div class="rpt-card-header">
+                    <span class="rpt-icon">📊</span>
+                    <div>
+                        <h3>Attendance Report</h3>
+                        <p>Per-student summary: present, absent, late, excused, and overall rate.</p>
+                    </div>
+                </div>
+                <div class="rpt-card-actions">
+                    <button class="aa-btn aa-btn-primary" id="dlAttendCsvBtn" type="button">⬇ CSV</button>
+                    <button class="aa-btn aa-btn-secondary" id="dlAttendPdfBtn" type="button">🖨 PDF</button>
+                </div>
+            </div>
+
+            <div class="rpt-card">
+                <div class="rpt-card-header">
+                    <span class="rpt-icon">📄</span>
+                    <div>
+                        <h3>Academic Results Report</h3>
+                        <p>Student marks, percentages, ECZ grades, and class positions by subject.</p>
+                    </div>
+                </div>
+                <div class="rpt-card-actions">
+                    <button class="aa-btn aa-btn-primary" id="dlAcadCsvBtn" type="button">⬇ CSV</button>
+                    <button class="aa-btn aa-btn-secondary" id="dlAcadPdfBtn" type="button">🖨 PDF</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Performance Reports -->
+        <p class="rpt-section-title">Performance Reports <span class="rpt-badge-new">New</span></p>
+        <div class="rpt-grid">
+
+            <div class="rpt-card rpt-top">
+                <div class="rpt-card-header">
+                    <span class="rpt-icon">🏆</span>
+                    <div>
+                        <h3>Top Performers</h3>
+                        <p>Students ranked by overall average percentage across all subjects.</p>
+                    </div>
+                </div>
+                <div class="rpt-card-actions">
+                    <button class="aa-btn aa-btn-primary" id="dlTopCsvBtn" type="button">⬇ CSV</button>
+                    <button class="aa-btn aa-btn-secondary" id="dlTopPdfBtn" type="button">🖨 PDF</button>
+                </div>
+            </div>
+
+            <div class="rpt-card">
+                <div class="rpt-card-header">
+                    <span class="rpt-icon">📚</span>
+                    <div>
+                        <h3>Subject Performance</h3>
+                        <p>Average marks, pass rates, and grade distribution per subject.</p>
+                    </div>
+                </div>
+                <div class="rpt-card-actions">
+                    <button class="aa-btn aa-btn-primary" id="dlSubjCsvBtn" type="button">⬇ CSV</button>
+                    <button class="aa-btn aa-btn-secondary" id="dlSubjPdfBtn" type="button">🖨 PDF</button>
+                </div>
+            </div>
+
+            <div class="rpt-card rpt-at-risk">
+                <div class="rpt-card-header">
+                    <span class="rpt-icon">⚠️</span>
+                    <div>
+                        <h3>Students at Risk</h3>
+                        <p>Students averaging below 50% — for early academic intervention. Includes parent contact.</p>
+                    </div>
+                </div>
+                <div class="rpt-card-actions">
+                    <button class="aa-btn aa-btn-primary" id="dlRiskCsvBtn" type="button">⬇ CSV</button>
+                    <button class="aa-btn aa-btn-secondary" id="dlRiskPdfBtn" type="button">🖨 PDF</button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- jsPDF + AutoTable CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+    <script src="auth.js"></script>
+    <script src="auth-guard.js"></script>
+    <script src="navigation.js"></script>
+    <script src="reports-dashboard.js"></script>
+</body>
+
+</html>

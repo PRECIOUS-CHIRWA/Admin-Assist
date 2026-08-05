@@ -8,17 +8,19 @@ const {
 
 const { authenticate, authorize } = require("../middleware/auth");
 
-// ─── Results CRUD (teacher, admin, headmaster can write) ───────────────────────
-router.get("/", authenticate, getResults);
-router.get("/:id", authenticate, getResultById);
-router.post("/", authenticate, authorize("admin", "headmaster", "teacher"), createResult);
-router.put("/:id", authenticate, authorize("admin", "headmaster", "teacher"), updateResult);
-router.delete("/:id", authenticate, authorize("admin", "headmaster", "teacher"), deleteResult);
-
-// ─── Aggregated views ────────────────────────────────────────────────────────────
+// ─── Named sub-routes MUST come before /:id to prevent Express matching
+// "student", "class", "transcript", "analytics" as the :id param ────────────
 router.get("/student/:studentId", authenticate, getStudentResults);
 router.get("/class/:classId", authenticate, getClassResults);
 router.get("/transcript/:studentId", authenticate, generateTranscript);
 router.get("/analytics/summary", authenticate, getResultsAnalytics);
+
+// ─── Results CRUD ────────────────────────────────────────────────────────────
+router.get("/", authenticate, getResults);
+router.post("/", authenticate, authorize("admin", "headmaster", "staff"), createResult);
+router.put("/:id", authenticate, authorize("admin", "headmaster", "staff"), updateResult);
+router.delete("/:id", authenticate, authorize("admin", "headmaster", "staff"), deleteResult);
+// Generic /:id LAST so it never shadows named routes above
+router.get("/:id", authenticate, getResultById);
 
 module.exports = router;

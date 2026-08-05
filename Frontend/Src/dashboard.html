@@ -24,6 +24,19 @@
   <div class="main-container">
     <h1 class="dashboard-title" id="welcomeTitle">Welcome!</h1>
 
+    <!-- School Banner & Staff Identity Card -->
+    <div class="dashboard-banner" style="margin-bottom: 1.5rem; padding: 1.25rem; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h2 id="dashSchoolName" style="font-size: 1.25rem; font-weight: 700; color: #ffffff; margin: 0 0 0.25rem;">Admin Assist Secondary School</h2>
+        <p style="font-size: 0.875rem; color: rgba(255,255,255,0.7); margin: 0;">School Information System — Official Staff Portal</p>
+      </div>
+      <div style="text-align: right; background: rgba(10,22,40,0.8); padding: 0.6rem 1rem; border-radius: 0.5rem; border: 1px solid rgba(212,175,55,0.4);">
+        <span style="display: block; font-size: 0.7rem; color: #d4af37; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Staff Identity</span>
+        <strong id="dashStaffId" style="display: block; font-size: 0.95rem; color: #ffffff; font-family: monospace; letter-spacing: 0.05em;">—</strong>
+        <span id="dashDepartment" style="display: block; font-size: 0.75rem; color: rgba(255,255,255,0.6);">—</span>
+      </div>
+    </div>
+
     <!-- STAT CARDS — values start at "—" and are filled by loadDashboardStats() -->
     <div class="stats-grid">
       <div class="stat-card blue">

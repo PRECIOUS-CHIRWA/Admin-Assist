@@ -5,11 +5,86 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Student Transcript | Admin Assist</title>
+    <meta name="description" content="Generate and download official academic transcripts for students." />
     <link rel="stylesheet" href="theme.css" />
     <link rel="stylesheet" href="navigation.css" />
     <link rel="stylesheet" href="slide-panels.css" />
     <link rel="stylesheet" href="aa-shared.css" />
-    <link rel="stylesheet" href="s-transcript.css" />
+    <link rel="stylesheet" href="student-transcript.css" />
+
+    <style>
+        /* ─── Transcript print / export styles ─────────────────────────────── */
+        .transcript-header {
+            margin-bottom: 1.5rem;
+        }
+        .transcript-header h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 0 0 .35rem;
+            color: var(--aa-text);
+        }
+        .transcript-header p {
+            font-size: .875rem;
+            color: var(--aa-text-muted);
+            margin: 0;
+        }
+        .transcript-term {
+            margin-bottom: 1.75rem;
+        }
+        .transcript-term h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--aa-accent);
+            margin: 0 0 .6rem;
+            padding-bottom: .4rem;
+            border-bottom: 2px solid var(--aa-accent);
+        }
+        .transcript-avg {
+            text-align: right;
+            font-size: .875rem;
+            font-weight: 600;
+            color: var(--aa-text-muted);
+            padding: .5rem 0;
+        }
+        .att-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: .75rem;
+            margin-bottom: 1.5rem;
+        }
+        .att-stat {
+            background: var(--aa-bg);
+            border: 1px solid var(--aa-border);
+            border-radius: .5rem;
+            padding: .75rem;
+            text-align: center;
+        }
+        .att-stat span { display: block; font-size: .75rem; color: var(--aa-text-muted); }
+        .att-stat strong { display: block; font-size: 1.25rem; font-weight: 700; color: var(--aa-text); }
+        .aa-export-bar {
+            display: flex;
+            gap: .75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+            padding: 1rem;
+            background: var(--aa-bg);
+            border: 1px solid var(--aa-border);
+            border-radius: .5rem;
+            align-items: center;
+        }
+        .aa-export-bar span {
+            font-size: .875rem;
+            font-weight: 600;
+            color: var(--aa-text-muted);
+            margin-right: auto;
+        }
+        @media print {
+            .aa-export-bar, #navigation-root, header.aa-page-header,
+            section.aa-filter-bar, #suggestions, .aa-btn { display: none !important; }
+            .aa-main { padding: 0 !important; }
+            #transcriptCard { display: block !important; }
+        }
+    </style>
 </head>
 
 <body data-page="student-transcript">
@@ -20,10 +95,9 @@
             <div>
                 <p class="aa-kicker">Academics</p>
                 <h1>Student Transcript</h1>
-                <p class="aa-subtitle">View a student's full academic record grouped by term.</p>
+                <p class="aa-subtitle">View and export a student's full academic record grouped by term.</p>
             </div>
             <div class="aa-header-actions">
-                <button class="aa-btn aa-btn-secondary" id="printBtn" type="button">🖨 Print</button>
                 <a class="aa-btn aa-btn-secondary" href="academic-records.html">← Records</a>
             </div>
         </header>
@@ -42,10 +116,16 @@
             </div>
         </section>
 
-        <!-- Search suggestions -->
+        <!-- Search suggestions dropdown -->
         <div id="suggestions" style="display:none; position:relative; margin-top:-1rem; margin-bottom:1rem;">
-            <div id="suggestionsList">
-            </div>
+            <div id="suggestionsList"></div>
+        </div>
+
+        <!-- Export bar — hidden until a transcript is loaded -->
+        <div class="aa-export-bar" id="exportBar" hidden>
+            <span>Export Transcript:</span>
+            <button class="aa-btn aa-btn-primary" id="downloadPdfBtn" type="button">⬇ Download PDF</button>
+            <button class="aa-btn aa-btn-secondary" id="downloadCsvBtn" type="button">📄 Download CSV</button>
         </div>
 
         <!-- Transcript output -->
@@ -59,6 +139,10 @@
             <p>Enter a name or admission number above to pull up their transcript.</p>
         </div>
     </main>
+
+    <!-- jsPDF + AutoTable CDN (no install needed) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
     <script src="auth.js"></script>
     <script src="auth-guard.js"></script>
