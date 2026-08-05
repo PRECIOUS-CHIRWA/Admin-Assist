@@ -51,7 +51,6 @@
         { section: 'Reports & Analytics' },
         { href: 'reports-dashboard.html', label: 'Reports', icon: '📈', roles: ['admin', 'headmaster', 'teacher'] },
         { href: 'analytics-dashboard.html', label: 'Analytics', icon: '📉', roles: ['admin', 'headmaster'] },
-        { href: 'student-search.html', label: 'Student Search', icon: '🔍', roles: [] },
     ];
 
     /* ─────────────────────────────────────────────────────────────────
