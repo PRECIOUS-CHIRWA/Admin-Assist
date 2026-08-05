@@ -512,6 +512,91 @@ const getAttendanceAnalytics = async (req, res) => {
     }
 };
 
+// ─── ACADEMIC YEARS ───────────────────────────────────────────────────────────
+
+/**
+ * GET /api/attendance/academic-years
+ * Returns all academic years, ordered newest first.
+ */
+const getAcademicYears = async (req, res) => {
+    try {
+        const [rows] = await pool.execute(
+            `SELECT id, year_label, start_date, end_date, is_current
+       FROM   academic_years
+       ORDER BY year_label DESC`
+        );
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// ─── CLASS REGISTER ───────────────────────────────────────────────────────────
+
+/**
+ * GET /api/attendance/register
+ * Query: class_id (required), term_id?, academic_year_id?
+ * Returns all active students enrolled in the given class, plus class metadata.
+ * This is the "Load Register" endpoint used by the Take Attendance modal.
+ */
+const getRegister = async (req, res) => {
+    const { class_id, term_id, academic_year_id } = req.query;
+
+    if (!class_id) {
+        return res.status(400).json({ error: 'class_id is required' });
+    }
+
+    try {
+        // Class metadata
+        const [[classInfo]] = await pool.execute(
+            `SELECT c.id, c.grade_level, c.stream, c.capacity,
+              CONCAT(c.grade_level, IF(c.stream != '', CONCAT(' ', c.stream), '')) AS class_name,
+              u.name AS class_teacher_name
+       FROM   classes c
+       LEFT JOIN users u ON u.id = c.class_teacher_id
+       WHERE  c.id = ?`,
+            [class_id]
+        );
+
+        if (!classInfo) {
+            return res.status(404).json({ error: 'Class not found' });
+        }
+
+        // Active students enrolled in this class
+        const [students] = await pool.execute(
+            `SELECT s.id, s.admission_number, s.first_name, s.last_name, s.gender
+       FROM   students s
+       WHERE  s.class_id = ? AND s.status = 'Active'
+       ORDER BY s.last_name, s.first_name`,
+            [class_id]
+        );
+
+        // Check for an existing session today for this class (avoid duplicate warning)
+        let existing_session = null;
+        if (term_id && academic_year_id) {
+            const today = new Date().toISOString().split('T')[0];
+            const [[sess]] = await pool.execute(
+                `SELECT id, attendance_date, period
+         FROM   attendance_sessions
+         WHERE  class_id = ? AND term_id = ? AND academic_year_id = ?
+           AND  attendance_date = ?
+         LIMIT 1`,
+                [class_id, term_id, academic_year_id, today]
+            );
+            existing_session = sess || null;
+        }
+
+        res.json({
+            class: classInfo,
+            students,
+            student_count: students.length,
+            existing_session,
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 // ─── LEGACY ALIASES (kept so any existing references don't break) ─────────────
 const markAttendance = createSession;
 const getAllAttendance = getSessions;
@@ -521,7 +606,7 @@ const getAttendanceByStudent = getStudentAttendance;
 
 module.exports = {
     // Meta
-    getClasses, getTerms,
+    getAcademicYears, getClasses, getTerms, getRegister,
     // Sessions
     createSession, getSessions, getSessionById, deleteSession,
     // Bulk submit

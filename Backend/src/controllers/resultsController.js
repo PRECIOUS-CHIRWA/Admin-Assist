@@ -388,7 +388,41 @@ const generateTranscript = async (req, res) => {
             return { ...term, average_percentage: avg };
         });
 
-        res.json({ student, terms, generated_at: new Date().toISOString() });
+        // ─── Attendance summary for this student ────────────────────────────
+        const attFilters = ['ar.student_id = ?'];
+        const attValues = [studentId];
+        if (academic_year_id) {
+            attFilters.push('sess.academic_year_id = ?');
+            attValues.push(academic_year_id);
+        }
+
+        const [[attRow]] = await pool.execute(
+            `SELECT
+               COUNT(ar.id)               AS total_sessions,
+               SUM(ar.status = 'present') AS present,
+               SUM(ar.status = 'absent')  AS absent,
+               SUM(ar.status = 'late')    AS late,
+               SUM(ar.status = 'excused') AS excused
+       FROM   attendance_records ar
+       JOIN   attendance_sessions sess ON sess.id = ar.session_id
+       WHERE  ${attFilters.join(' AND ')}`,
+            attValues
+        );
+
+        const attendance_summary = {
+            total_sessions : Number(attRow.total_sessions) || 0,
+            present        : Number(attRow.present)        || 0,
+            absent         : Number(attRow.absent)         || 0,
+            late           : Number(attRow.late)           || 0,
+            excused        : Number(attRow.excused)        || 0,
+            attendance_rate: attRow.total_sessions
+                ? ((attRow.present / attRow.total_sessions) * 100).toFixed(1)
+                : '0.0',
+        };
+
+        const school_name = process.env.SCHOOL_NAME || 'Admin Assist School';
+
+        res.json({ student, terms, attendance_summary, school_name, generated_at: new Date().toISOString() });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
