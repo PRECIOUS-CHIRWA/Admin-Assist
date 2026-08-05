@@ -476,13 +476,7 @@
         // Admin-pages: logo-mark already shows "AA"; CSS hides the adjacent text
     }
 
-    /* ─────────────────────────────────────────────────────────────────
-       USER INFO LAYOUT FIX
-       Standard pages have #headerUserName and #roleBadge as siblings.
-       Wrap them in #nav-user-text so they stack vertically.
-       Final layout: [avatar] [Name  ]
-                               [Role  ]
-    ───────────────────────────────────────────────────────────────── */
+
     function _fixUserInfoLayout() {
         var nameEl = document.getElementById('headerUserName');
         var badgeEl = document.getElementById('roleBadge');
