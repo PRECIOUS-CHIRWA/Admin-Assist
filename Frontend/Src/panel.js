@@ -1,21 +1,4 @@
-/**
- * panels.js
- * Slide-over panel management.
- *
- * Responsibilities:
- *   - Open / close panels by ID
- *   - Wire [data-panel] trigger buttons and [data-panel-close] buttons
- *   - Close on backdrop click and Escape key
- *   - Role-gate triggers via [data-require-role]
- *   - Fetch and render live panel content from the API
- *
- * Load on pages that include panel markup.
- * Requires: auth.js (for apiFetch, getUser)
- */
 
-/* === Sprint 2 Additions: Slide-Over Panels === */
-
-// ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
  * openPanel(panelId)
