@@ -220,6 +220,172 @@ const getSummaryReport = async (req, res) => {
     }
 };
 
+// ─── SUBJECT PERFORMANCE REPORT ───────────────────────────────────────────────────────────
+
+/**
+ * GET /api/reports/subject-performance
+ * Query: format? (json|csv), term_id?, academic_year_id?
+ * Average marks and pass rate per subject.
+ */
+const getSubjectPerformanceReport = async (req, res) => {
+    const { format = 'json', term_id, academic_year_id } = req.query;
+
+    const filters = [];
+    const values = [];
+    if (term_id)          { filters.push('r.term_id = ?');           values.push(term_id); }
+    if (academic_year_id) { filters.push('r.academic_year_id = ?'); values.push(academic_year_id); }
+    const where = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
+
+    try {
+        const [rows] = await pool.execute(
+            `SELECT sub.subject_code, sub.subject_name,
+              COUNT(r.id)                                                   AS entries,
+              ROUND(AVG(r.percentage), 1)                                   AS avg_percentage,
+              ROUND(AVG(r.total_marks), 1)                                  AS avg_total,
+              SUM(r.grade_code <= 6)                                        AS passes,
+              ROUND(SUM(r.grade_code <= 6) / COUNT(r.id) * 100, 1)         AS pass_rate,
+              MIN(r.percentage)                                             AS min_pct,
+              MAX(r.percentage)                                             AS max_pct
+       FROM   results r
+       JOIN   subjects sub ON sub.id = r.subject_id
+       ${where}
+       GROUP BY r.subject_id
+       ORDER BY avg_percentage DESC`,
+            values
+        );
+
+        if (format === 'csv') {
+            const csv = toCsv(rows, [
+                { key: 'subject_code',  label: 'Code' },
+                { key: 'subject_name',  label: 'Subject' },
+                { key: 'entries',       label: 'Entries' },
+                { key: 'avg_percentage', label: 'Avg %' },
+                { key: 'avg_total',     label: 'Avg Total' },
+                { key: 'passes',        label: 'Passes' },
+                { key: 'pass_rate',     label: 'Pass Rate (%)' },
+                { key: 'min_pct',       label: 'Min %' },
+                { key: 'max_pct',       label: 'Max %' },
+            ]);
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader('Content-Disposition', 'attachment; filename=subject_performance.csv');
+            return res.send(csv);
+        }
+
+        res.json({ total: rows.length, subjects: rows });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// ─── TOP PERFORMERS REPORT ──────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/reports/top-performers
+ * Query: format? (json|csv), term_id?, academic_year_id?, limit? (default 20)
+ * Students ranked by overall average percentage.
+ */
+const getTopPerformersReport = async (req, res) => {
+    const { format = 'json', term_id, academic_year_id, limit = 20 } = req.query;
+
+    const filters = [];
+    const values = [];
+    if (term_id)          { filters.push('r.term_id = ?');           values.push(term_id); }
+    if (academic_year_id) { filters.push('r.academic_year_id = ?'); values.push(academic_year_id); }
+    const where = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
+
+    try {
+        const [rows] = await pool.execute(
+            `SELECT st.admission_number, st.first_name, st.last_name,
+              CONCAT(c.grade_level, IF(c.stream != '', CONCAT(' ', c.stream), '')) AS class_name,
+              ROUND(AVG(r.percentage), 1)                                          AS avg_percentage,
+              COUNT(r.id)                                                           AS subjects_recorded
+       FROM   results r
+       JOIN   students st ON st.id = r.student_id
+       LEFT JOIN classes  c  ON c.id  = st.class_id
+       ${where}
+       GROUP BY r.student_id
+       ORDER BY avg_percentage DESC
+       LIMIT ?`,
+            [...values, Number(limit)]
+        );
+
+        if (format === 'csv') {
+            const csv = toCsv(rows, [
+                { key: 'admission_number',   label: 'Admission No' },
+                { key: 'first_name',         label: 'First Name' },
+                { key: 'last_name',          label: 'Last Name' },
+                { key: 'class_name',         label: 'Class' },
+                { key: 'avg_percentage',     label: 'Average (%)' },
+                { key: 'subjects_recorded',  label: 'Subjects' },
+            ]);
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader('Content-Disposition', 'attachment; filename=top_performers.csv');
+            return res.send(csv);
+        }
+
+        res.json({ total: rows.length, students: rows });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// ─── INTERVENTION REPORT (Students At Risk) ──────────────────────────────────────────────────
+
+/**
+ * GET /api/reports/intervention
+ * Query: format? (json|csv), term_id?, academic_year_id?, threshold? (default 50)
+ * Students whose average is below the threshold — requires academic intervention.
+ */
+const getInterventionReport = async (req, res) => {
+    const { format = 'json', term_id, academic_year_id, threshold = 50 } = req.query;
+
+    const filters = [];
+    const values = [];
+    if (term_id)          { filters.push('r.term_id = ?');           values.push(term_id); }
+    if (academic_year_id) { filters.push('r.academic_year_id = ?'); values.push(academic_year_id); }
+    const where = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
+
+    try {
+        const [rows] = await pool.execute(
+            `SELECT st.admission_number, st.first_name, st.last_name, st.phone_number,
+              st.parent_guardian_name,
+              CONCAT(c.grade_level, IF(c.stream != '', CONCAT(' ', c.stream), '')) AS class_name,
+              ROUND(AVG(r.percentage), 1)                                          AS avg_percentage,
+              COUNT(r.id)                                                           AS subjects_recorded,
+              SUM(r.grade_code = 9)                                                AS fails
+       FROM   results r
+       JOIN   students st ON st.id = r.student_id
+       LEFT JOIN classes  c  ON c.id  = st.class_id
+       ${where}
+       GROUP BY r.student_id
+       HAVING avg_percentage < ?
+       ORDER BY avg_percentage ASC`,
+            [...values, Number(threshold)]
+        );
+
+        if (format === 'csv') {
+            const csv = toCsv(rows, [
+                { key: 'admission_number',  label: 'Admission No' },
+                { key: 'first_name',        label: 'First Name' },
+                { key: 'last_name',         label: 'Last Name' },
+                { key: 'class_name',        label: 'Class' },
+                { key: 'avg_percentage',    label: 'Average (%)' },
+                { key: 'fails',             label: 'Failed Subjects' },
+                { key: 'parent_guardian_name', label: 'Parent/Guardian' },
+                { key: 'phone_number',      label: 'Contact' },
+            ]);
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader('Content-Disposition', 'attachment; filename=students_at_risk.csv');
+            return res.send(csv);
+        }
+
+        res.json({ total: rows.length, students: rows });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 module.exports = {
     getEnrollmentReport, getAttendanceReport, getAcademicReport, getSummaryReport,
+    getSubjectPerformanceReport, getTopPerformersReport, getInterventionReport,
 };

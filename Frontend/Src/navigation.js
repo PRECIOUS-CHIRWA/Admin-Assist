@@ -162,15 +162,23 @@
                 '</li>';
         }).join('');
 
+        // Global School Name fallback
+        window.SCHOOL_NAME = window.SCHOOL_NAME || 'Admin Assist Secondary School';
+        var schoolName = window.SCHOOL_NAME;
+
         // Build sidebar element
         var nav = document.createElement('nav');
         nav.id = 'app-sidebar';
         nav.setAttribute('aria-label', 'Main navigation');
         nav.innerHTML =
-            // ── Header: AA brand mark + close button ──
+            // ── Header: AA brand mark + School Name + close button ──
             '<div class="sb-head">' +
             '<div class="sb-brand">' +
             '<div class="sb-brand-mark">AA</div>' +
+            '<div class="sb-brand-info">' +
+            '<span class="sb-school-name" id="sidebar-school-name">' + _escapeHtml(schoolName) + '</span>' +
+            '<span class="sb-system-tag">SIS Workspace</span>' +
+            '</div>' +
             '</div>' +
             '<button class="sb-close-btn" id="sidebar-close-btn" ' +
             'aria-label="Close navigation menu" type="button">' +
@@ -178,12 +186,13 @@
             '</button>' +
             '</div>' +
 
-            // ── User card: [Avatar] [Name / Role] ──
+            // ── User card: [Avatar] [Name / Role / Staff ID] ──
             '<div class="sb-user">' +
             '<div class="sb-avatar" id="sidebar-avatar">?</div>' +
             '<div class="sb-user-text">' +
             '<span class="sb-name" id="sidebar-name">Loading\u2026</span>' +
             '<span class="sb-role" id="sidebar-role"></span>' +
+            '<span class="sb-staff-id" id="sidebar-staff-id"></span>' +
             '</div>' +
             '</div>' +
 
@@ -226,7 +235,17 @@
     padding: 0 16px; min-height: 64px; flex-shrink: 0;
     border-bottom: 1px solid rgba(255,255,255,.08);
 }
-.sb-brand { display: flex; align-items: center; }
+.sb-brand { display: flex; align-items: center; gap: 10px; }
+.sb-brand-info { display: flex; flex-direction: column; }
+.sb-school-name {
+    font-size: 12px; font-weight: 700; color: #ffffff;
+    line-height: 1.2; max-width: 160px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sb-system-tag {
+    font-size: 9px; color: #d4af37; font-weight: 700;
+    letter-spacing: .06em; text-transform: uppercase; margin-top: 1px;
+}
 .sb-brand-mark {
     width: 38px; height: 38px; border-radius: 10px;
     background: linear-gradient(135deg, #1a5580 0%, #2b84d9 100%);
@@ -252,6 +271,10 @@
     padding: 14px 20px; flex-shrink: 0;
     background: rgba(255,255,255,.04);
     border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.sb-staff-id {
+    font-size: 10px; color: rgba(255,255,255,.6);
+    font-family: monospace; letter-spacing: 0.05em; margin-top: 2px;
 }
 
 .sb-avatar {
@@ -456,24 +479,37 @@
     /* ─────────────────────────────────────────────────────────────────
        BRANDING FIX
        Standard pages have: <div class="logo">Admin Assist</div>
-       Replace text with "AA" and style it like the login page logo mark.
+       Replace text with brand group containing AA logo mark and School Name.
     ───────────────────────────────────────────────────────────────── */
     function _fixBranding() {
-        // Standard pages
+        var schoolName = window.SCHOOL_NAME || 'Admin Assist Secondary School';
+
+        // Standard pages header (e.g. header:not(.app-header) .logo)
         var logoEl = document.querySelector('header:not(.app-header) .logo');
-        if (logoEl && logoEl.textContent.trim() === 'Admin Assist') {
-            logoEl.textContent = 'AA';
-            // Apply box styling inline to ensure it's visible even without navigation.css
-            logoEl.setAttribute('style',
-                'display:inline-flex;align-items:center;justify-content:center;' +
-                'width:38px;height:38px;border-radius:10px;' +
-                'background:linear-gradient(135deg,#1a5580,#2b84d9);' +
-                'border:2px solid #d4af37;color:#d4af37;' +
-                'font-size:13px;font-weight:800;letter-spacing:.06em;' +
-                'flex-shrink:0;user-select:none;text-decoration:none;'
-            );
+        if (logoEl) {
+            logoEl.innerHTML =
+                '<div class="brand-group" style="display:flex;align-items:center;gap:10px;">' +
+                '<div class="logo-mark" style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#1a5580,#2b84d9);border:2px solid #d4af37;color:#d4af37;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;">AA</div>' +
+                '<div class="brand-titles" style="display:flex;flex-direction:column;">' +
+                '<span class="school-title" style="font-size:14px;font-weight:700;color:#ffffff;line-height:1.2;">' + _escapeHtml(schoolName) + '</span>' +
+                '<span class="sub-title" style="font-size:10px;color:#d4af37;font-weight:600;letter-spacing:.05em;text-transform:uppercase;">Admin Assist SIS</span>' +
+                '</div>' +
+                '</div>';
+            logoEl.style.background = 'none';
+            logoEl.style.border = 'none';
+            logoEl.style.padding = '0';
         }
-        // Admin-pages: logo-mark already shows "AA"; CSS hides the adjacent text
+
+        // Admin-pages header (.app-header)
+        var appLogoGroup = document.querySelector('.app-header .logo-group');
+        if (appLogoGroup) {
+            var logoCopy = appLogoGroup.querySelector('.logo-copy');
+            if (logoCopy) {
+                logoCopy.innerHTML =
+                    '<div class="logo" style="display:block!important;font-size:14px;font-weight:700;color:#ffffff;">' + _escapeHtml(schoolName) + '</div>' +
+                    '<span style="display:block!important;font-size:11px;color:rgba(255,255,255,.6);">School Management System</span>';
+            }
+        }
     }
 
 
@@ -612,27 +648,33 @@
         var role = user.role || 'user';
         var initials = _getInitials(fullName);
         var roleLabel = _formatRole(role);
+        var schoolName = window.SCHOOL_NAME || 'Admin Assist Secondary School';
+        var staffId = _generateStaffId(user);
+        var dept = user.department || _getDepartment(role);
 
         /* 1 — Sidebar user card */
         _setText('sidebar-avatar', initials);
         _setText('sidebar-name', fullName);
         _setText('sidebar-role', roleLabel);
+        _setText('sidebar-staff-id', staffId);
+        _setText('sidebar-school-name', schoolName);
 
-        /* 2 — Standard pages header (dashboard, students, enroll, etc.)
-               #headerAvatar | #nav-user-text > [#headerUserName / #roleBadge] */
+        /* 2 — Standard pages header */
         _setText('headerAvatar', initials);
         _setText('headerUserName', fullName);
         var badge = document.getElementById('roleBadge');
         if (badge) badge.textContent = roleLabel;
 
-        /* 3 — Dashboard welcome title */
+        /* 3 — Dashboard welcome title & school info */
         var welcome = document.getElementById('welcomeTitle');
         if (welcome) {
             welcome.textContent = 'Welcome, ' + fullName.split(' ')[0] + '!';
         }
+        _setText('dashSchoolName', schoolName);
+        _setText('dashStaffId', staffId);
+        _setText('dashDepartment', dept);
 
-        /* 4 — Admin-pages header (.app-header)
-               .user-meta > [strong / span] + .user-avatar */
+        /* 4 — Admin-pages header (.app-header) */
         var metaName = document.querySelector('.app-header .user-meta strong');
         var metaRole = document.querySelector('.app-header .user-meta span');
         var appAvt = document.querySelector('.app-header .user-avatar');
@@ -640,13 +682,19 @@
         if (metaRole) metaRole.textContent = roleLabel;
         if (appAvt) appAvt.textContent = initials;
 
-        /* 5 — data-user-* attribute contract for future pages */
+        /* 5 — Data attributes contract for pages */
         document.querySelectorAll('[data-user-name]')
             .forEach(function (el) { el.textContent = fullName; });
         document.querySelectorAll('[data-user-role]')
             .forEach(function (el) { el.textContent = roleLabel; });
         document.querySelectorAll('[data-user-initials]')
             .forEach(function (el) { el.textContent = initials; });
+        document.querySelectorAll('[data-school-name]')
+            .forEach(function (el) { el.textContent = schoolName; });
+        document.querySelectorAll('[data-staff-id]')
+            .forEach(function (el) { el.textContent = staffId; });
+        document.querySelectorAll('[data-department]')
+            .forEach(function (el) { el.textContent = dept; });
     }
 
     /* ─────────────────────────────────────────────────────────────────
@@ -689,6 +737,39 @@
     /* ─────────────────────────────────────────────────────────────────
        HELPERS
     ───────────────────────────────────────────────────────────────── */
+    function _generateStaffId(user) {
+        if (!user) return 'AA-STF-2025-0001';
+        if (user.staffId || user.staff_id) return user.staffId || user.staff_id;
+        var role = (user.role || 'user').toLowerCase();
+        var prefix = 'STF';
+        if (role === 'admin') prefix = 'ADM';
+        else if (role === 'headmaster') prefix = 'EXE';
+        else if (role === 'teacher') prefix = 'TCH';
+        else if (role === 'staff') prefix = 'STF';
+
+        var idNum = String(user.id || 1).padStart(4, '0');
+        return 'AA-' + prefix + '-2025-' + idNum;
+    }
+
+    function _getDepartment(role) {
+        var map = {
+            admin: 'Administration',
+            headmaster: 'Executive Office',
+            teacher: 'Academic Department',
+            staff: 'School Operations',
+            user: 'General Staff'
+        };
+        return map[(role || '').toLowerCase()] || 'General Operations';
+    }
+
+    function _escapeHtml(str) {
+        return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
     function _setText(id, text) {
         var el = document.getElementById(id);
         if (el) el.textContent = text;

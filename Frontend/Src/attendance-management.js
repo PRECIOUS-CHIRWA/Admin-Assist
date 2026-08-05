@@ -1,24 +1,51 @@
-// attendance-management.js — Sprint 3 (refactored with ModalManager)
+// attendance-management.js — Sprint 3 (full cascade: Year → Term → Class → Date → Register)
 // Depends on: auth.js (apiFetch, API_BASE), auth-guard.js, navigation.js, modal-manager.js
 
 (function () {
     'use strict';
 
-    let allClasses = [];
-    let allTerms   = [];
+    let allYears    = [];
+    let allClasses  = [];
+    let allTerms    = [];
     let allSubjects = [];
     let rosterStudents = [];
 
     // ─── Bootstrap ───────────────────────────────────────────────────────────
 
     document.addEventListener('DOMContentLoaded', async () => {
-        await Promise.all([loadClasses(), loadTerms()]);
+        // Load all meta-data in parallel, then populate filters and load sessions
+        await Promise.all([loadAcademicYears(), loadClasses(), loadTerms()]);
         await loadSessions();
         bindFilterEvents();
         bindModalEvents();
     });
 
-    // ─── Initial data loads ──────────────────────────────────────────────────
+    // ─── Meta data loaders ────────────────────────────────────────────────────
+
+    async function loadAcademicYears() {
+        try {
+            const res = await apiFetch('/api/attendance/academic-years');
+            if (!res || !res.ok) throw new Error('Failed to load academic years');
+            allYears = await res.json();
+
+            // Filter bar year
+            populateSelect('filterYear', allYears, 'id', y => y.year_label, 'All Years');
+            // Modal session year
+            populateSelect('sessionYear', allYears, 'id', y => y.year_label, '— Select Year —');
+
+            // Auto-select the current academic year in the modal
+            const current = allYears.find(y => y.is_current);
+            if (current) {
+                const el = document.getElementById('sessionYear');
+                if (el) {
+                    el.value = current.id;
+                    filterTermsByYear(current.id, true);
+                }
+            }
+        } catch (err) {
+            console.error('loadAcademicYears:', err);
+        }
+    }
 
     async function loadClasses() {
         try {
@@ -28,7 +55,7 @@
             populateSelect('filterClass', allClasses, 'id', classLabel, 'All Classes');
             populateSelect('sessionClass', allClasses, 'id', classLabel, '— Select Class —');
         } catch (err) {
-            console.error('Failed to load classes:', err);
+            console.error('loadClasses:', err);
         }
     }
 
@@ -38,13 +65,9 @@
             if (!res || !res.ok) throw new Error('Failed to load terms');
             allTerms = await res.json();
             populateSelect('filterTerm', allTerms, 'id', termLabel, 'All Terms');
-            populateSelect('sessionTerm', allTerms, 'id', termLabel, '— Select Term —');
-
-            // Pre-select the current term
-            const current = allTerms.find(t => t.is_current);
-            if (current) document.getElementById('sessionTerm').value = current.id;
+            // Modal terms are populated by filterTermsByYear — don't populate all here
         } catch (err) {
-            console.error('Failed to load terms:', err);
+            console.error('loadTerms:', err);
         }
     }
 
@@ -55,7 +78,35 @@
             allSubjects = await res.json();
             populateSelect('sessionSubject', allSubjects, 'id', s => s.subject_name, 'General Roll Call');
         } catch (err) {
-            console.error('Failed to load subjects:', err);
+            console.error('loadSubjectsForSession:', err);
+        }
+    }
+
+    // ─── Year → Term cascade ─────────────────────────────────────────────────
+
+    /**
+     * filterTermsByYear
+     * Restricts the sessionTerm dropdown to only terms belonging to the given year.
+     * @param {string|number} yearId
+     * @param {boolean} autoSelectCurrent - if true, auto-select the is_current term
+     */
+    function filterTermsByYear(yearId, autoSelectCurrent = false) {
+        const filtered = yearId
+            ? allTerms.filter(t => String(t.academic_year_id) === String(yearId))
+            : allTerms;
+
+        const termSelect = document.getElementById('sessionTerm');
+        if (!termSelect) return;
+
+        termSelect.innerHTML =
+            `<option value="">— Select Term —</option>` +
+            filtered.map(t =>
+                `<option value="${t.id}">${escapeHtml(termLabel(t))}</option>`
+            ).join('');
+
+        if (autoSelectCurrent) {
+            const current = filtered.find(t => t.is_current);
+            if (current) termSelect.value = current.id;
         }
     }
 
@@ -63,15 +114,17 @@
 
     async function loadSessions() {
         const params = new URLSearchParams();
+        const yearId   = document.getElementById('filterYear').value;
         const classId  = document.getElementById('filterClass').value;
         const termId   = document.getElementById('filterTerm').value;
         const fromDate = document.getElementById('filterFromDate').value;
         const toDate   = document.getElementById('filterToDate').value;
 
-        if (classId)  params.set('class_id',  classId);
-        if (termId)   params.set('term_id',   termId);
-        if (fromDate) params.set('from_date', fromDate);
-        if (toDate)   params.set('to_date',   toDate);
+        if (yearId)   params.set('academic_year_id', yearId);
+        if (classId)  params.set('class_id',         classId);
+        if (termId)   params.set('term_id',           termId);
+        if (fromDate) params.set('from_date',         fromDate);
+        if (toDate)   params.set('to_date',           toDate);
 
         try {
             const res = await apiFetch(`/api/attendance/sessions?${params}`);
@@ -79,7 +132,7 @@
             const sessions = await res.json();
             renderSessions(sessions);
         } catch (err) {
-            console.error('Failed to load sessions:', err);
+            console.error('loadSessions:', err);
         }
     }
 
@@ -188,12 +241,17 @@
     // ─── Filters ─────────────────────────────────────────────────────────────
 
     function bindFilterEvents() {
-        ['filterClass', 'filterTerm', 'filterFromDate', 'filterToDate'].forEach(id =>
-            document.getElementById(id).addEventListener('change', loadSessions)
-        );
+        ['filterYear', 'filterClass', 'filterTerm', 'filterFromDate', 'filterToDate'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', loadSessions);
+        });
+
         document.getElementById('clearFiltersBtn').addEventListener('click', () => {
-            ['filterClass', 'filterTerm', 'filterFromDate', 'filterToDate']
-                .forEach(id => (document.getElementById(id).value = ''));
+            ['filterYear', 'filterClass', 'filterTerm', 'filterFromDate', 'filterToDate']
+                .forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
+                });
             loadSessions();
         });
     }
@@ -201,7 +259,7 @@
     // ─── Take Attendance modal ────────────────────────────────────────────────
 
     function bindModalEvents() {
-        // Open
+        // Open modal
         document.getElementById('openTakeAttendanceBtn').addEventListener('click', async () => {
             await loadSubjectsForSession();
             document.getElementById('sessionDate').value = new Date().toISOString().split('T')[0];
@@ -211,12 +269,24 @@
             });
         });
 
-        // Close buttons — ModalManager auto-wires .aa-modal-close buttons,
-        // but we also wire the Cancel and View-modal close buttons explicitly.
+        // Close / Cancel buttons
         document.getElementById('cancelTakeAttBtn').addEventListener('click', closeTakeAttendanceModal);
-        document.getElementById('closeViewModalBtn').addEventListener('click', () => ModalManager.close('viewSessionModal'));
+        document.getElementById('closeViewModalBtn').addEventListener('click', () =>
+            ModalManager.close('viewSessionModal')
+        );
 
-        // Roster loading
+        // Year → Term cascade (in modal)
+        document.getElementById('sessionYear').addEventListener('change', function () {
+            filterTermsByYear(this.value, false);
+            hideBanner();
+        });
+
+        // Class info banner
+        document.getElementById('sessionClass').addEventListener('change', function () {
+            showClassBanner(this.value);
+        });
+
+        // Load register
         document.getElementById('loadRosterBtn').addEventListener('click', loadRoster);
 
         // Navigation between steps
@@ -225,23 +295,50 @@
         // Submit
         document.getElementById('submitAttendanceBtn').addEventListener('click', submitAttendance);
 
-        // Bulk mark buttons
+        // Bulk mark
         document.querySelectorAll('[data-bulk]').forEach(btn =>
             btn.addEventListener('click', () => bulkMark(btn.dataset.bulk))
         );
     }
 
+    function showClassBanner(classId) {
+        const banner = document.getElementById('classInfoBanner');
+        const text   = document.getElementById('classInfoText');
+        if (!classId) { hideBanner(); return; }
+
+        const cls = allClasses.find(c => String(c.id) === String(classId));
+        if (!cls) { hideBanner(); return; }
+
+        const enrolled = cls.student_count !== undefined ? cls.student_count : '?';
+        text.textContent = `${cls.class_name}  ·  ${enrolled} enrolled student${enrolled !== 1 ? 's' : ''}` +
+            (cls.class_teacher_name ? `  ·  Class Teacher: ${cls.class_teacher_name}` : '');
+        banner.hidden = false;
+    }
+
+    function hideBanner() {
+        document.getElementById('classInfoBanner').hidden = true;
+    }
+
     function closeTakeAttendanceModal() {
         ModalManager.close('takeAttendanceModal');
-        // Reset form state after animation
         setTimeout(() => {
             showStep(1);
             rosterStudents = [];
-            document.getElementById('rosterList').innerHTML = '';
-            document.getElementById('sessionClass').value  = '';
-            document.getElementById('sessionDate').value   = '';
-            document.getElementById('sessionPeriod').value = 'General';
-            document.getElementById('sessionSubject').value = '';
+            hideBanner();
+            document.getElementById('rosterList').innerHTML     = '';
+            document.getElementById('sessionYear').value        = '';
+            document.getElementById('sessionClass').value       = '';
+            document.getElementById('sessionDate').value        = '';
+            document.getElementById('sessionPeriod').value      = 'General';
+            document.getElementById('sessionSubject').value     = '';
+            document.getElementById('sessionTerm').innerHTML    = '<option value="">— Select Year First —</option>';
+
+            // Re-apply current year after reset
+            const current = allYears.find(y => y.is_current);
+            if (current) {
+                document.getElementById('sessionYear').value = current.id;
+                filterTermsByYear(current.id, true);
+            }
         }, 300);
     }
 
@@ -250,36 +347,57 @@
         document.getElementById('step2').hidden = (n !== 2);
     }
 
+    // ─── Load Register ────────────────────────────────────────────────────────
+
     async function loadRoster() {
-        const classId = document.getElementById('sessionClass').value;
+        const yearId  = document.getElementById('sessionYear').value;
         const termId  = document.getElementById('sessionTerm').value;
+        const classId = document.getElementById('sessionClass').value;
         const date    = document.getElementById('sessionDate').value;
 
-        if (!classId || !termId || !date) {
-            ModalManager.toast('Please select a class, term, and date.', 'warning');
+        if (!yearId || !termId || !classId || !date) {
+            ModalManager.toast('Please select Academic Year, Term, Class, and Date.', 'warning');
             return;
         }
 
         ModalManager.setLoading('loadRosterBtn', true, 'Loading…');
 
         try {
-            const res = await apiFetch(`/api/search/students?class_id=${classId}`);
-            if (!res || !res.ok) throw new Error('Failed to load roster');
-            const { students } = await res.json();
+            const params = new URLSearchParams({
+                class_id:         classId,
+                term_id:          termId,
+                academic_year_id: yearId,
+            });
 
-            if (!students || !students.length) {
-                ModalManager.toast('This class has no enrolled students yet.', 'warning');
+            const res = await apiFetch(`/api/attendance/register?${params}`);
+            if (!res || !res.ok) throw new Error('Failed to load register');
+            const data = await res.json();
+
+            if (!data.students || !data.students.length) {
+                ModalManager.toast(
+                    'No active students are enrolled in this class yet. Enroll students first.',
+                    'warning'
+                );
                 return;
             }
 
-            rosterStudents = students;
-            renderRoster(students);
+            // Warn if a session already exists for today
+            if (data.existing_session) {
+                const proceed = confirm(
+                    `A session already exists for ${data.class.class_name} today (${data.existing_session.period}). ` +
+                    `Submitting will create a separate session. Continue?`
+                );
+                if (!proceed) return;
+            }
+
+            rosterStudents = data.students;
+            renderRoster(data.students);
             showStep(2);
         } catch (err) {
-            ModalManager.toast('Unable to load class roster. Please try again.', 'error');
+            ModalManager.toast('Unable to load class register. Please try again.', 'error');
             console.error(err);
         } finally {
-            ModalManager.setLoading('loadRosterBtn', false, 'Load Class Roster');
+            ModalManager.setLoading('loadRosterBtn', false, 'Load Register');
         }
     }
 
@@ -308,16 +426,15 @@
         });
     }
 
-    async function submitAttendance() {
-        const sessionClass  = document.getElementById('sessionClass').value;
-        const sessionTerm   = document.getElementById('sessionTerm').value;
-        const sessionDate   = document.getElementById('sessionDate').value;
-        const sessionPeriod = document.getElementById('sessionPeriod').value || 'General';
-        const sessionSubject = document.getElementById('sessionSubject').value || null;
+    // ─── Submit Attendance ────────────────────────────────────────────────────
 
-        // Derive academic_year_id from the selected term (no longer required from frontend)
-        const termRecord = allTerms.find(t => String(t.id) === String(sessionTerm));
-        const academicYearId = termRecord ? termRecord.academic_year_id : null;
+    async function submitAttendance() {
+        const yearId        = document.getElementById('sessionYear').value;
+        const termId        = document.getElementById('sessionTerm').value;
+        const classId       = document.getElementById('sessionClass').value;
+        const date          = document.getElementById('sessionDate').value;
+        const period        = document.getElementById('sessionPeriod').value || 'General';
+        const subjectId     = document.getElementById('sessionSubject').value || null;
 
         ModalManager.setLoading('submitAttendanceBtn', true, 'Submitting…');
 
@@ -326,29 +443,29 @@
             const sessionRes = await apiFetch('/api/attendance/sessions', {
                 method: 'POST',
                 body: JSON.stringify({
-                    class_id:         sessionClass,
-                    term_id:          sessionTerm,
-                    academic_year_id: academicYearId,
-                    attendance_date:  sessionDate,
-                    period:           sessionPeriod,
-                    subject_id:       sessionSubject,
+                    class_id:         classId,
+                    term_id:          termId,
+                    academic_year_id: yearId,
+                    attendance_date:  date,
+                    period,
+                    subject_id:       subjectId,
                 }),
             });
 
             if (!sessionRes || !sessionRes.ok) {
                 const data = await sessionRes.json().catch(() => ({}));
-                throw new Error(data.error || 'Unable to create session');
+                throw new Error(data.error || 'Unable to create attendance session');
             }
 
             const { session } = await sessionRes.json();
 
-            // 2. Collect each student's status
+            // 2. Collect each student's status from the roster
             const records = rosterStudents.map(s => {
                 const checked = document.querySelector(`input[name="status-${s.id}"]:checked`);
                 return { student_id: s.id, status: checked ? checked.value : 'present' };
             });
 
-            // 3. Submit bulk attendance
+            // 3. Submit bulk records
             const submitRes = await apiFetch(`/api/attendance/sessions/${session.id}/submit`, {
                 method: 'POST',
                 body: JSON.stringify({ records }),
@@ -356,10 +473,13 @@
 
             if (!submitRes || !submitRes.ok) {
                 const data = await submitRes.json().catch(() => ({}));
-                throw new Error(data.error || 'Unable to submit attendance');
+                throw new Error(data.error || 'Unable to submit attendance records');
             }
 
-            ModalManager.toast('Attendance recorded successfully! ✓', 'success');
+            ModalManager.toast(
+                `Attendance recorded for ${rosterStudents.length} student${rosterStudents.length !== 1 ? 's' : ''}. ✓`,
+                'success'
+            );
             closeTakeAttendanceModal();
             await loadSessions();
 
