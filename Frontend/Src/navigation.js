@@ -1,26 +1,24 @@
-/**
- * navigation.js — Sidebar, Branding, and User Display
- *
- * WHAT THIS FILE DOES:
- *  Step 0 – Injects critical CSS synchronously so the sidebar is
- *            ALWAYS off-screen before any paint. This is the fix
- *            for the sidebar appearing at the bottom of the page.
- *  Step 1 – After DOM is ready: injects sidebar HTML and hamburger button.
- *  Step 2 – Fixes header branding (Admin Assist → AA box).
- *  Step 3 – Fixes user info layout → [Avatar] [Name / Role stacked].
- *  Step 4 – Populates user data: fast from localStorage, accurate from API.
- *  Step 5 – Applies role-based nav link visibility.
- *  Step 6 – Wires all events: hamburger, close, backdrop, Escape, logout.
- *
- * Load order on every protected page:
- *   auth.js → auth-guard.js → navigation.js → page-specific script
- */
-
 (function () {
     'use strict';
 
     /* ─────────────────────────────────────────────────────────────────
-       STEP 0 — INJECT CRITICAL CSS IMMEDIATELY (synchronous)
+       STEP 0 — APPLY THEME FROM LOCALSTORAGE (must happen before paint)
+    ───────────────────────────────────────────────────────────────── */
+    (function () {
+        var saved = localStorage.getItem('aa-theme');
+        if (saved === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        } else if (!saved) {
+            // Default: respect OS preference
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('aa-theme', 'dark');
+            }
+        }
+    })();
+
+    /* ─────────────────────────────────────────────────────────────────
+       STEP 1 — INJECT CRITICAL CSS IMMEDIATELY (synchronous)
        Must run before DOMContentLoaded so the sidebar never flashes
        visible before being hidden. Uses !important to prevent override.
     ───────────────────────────────────────────────────────────────── */
@@ -109,28 +107,30 @@
             '#app-sidebar{' +
             'position:fixed!important;' +
             'top:0!important;left:0!important;' +
-            'width:280px!important;height:100vh!important;' +
-            'background:#0A1628!important;color:#fff!important;' +
+            'width:270px!important;height:100vh!important;' +
+            'background:var(--aa-sidebar-bg,#172033)!important;color:#fff!important;' +
             'z-index:9999!important;' +
             'display:flex!important;flex-direction:column!important;' +
             'overflow-y:auto!important;overflow-x:hidden!important;' +
             'transform:translateX(-100%)!important;' +
             'visibility:hidden!important;pointer-events:none!important;' +
-            'transition:transform .3s cubic-bezier(.4,0,.2,1),' +
-            'visibility 0s .3s!important;' +
+            'transition:transform .25s cubic-bezier(.4,0,.2,1),' +
+            'visibility 0s .25s!important;' +
+            'border-right:1px solid rgba(255,255,255,.06)!important;' +
             '}' +
             '#app-sidebar.is-open{' +
             'transform:translateX(0)!important;' +
             'visibility:visible!important;pointer-events:all!important;' +
-            'transition:transform .3s cubic-bezier(.4,0,.2,1),' +
+            'transition:transform .25s cubic-bezier(.4,0,.2,1),' +
             'visibility 0s 0s!important;' +
             '}' +
             '#sidebar-backdrop{' +
             'position:fixed!important;inset:0!important;' +
-            'background:rgba(0,0,0,.52)!important;' +
+            'background:rgba(0,0,0,.45)!important;' +
+            'backdrop-filter:blur(2px)!important;' +
             'z-index:9998!important;' +
             'opacity:0!important;pointer-events:none!important;' +
-            'transition:opacity .3s ease!important;' +
+            'transition:opacity .25s ease!important;' +
             '}' +
             '#sidebar-backdrop.is-visible{' +
             'opacity:1!important;pointer-events:all!important;' +
@@ -229,223 +229,241 @@
         var s = document.createElement('style');
         s.id = 'nav-ui';
         s.textContent = `
-/* ── Sidebar header ──────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════
+   SIDEBAR — Brand New Design System
+   Primary Blue: #1E5AA8 | Academic Gold: #D4AF37
+   Dark sidebar background: #172033
+════════════════════════════════════════════════════════ */
+
+/* ── Sidebar header bar ───────────────────────────────── */
 .sb-head {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 0 16px; min-height: 64px; flex-shrink: 0;
-    border-bottom: 1px solid rgba(255,255,255,.08);
+    padding: 0 1rem; min-height: 64px; flex-shrink: 0;
+    border-bottom: 1px solid rgba(255,255,255,.07);
+    gap: 8px;
 }
-.sb-brand { display: flex; align-items: center; gap: 10px; }
-.sb-brand-info { display: flex; flex-direction: column; }
+.sb-brand { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+.sb-brand-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .sb-school-name {
-    font-size: 12px; font-weight: 700; color: #ffffff;
-    line-height: 1.2; max-width: 160px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 12.5px; font-weight: 700; color: #ffffff;
+    line-height: 1.25; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; max-width: 155px;
 }
 .sb-system-tag {
-    font-size: 9px; color: #d4af37; font-weight: 700;
-    letter-spacing: .06em; text-transform: uppercase; margin-top: 1px;
+    font-size: 9px; color: #D4AF37; font-weight: 700;
+    letter-spacing: .07em; text-transform: uppercase; margin-top: 1px;
 }
+
+/* AA brand mark — square with gold border */
 .sb-brand-mark {
-    width: 38px; height: 38px; border-radius: 10px;
-    background: linear-gradient(135deg, #1a5580 0%, #2b84d9 100%);
-    border: 2px solid #d4af37;
-    color: #d4af37; font-size: 13px; font-weight: 800;
-    letter-spacing: .06em;
+    width: 36px; height: 36px; border-radius: 8px;
+    background: #1E5AA8;
+    border: 2px solid #D4AF37;
+    color: #D4AF37; font-size: 12px; font-weight: 800;
+    letter-spacing: .04em;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0; user-select: none;
 }
+
+/* Close X button */
 .sb-close-btn {
     background: transparent; border: none;
-    color: rgba(255,255,255,.65); font-size: 18px;
-    cursor: pointer; width: 32px; height: 32px; border-radius: 6px;
+    color: rgba(255,255,255,.5); font-size: 17px;
+    cursor: pointer; width: 30px; height: 30px; border-radius: 5px;
     display: flex; align-items: center; justify-content: center;
     transition: background .15s, color .15s; flex-shrink: 0;
+    line-height: 1;
 }
-.sb-close-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
-.sb-close-btn:focus-visible { outline: 2px solid #d4af37; outline-offset: 2px; }
+.sb-close-btn:hover { background: rgba(255,255,255,.09); color: #fff; }
+.sb-close-btn:focus-visible { outline: 2px solid #D4AF37; outline-offset: 2px; }
 
-/* ── Sidebar user card ── [Avatar] [Name \n Role] ────── */
+/* ── Sidebar user card ────────────────────────────────── */
 .sb-user {
-    display: flex; align-items: center; gap: 12px;
-    padding: 14px 20px; flex-shrink: 0;
-    background: rgba(255,255,255,.04);
-    border-bottom: 1px solid rgba(255,255,255,.07);
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; flex-shrink: 0;
+    background: rgba(255,255,255,.03);
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    cursor: pointer;
+    transition: background .15s;
 }
-.sb-staff-id {
-    font-size: 10px; color: rgba(255,255,255,.6);
-    font-family: monospace; letter-spacing: 0.05em; margin-top: 2px;
+.sb-user:hover { background: rgba(30,90,168,.2) !important; }
+.sb-user::after {
+    content: '✎'; margin-left: auto;
+    font-size: 12px; color: rgba(255,255,255,.25); padding-right: 2px;
 }
 
 .sb-avatar {
-    width: 40px; height: 40px; border-radius: 50%;
-    background: linear-gradient(135deg, #d4af37 0%, #f0c674 100%);
-    color: #0A1628; font-size: 14px; font-weight: 700;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #D4AF37;
+    color: #172033; font-size: 13px; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0; letter-spacing: .5px; user-select: none;
+    border: 1.5px solid rgba(255,255,255,.15);
 }
-.sb-user-text {
-    display: flex; flex-direction: column; gap: 2px;
-    min-width: 0; flex: 1;
-}
+.sb-user-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
 .sb-name {
     font-size: 13px; font-weight: 600; color: #fff;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.sb-role { font-size: 11px; color: rgba(255,255,255,.55); }
-
-/* ── Nav links ───────────────────────────────────────── */
-.sb-nav {
-    list-style: none; padding: 8px 0; margin: 0; flex: 1;
+.sb-role   { font-size: 11px; color: rgba(255,255,255,.5); }
+.sb-staff-id {
+    font-size: 10px; color: rgba(255,255,255,.35);
+    font-variant-numeric: tabular-nums; letter-spacing: .03em;
 }
 
-/* ── Sidebar user card hover (signals it's clickable) ── */
-.sb-user:hover {
-    background: rgba(255,255,255,.07) !important;
-    transition: background .15s !important;
-}
-.sb-user::after {
-    content: '✎';
-    margin-left: auto;
-    font-size: 13px;
-    color: rgba(255,255,255,.3);
-    padding-right: 4px;
-}
+/* ── Nav links ────────────────────────────────────────── */
+.sb-nav { list-style: none; padding: 6px 0; margin: 0; flex: 1; }
 
 .sb-link {
-    display: flex; align-items: center; gap: 12px;
-    padding: 11px 20px;
-    color: rgba(255,255,255,.72); text-decoration: none;
-    font-size: 14px; font-weight: 500;
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 18px;
+    color: rgba(255,255,255,.65); text-decoration: none;
+    font-size: 13.5px; font-weight: 500;
     border-left: 3px solid transparent;
-    transition: background .15s, color .15s, border-color .15s;
-    white-space: nowrap;
+    transition: background .12s, color .12s, border-color .12s;
+    white-space: nowrap; border-radius: 0;
 }
-.sb-link:hover { background: rgba(255,255,255,.07); color: #fff; }
+.sb-link:hover {
+    background: rgba(30,90,168,.15);
+    color: #fff;
+}
 .sb-link.is-active {
-    background: rgba(184,115,51,.15); color: #d4af37;
-    border-left-color: #d4af37; font-weight: 600;
+    background: rgba(30,90,168,.25);
+    color: #ffffff;
+    border-left-color: #1E5AA8;
+    font-weight: 600;
 }
-.sb-link:focus-visible { outline: 2px solid #d4af37; outline-offset: -2px; }
-.sb-icon { font-size: 17px; width: 22px; text-align: center; flex-shrink: 0; }
+.sb-link:focus-visible { outline: 2px solid #D4AF37; outline-offset: -2px; }
+.sb-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; opacity: .85; }
 
-/* ── Section headers in sidebar nav ─────────────────── */
+/* ── Section labels in nav ────────────────────────────── */
 .sb-section-header {
-    padding: 16px 20px 4px;
-    font-size: 10px; font-weight: 700; letter-spacing: .1em;
-    text-transform: uppercase; color: rgba(255,255,255,.35);
+    padding: 14px 18px 3px;
+    font-size: 9.5px; font-weight: 700; letter-spacing: .10em;
+    text-transform: uppercase; color: rgba(255,255,255,.3);
     pointer-events: none; user-select: none;
 }
 
-/* ── Sidebar footer / logout ─────────────────────────── */
+/* ── Sidebar footer ───────────────────────────────────── */
 .sb-footer {
-    padding: 8px 0; flex-shrink: 0;
-    border-top: 1px solid rgba(255,255,255,.07);
+    padding: 6px 0; flex-shrink: 0;
+    border-top: 1px solid rgba(255,255,255,.06);
 }
 .sb-logout-btn {
-    display: flex; align-items: center; gap: 12px;
-    width: 100%; padding: 11px 20px;
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 10px 18px;
     background: transparent; border: none;
     border-left: 3px solid transparent;
-    color: rgba(255,255,255,.65); font-size: 14px; font-weight: 500;
+    color: rgba(255,255,255,.55); font-size: 13.5px; font-weight: 500;
     font-family: inherit; cursor: pointer; text-align: left;
-    transition: background .15s, color .15s, border-color .15s;
+    transition: background .12s, color .12s, border-color .12s;
 }
 .sb-logout-btn:hover {
-    background: rgba(217,64,64,.12);
-    color: #ff8a8a; border-left-color: #c0392b;
+    background: rgba(220,38,38,.12);
+    color: #fca5a5; border-left-color: #DC2626;
 }
-.sb-logout-btn:focus-visible { outline: 2px solid #d4af37; outline-offset: -2px; }
+.sb-logout-btn:focus-visible { outline: 2px solid #D4AF37; outline-offset: -2px; }
 
-/* ── Hamburger button ────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════
+   HEADER CHROME
+════════════════════════════════════════════════════════ */
+
+/* ── Hamburger button ─────────────────────────────────── */
 #hamburger-btn {
     display: flex; flex-direction: column;
-    justify-content: center; align-items: center; gap: 5px;
-    width: 40px; height: 40px; padding: 8px;
+    justify-content: center; align-items: center; gap: 4.5px;
+    width: 38px; height: 38px; padding: 8px;
     background: transparent; border: none;
     border-radius: 6px; cursor: pointer;
-    flex-shrink: 0; margin-right: 8px;
-    transition: background .2s;
+    flex-shrink: 0;
+    transition: background .15s;
 }
-#hamburger-btn:hover { background: rgba(255,255,255,.12); }
-#hamburger-btn:focus-visible { outline: 2px solid #d4af37; outline-offset: 2px; }
+#hamburger-btn:hover { background: rgba(255,255,255,.1); }
+#hamburger-btn:focus-visible { outline: 2px solid #D4AF37; outline-offset: 2px; }
 .hb-line {
-    display: block; width: 20px; height: 2px;
-    background: #ffffff; border-radius: 2px; pointer-events: none;
+    display: block; width: 18px; height: 2px;
+    background: currentColor; border-radius: 2px; pointer-events: none;
+    transition: background .15s;
 }
 
-/* ── User info wrapper on standard pages ─────────────── */
-/* #nav-user-text wraps #headerUserName + #roleBadge so they stack */
+/* ── Theme toggle button ──────────────────────────────── */
+#aa-theme-btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px;
+    background: transparent;
+    border: 1.5px solid rgba(255,255,255,.25);
+    border-radius: 50%;
+    cursor: pointer; font-size: 16px; line-height: 1;
+    flex-shrink: 0;
+    transition: background .15s, border-color .15s;
+    color: inherit;
+}
+#aa-theme-btn:hover {
+    background: rgba(255,255,255,.1);
+    border-color: rgba(255,255,255,.5);
+}
+#aa-theme-btn:focus-visible { outline: 2px solid #D4AF37; outline-offset: 2px; }
+
+/* ── User info wrapper on standard pages ──────────────── */
 #nav-user-text {
     display: flex; flex-direction: column;
-    align-items: flex-start; gap: 1px;
+    align-items: flex-start; gap: 0px;
 }
 #nav-user-text #headerUserName {
-    font-size: 14px; font-weight: 600; color: #d4af37;
-    line-height: 1.3;
+    font-size: 13.5px; font-weight: 600; color: #D4AF37;
+    line-height: 1.35;
 }
 #nav-user-text #roleBadge {
-    font-size: 11px !important; color: rgba(255,255,255,.7) !important;
+    font-size: 11px !important; color: rgba(255,255,255,.6) !important;
     background: transparent !important; padding: 0 !important;
-    border-radius: 0 !important; font-weight: 500 !important;
+    border-radius: 0 !important; font-weight: 400 !important;
     text-transform: none !important; letter-spacing: 0 !important;
     line-height: 1.3;
 }
 
-/* ── User info on admin-pages (.app-header) ──────────── */
-/* Reorder: [Avatar first] [Name / Role stacked] */
+/* ── User info on admin-pages (.app-header) ───────────── */
 .app-header .user-profile {
     display: flex !important; flex-direction: row !important;
     align-items: center !important; gap: 10px !important;
 }
 .app-header .user-avatar {
-    order: -1 !important;          /* visually moves avatar before meta text */
-    font-size: 14px !important;
-    font-weight: 700 !important;
+    order: -1 !important;
+    font-size: 13px !important; font-weight: 700 !important;
 }
 .app-header .user-meta {
-    text-align: left !important;   /* was right-aligned in admin-pages.css */
-    display: flex !important;
-    flex-direction: column !important; gap: 2px !important;
+    text-align: left !important;
+    display: flex !important; flex-direction: column !important; gap: 1px !important;
 }
-.app-header .user-meta strong {
-    font-size: 14px !important; font-weight: 600 !important;
-    color: #ffffff !important;
-}
-.app-header .user-meta span {
-    font-size: 11px !important; color: rgba(255,255,255,.6) !important;
-}
+.app-header .user-meta strong { font-size: 13.5px !important; font-weight: 600 !important; color: #ffffff !important; }
+.app-header .user-meta span   { font-size: 11px !important;   color: rgba(255,255,255,.55) !important; }
 
-/* ── AA branding: hide "Admin Assist" text on admin-pages ─ */
-/* .logo-mark already shows "AA" — we hide the text beside it */
 .app-header .logo-copy .logo,
 .app-header .logo-copy > span { display: none !important; }
 
-/* ── Logout button — standardized white-outline style ── */
-/* Overrides the red style in dashboard.css */
+/* ── Logout button ────────────────────────────────────── */
 #logoutBtn {
     background: transparent !important;
-    border: 1px solid rgba(255,255,255,.65) !important;
-    color: #ffffff !important;
-    padding: 7px 14px !important;
+    border: 1.5px solid rgba(255,255,255,.4) !important;
+    color: rgba(255,255,255,.9) !important;
+    padding: 6px 14px !important;
     border-radius: 6px !important;
     font-size: 13px !important;
     font-weight: 500 !important;
     cursor: pointer !important;
-    transition: background .2s, border-color .2s !important;
+    transition: background .15s, border-color .15s !important;
     margin-left: 8px !important;
 }
 #logoutBtn:hover {
-    background: rgba(255,255,255,.12) !important;
-    border-color: #ffffff !important;
+    background: rgba(255,255,255,.1) !important;
+    border-color: rgba(255,255,255,.7) !important;
 }
 #logoutBtn:focus-visible {
-    outline: 2px solid #d4af37 !important; outline-offset: 2px !important;
+    outline: 2px solid #D4AF37 !important; outline-offset: 2px !important;
 }
 
-/* ── Mobile ──────────────────────────────────────────── */
+/* ── Mobile ───────────────────────────────────────────── */
 @media (max-width: 480px) {
-    #app-sidebar { width: 100% !important; max-width: 300px !important; }
+    #app-sidebar { width: 88vw !important; max-width: 290px !important; }
 }
         `;
         (document.head || document.documentElement).appendChild(s);
@@ -474,13 +492,38 @@
 
         // insertBefore with firstChild puts it at the very left of the header
         header.insertBefore(btn, header.firstChild);
+
+        // ── Theme toggle button — inject into header right side ──────────
+        if (!document.getElementById('aa-theme-btn')) {
+            var themeBtn = document.createElement('button');
+            themeBtn.id = 'aa-theme-btn';
+            themeBtn.type = 'button';
+            themeBtn.setAttribute('aria-label', 'Toggle dark/light theme');
+            themeBtn.title = 'Toggle theme';
+            // Set correct icon based on current theme
+            var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            themeBtn.textContent = isDark ? '☀' : '🌙';
+            // Append near the end of header (before last child, typically logout/user)
+            header.appendChild(themeBtn);
+
+            themeBtn.addEventListener('click', function () {
+                var html = document.documentElement;
+                var current = html.getAttribute('data-theme');
+                if (current === 'dark') {
+                    html.removeAttribute('data-theme');
+                    localStorage.setItem('aa-theme', 'light');
+                    themeBtn.textContent = '🌙';
+                    themeBtn.setAttribute('aria-label', 'Switch to dark mode');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('aa-theme', 'dark');
+                    themeBtn.textContent = '☀';
+                    themeBtn.setAttribute('aria-label', 'Switch to light mode');
+                }
+            });
+        }
     }
 
-    /* ─────────────────────────────────────────────────────────────────
-       BRANDING FIX
-       Standard pages have: <div class="logo">Admin Assist</div>
-       Replace text with brand group containing AA logo mark and School Name.
-    ───────────────────────────────────────────────────────────────── */
     function _fixBranding() {
         var schoolName = window.SCHOOL_NAME || 'Admin Assist Secondary School';
 

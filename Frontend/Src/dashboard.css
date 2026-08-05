@@ -1,473 +1,426 @@
-   * {
-     margin: 0;
-     padding: 0;
-     box-sizing: border-box;
-   }
-
-   body {
-     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-     background: #f0f4f8;
-     color: #1a1a1a;
-   }
-
-   header {
-     background: linear-gradient(135deg, #1a3a52 0%, #0f2d42 100%);
-     border-bottom: 3px solid #d4af37;
-     padding: 20px 40px;
-     display: flex;
-     align-items: center;
-     justify-content: space-between;
-     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-   }
-
-   .logo {
-     font-size: 20px;
-     font-weight: 700;
-     color: #d4af37;
-   }
-
-   .user-avatar {
-     width: 40px;
-     height: 40px;
-     border-radius: 50%;
-     background: linear-gradient(135deg, #d4af37 0%, #f0c674 100%);
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     color: #1a3a52;
-     font-weight: 600;
-   }
-
-   /* header {
-      background: white;
-      border-bottom: 1px solid #e5e5e5;
-      padding: 20px 40px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    } */
-
-   .logo {
-     font-size: 20px;
-     font-weight: 700;
-     color: #0f3a5c;
-   }
-
-   .user-profile {
-     display: flex;
-     align-items: center;
-     gap: 12px;
-   }
-
-   #headerUserName {
-     color: #d4af37;
-     font-weight: 600;
-   }
-
-   .user-avatar {
-     width: 40px;
-     height: 40px;
-     border-radius: 50%;
-     background: linear-gradient(135deg, #0f5f4f 0%, #2b84d9 100%);
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     color: white;
-     font-weight: 600;
-   }
-
-   .main-container {
-     padding: 40px;
-     max-width: 1400px;
-     margin: 0 auto;
-   }
-
-   .dashboard-title {
-     font-size: 32px;
-     font-weight: 600;
-     color: #1a3a52;
-     margin-bottom: 40px;
-   }
-
-   .role-badge {
-     display: inline-block;
-     padding: 3px 10px;
-     border-radius: 999px;
-     font-size: 11px;
-     font-weight: 700;
-     text-transform: uppercase;
-     letter-spacing: 0.05em;
-     margin-left: 8px;
-     vertical-align: middle;
-   }
-
-   .role-badge.admin {
-     background: #fde68a;
-     color: #78350f;
-   }
-
-   .role-badge.headmaster {
-     background: #ddd6fe;
-     color: #4c1d95;
-   }
-
-   .role-badge.staff {
-     background: #d1fae5;
-     color: #064e3b;
-   }
-
-   .role-badge.user {
-     background: #dbeafe;
-     color: #1e3a5f;
-   }
-
-   /* Hide cards that the current role shouldn't see */
-   .admin-only {
-     display: none;
-   }
-
-   #logoutBtn {
-     margin-left: 12px;
-     padding: 8px 14px;
-     border: none;
-     border-radius: 6px;
-     background: #c0392b;
-     color: #fff;
-     font-size: 13px;
-     font-weight: 600;
-     cursor: pointer;
-   }
-
-   .stat-card {
-     background: white;
-     padding: 28px;
-     border-radius: 12px;
-     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-     transition: all 0.3s;
-     border-top: 4px solid transparent;
-   }
-
-   .stat-card:hover {
-     transform: translateY(-4px);
-     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-   }
-
-   .stat-card.blue {
-     border-top-color: #2b84d9;
-   }
-
-   .stat-card.gold {
-     border-top-color: #d4af37;
-   }
-
-   .stat-card.orange {
-     border-top-color: #f59e0b;
-   }
-
-   .stats-grid {
-     display: grid;
-     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-     gap: 24px;
-     margin-bottom: 48px;
-   }
-
-   .stat-card {
-     background: white;
-     padding: 28px;
-     border-radius: 12px;
-     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-     transition: all 0.3s;
-     border-top: 4px solid transparent;
-   }
-
-   .stat-card:hover {
-     transform: translateY(-4px);
-     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-   }
-
-   .stat-card.blue {
-     border-top-color: #2b84d9;
-   }
-
-   .stat-card.green {
-     border-top-color: #0f5f4f;
-   }
-
-   .stat-card.orange {
-     border-top-color: #f59e0b;
-   }
-
-   .stat-header {
-     display: flex;
-     align-items: center;
-     justify-content: space-between;
-     margin-bottom: 16px;
-   }
-
-   .stat-icon {
-     width: 50px;
-     height: 50px;
-     background: linear-gradient(135deg, rgba(43, 132, 217, 0.1) 0%, rgba(43, 132, 217, 0.05) 100%);
-     border-radius: 10px;
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     font-size: 24px;
-   }
-
-   .stat-card.green .stat-icon {
-     background: linear-gradient(135deg, rgba(15, 95, 79, 0.1) 0%, rgba(15, 95, 79, 0.05) 100%);
-   }
-
-   .stat-card.orange .stat-icon {
-     background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
-   }
-
-   .stat-label {
-     font-size: 14px;
-     color: #666;
-     margin-bottom: 8px;
-     font-weight: 500;
-   }
-
-   .stat-value {
-     font-size: 36px;
-     font-weight: 700;
-     color: #1a3a52;
-   }
-
-   .stat-bar {
-     width: 100%;
-     height: 6px;
-     background: #e5e5e5;
-     border-radius: 3px;
-     margin-top: 12px;
-     overflow: hidden;
-   }
-
-   .stat-bar.blue {
-     background: rgba(43, 132, 217, 0.2);
-   }
-
-   .stat-bar.blue::after {
-     content: '';
-     display: block;
-     width: 75%;
-     height: 100%;
-     background: #2b84d9;
-     border-radius: 3px;
-   }
-
-   .stat-bar.green {
-     background: rgba(15, 95, 79, 0.2);
-   }
-
-   .stat-bar.green::after {
-     content: '';
-     display: block;
-     width: 65%;
-     height: 100%;
-     background: #0f5f4f;
-     border-radius: 3px;
-   }
-
-   .stat-bar.orange {
-     background: rgba(245, 158, 11, 0.2);
-   }
-
-   .stat-bar.orange::after {
-     content: '';
-     display: block;
-     width: 50%;
-     height: 100%;
-     background: #f59e0b;
-     border-radius: 3px;
-   }
-
-   .activity-section {
-     margin-top: 48px;
-   }
-
-   .activity-title {
-     font-size: 22px;
-     font-weight: 600;
-     color: #0f3a5c;
-     margin-bottom: 24px;
-   }
-
-   .activity-grid {
-     display: grid;
-     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-     gap: 24px;
-   }
-
-   .activity-card {
-     background: white;
-     border-radius: 12px;
-     overflow: hidden;
-     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-     transition: all 0.3s;
-     cursor: pointer;
-   }
-
-   .activity-card:hover {
-     transform: translateY(-4px);
-     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-   }
-
-   .activity-image {
-     width: 100%;
-     height: 180px;
-     background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     font-size: 48px;
-   }
-
-   .activity-image.enrollment {
-     background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-   }
-
-   .activity-image.attendance {
-     background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-   }
-
-   .activity-image.records {
-     background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
-   }
-
-   .activity-image.reports {
-     background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-   }
-
-   .activity-content {
-     padding: 20px;
-   }
-
-   .activity-title-small {
-     font-size: 16px;
-     font-weight: 600;
-     color: #0f3a5c;
-     margin-bottom: 8px;
-   }
-
-   .activity-description {
-     font-size: 14px;
-     color: #666;
-     line-height: 1.5;
-   }
-
-   @media (max-width: 768px) {
-     header {
-       padding: 16px 20px;
-     }
-
-     .main-container {
-       padding: 20px;
-     }
-
-     .dashboard-title {
-       font-size: 24px;
-     }
-
-     .stats-grid {
-       grid-template-columns: 1fr;
-     }
-
-     .activity-grid {
-       grid-template-columns: 1fr;
-     }
-   }
-
-   /* === Sprint 2: Dashboard additions === */
-
-   /* Student Directory card colour */
-   .activity-image.directory {
-     background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
-   }
-
-   /* === Sprint 2 Additions: Recent Activity === */
-
-   .recent-activity-section {
-     margin-top: 48px;
-   }
-
-   .activity-list {
-     list-style: none;
-     padding: 0;
-     margin: 0;
-     background: white;
-     border-radius: 12px;
-     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-     overflow: hidden;
-   }
-
-   .activity-item {
-     display: flex;
-     align-items: flex-start;
-     gap: 14px;
-     padding: 16px 20px;
-     border-bottom: 1px solid #f0f0f0;
-   }
-
-   .activity-item:last-child {
-     border-bottom: none;
-   }
-
-   .activity-dot {
-     width: 10px;
-     height: 10px;
-     border-radius: 50%;
-     background: #d4af37;
-     flex-shrink: 0;
-     margin-top: 5px;
-   }
-
-   .activity-detail {
-     display: flex;
-     flex-direction: column;
-     gap: 3px;
-   }
-
-   .activity-action {
-     font-size: 14px;
-     color: #1a3a52;
-     font-weight: 500;
-   }
-
-   .activity-meta {
-     font-size: 12px;
-     color: #666;
-   }
-
-   /* Skeleton shimmer for loading state */
-   .activity-skeleton {
-     height: 48px;
-     background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
-     background-size: 200% 100%;
-     animation: activityShimmer 1.5s infinite;
-   }
-
-   @keyframes activityShimmer {
-     from {
-       background-position: 200% 0;
-     }
-
-     to {
-       background-position: -200% 0;
-     }
-   }
-
-   .activity-empty,
-   .activity-error {
-     padding: 24px 20px;
-     color: #666;
-     font-size: 14px;
-     text-align: center;
-   }
-
-   .activity-error {
-     color: #c0392b;
-   }
+/*
+ * dashboard.css — Admin Assist Dashboard
+ * Inherits from theme.css and aa-shared.css.
+ * Defines: header, stat cards, quick-access list, recent-activity feed.
+ */
+
+/* ─── Reset (dashboard is standalone, not using aa-shared reset) ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.9375rem;
+    color: var(--aa-text, #1F2937);
+    background: var(--aa-bg, #F7F9FC);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Header ─────────────────────────────────────────────────── */
+header {
+    background: var(--aa-blue, #1E5AA8);
+    border-bottom: 3px solid var(--aa-gold, #D4AF37);
+    padding: 0 1.5rem;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 4px rgba(0,0,0,.12);
+}
+
+/* Logo replaced by navigation.js _fixBranding() — hide default text */
+.logo {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    color: #ffffff;
+    flex-shrink: 0;
+}
+
+/* User profile section */
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    flex-shrink: 0;
+}
+
+#headerUserName { color: var(--aa-gold, #D4AF37); font-weight: 600; font-size: 0.875rem; }
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--aa-gold, #D4AF37);
+    color: #172033;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1.5px solid rgba(255,255,255,.2);
+    user-select: none;
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: rgba(255,255,255,.15);
+    color: #fff;
+    flex-shrink: 0;
+}
+
+/* Role-specific badge colours (subtle) */
+.role-badge.admin      { background: rgba(212,175,55,.25); color: #D4AF37; }
+.role-badge.headmaster { background: rgba(212,175,55,.2);  color: #e8cc80; }
+.role-badge.staff      { background: rgba(255,255,255,.15); color: #fff;   }
+.role-badge.user       { background: rgba(255,255,255,.1);  color: rgba(255,255,255,.85); }
+
+/* Hide admin-only elements by default (RBAC shown by navigation.js) */
+.admin-only { display: none; }
+
+/* Logout button — overridden further by navigation.js injected CSS */
+#logoutBtn {
+    padding: 0.4rem 0.875rem;
+    border: 1.5px solid rgba(255,255,255,.5);
+    border-radius: 6px;
+    background: transparent;
+    color: #fff;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+/* ─── Main Container ─────────────────────────────────────────── */
+.main-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem 2.5rem 3rem;
+}
+
+/* ─── Welcome Title ──────────────────────────────────────────── */
+.dashboard-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--aa-text, #1F2937);
+    letter-spacing: -0.01em;
+    margin-bottom: 1.5rem;
+}
+
+/* ─── School Banner ──────────────────────────────────────────── */
+.dashboard-banner {
+    background: var(--aa-blue, #1E5AA8);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 10px;
+    padding: 1.125rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+}
+
+.dashboard-banner h2 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 0.2rem;
+}
+
+.dashboard-banner p {
+    font-size: 0.8125rem;
+    color: rgba(255,255,255,.7);
+    margin: 0;
+}
+
+.dashboard-id-card {
+    text-align: right;
+    background: rgba(0,0,0,.2);
+    padding: 0.5rem 0.875rem;
+    border-radius: 6px;
+    border: 1px solid rgba(212,175,55,.3);
+}
+
+.dashboard-id-card .id-label {
+    display: block;
+    font-size: 0.65rem;
+    color: #D4AF37;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.15rem;
+}
+
+.dashboard-id-card .id-value {
+    display: block;
+    font-size: 0.875rem;
+    color: #ffffff;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+}
+
+.dashboard-id-card .id-dept {
+    display: block;
+    font-size: 0.72rem;
+    color: rgba(255,255,255,.55);
+    margin-top: 0.1rem;
+}
+
+/* ─── Stats Grid ─────────────────────────────────────────────── */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--aa-surface, #fff);
+    border: 1px solid var(--aa-border, #E5E7EB);
+    border-radius: 10px;
+    padding: 1.25rem 1.375rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    border-top: 3px solid var(--aa-blue, #1E5AA8);
+    transition: box-shadow 0.15s;
+}
+
+.stat-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,.08);
+}
+
+.stat-card.blue   { border-top-color: var(--aa-blue, #1E5AA8); }
+.stat-card.green  { border-top-color: #059669; }
+.stat-card.orange { border-top-color: #D97706; }
+.stat-card.gold   { border-top-color: var(--aa-gold, #D4AF37); }
+
+.stat-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.stat-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    opacity: 0.75;
+}
+
+.stat-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--aa-text-muted, #6B7280);
+    margin-bottom: 0.25rem;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--aa-text, #1F2937);
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+
+/* Progress bar — optional visual accent */
+.stat-bar {
+    height: 3px;
+    border-radius: 999px;
+    background: var(--aa-border, #E5E7EB);
+    margin-top: 0.25rem;
+    overflow: hidden;
+}
+.stat-bar::after {
+    content: '';
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    width: 70%;
+}
+.stat-bar.blue::after   { background: var(--aa-blue, #1E5AA8); }
+.stat-bar.green::after  { background: #059669; }
+.stat-bar.orange::after { background: #D97706; }
+
+/* ─── Quick Access Section ───────────────────────────────────── */
+.activity-section { margin-bottom: 2.5rem; }
+
+.activity-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--aa-text, #1F2937);
+    margin-bottom: 0.875rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--aa-border, #E5E7EB);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.72rem;
+    color: var(--aa-text-muted, #6B7280);
+}
+
+/* Compact list layout */
+.activity-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid var(--aa-border, #E5E7EB);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--aa-surface, #fff);
+}
+
+.activity-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.875rem 1.125rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--aa-border, #E5E7EB);
+    text-decoration: none;
+    transition: background 0.12s;
+}
+
+.activity-card:last-child {
+    border-bottom: none;
+}
+
+.activity-card:hover {
+    background: var(--aa-blue-light, #EBF2FB);
+}
+
+/* Icon circle — small, inline */
+.activity-image {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    flex-shrink: 0;
+    background: var(--aa-blue-light, #EBF2FB);
+}
+
+.activity-image.enrollment { background: var(--aa-gold-light, #FBF6E3); }
+.activity-image.attendance { background: #EBF2FB; }
+.activity-image.records    { background: #FDF4FF; }
+.activity-image.reports    { background: #ECFDF5; }
+.activity-image.directory  { background: #F3E8FF; }
+
+/* Card text */
+.activity-content { flex: 1; min-width: 0; }
+
+.activity-title-small {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--aa-text, #1F2937);
+    margin-bottom: 0.1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.activity-description {
+    font-size: 0.8125rem;
+    color: var(--aa-text-muted, #6B7280);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Chevron arrow */
+.activity-card::after {
+    content: '›';
+    font-size: 1.25rem;
+    color: var(--aa-text-light, #9CA3AF);
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+/* ─── Recent Activity Section ────────────────────────────────── */
+.recent-activity-section { margin-bottom: 2rem; }
+
+.activity-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    background: var(--aa-surface, #fff);
+    border: 1px solid var(--aa-border, #E5E7EB);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.875rem 1.125rem;
+    border-bottom: 1px solid var(--aa-border, #E5E7EB);
+}
+
+.activity-item:last-child { border-bottom: none; }
+
+.activity-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--aa-blue, #1E5AA8);
+    flex-shrink: 0;
+    margin-top: 5px;
+}
+
+.activity-detail { display: flex; flex-direction: column; gap: 2px; }
+.activity-action { font-size: 0.875rem; color: var(--aa-text, #1F2937); font-weight: 500; }
+.activity-meta   { font-size: 0.75rem;  color: var(--aa-text-muted, #6B7280); }
+
+/* Skeleton shimmer for loading state */
+.activity-skeleton {
+    height: 52px;
+    background: linear-gradient(90deg,
+        var(--aa-surface-2, #F3F6FA) 25%,
+        var(--aa-border, #E5E7EB) 50%,
+        var(--aa-surface-2, #F3F6FA) 75%
+    );
+    background-size: 200% 100%;
+    animation: dashShimmer 1.4s infinite;
+}
+
+@keyframes dashShimmer {
+    to { background-position: -200% 0; }
+}
+
+.activity-empty,
+.activity-error {
+    padding: 1.5rem 1.125rem;
+    color: var(--aa-text-muted, #6B7280);
+    font-size: 0.875rem;
+    text-align: center;
+}
+
+.activity-error { color: var(--aa-danger, #DC2626); }
+
+/* ─── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .main-container { padding: 1.25rem 1rem 2rem; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    .stat-value { font-size: 1.625rem; }
+    header { padding: 0 1rem; }
+}
+
+@media (max-width: 480px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .dashboard-banner { flex-direction: column; }
+    .dashboard-id-card { text-align: left; width: 100%; }
+}

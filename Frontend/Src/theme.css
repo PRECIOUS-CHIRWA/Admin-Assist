@@ -1,15 +1,24 @@
 /*
- * theme.css — Admin Assist Global Theme Layer
- * ============================================
- * Provides: Google Fonts, CSS reset, root variables, and base body styles.
- * Loaded first on all Sprint 3-5 pages so every subsequent stylesheet
- * inherits a clean, consistent typographic and colour foundation.
+ * theme.css — Admin Assist Global Design System
+ * =============================================
+ * Single source of truth for all design tokens.
+ * Loaded FIRST on every page.
+ *
+ * Sections:
+ *   1. Google Fonts
+ *   2. CSS Reset
+ *   3. Light-mode tokens (default)
+ *   4. Dark-mode tokens  ([data-theme="dark"] on <html>)
+ *   5. Base body styles
+ *   6. Typography baseline
+ *   7. Color transition
+ *   8. Utility helpers
  */
 
-/* ─── Google Fonts ──────────────────────────────────────────────── */
+/* ─── 1. Google Fonts ───────────────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-/* ─── CSS Reset ─────────────────────────────────────────────────── */
+/* ─── 2. CSS Reset ──────────────────────────────────────────── */
 *,
 *::before,
 *::after {
@@ -18,48 +27,116 @@
     padding: 0;
 }
 
-/* ─── Root Design Tokens ────────────────────────────────────────── */
-/* Mirrors the tokens in aa-shared.css — defining here ensures they're
-   available even if aa-shared.css hasn't loaded yet.               */
+/* ─── 3. Light-Mode Tokens (default) ───────────────────────── */
 :root {
-    /* Brand */
-    --aa-navy:          #1a2744;
-    --aa-navy-light:    #253563;
-    --aa-copper:        #c8923a;
-    --aa-copper-light:  #f5e6d0;
-    --aa-copper-pale:   #fdf6ec;
-    --aa-white:         #ffffff;
+    /* ── Brand ─────────────────────────────────────────────── */
+    --aa-blue:          #1E5AA8;   /* Primary brand blue        */
+    --aa-blue-dark:     #174b8f;   /* Hover / pressed state     */
+    --aa-blue-light:    #EBF2FB;   /* Blue tint background      */
+    --aa-gold:          #D4AF37;   /* Academic gold             */
+    --aa-gold-light:    #FBF6E3;   /* Gold tint background      */
 
-    /* Surfaces */
-    --aa-bg:            #f4f6f9;
-    --aa-border:        #e2e8f0;
-    --aa-border-dark:   #cbd5e1;
+    /* ── Surfaces ──────────────────────────────────────────── */
+    --aa-bg:            #F7F9FC;   /* Page background           */
+    --aa-surface:       #FFFFFF;   /* Card / panel surface      */
+    --aa-surface-2:     #F3F6FA;   /* Nested surface (sidebar)  */
+    --aa-sidebar-bg:    #FFFFFF;
+    --aa-header-bg:     #FFFFFF;
 
-    /* Text */
-    --aa-text:          #1a2744;
-    --aa-text-muted:    #64748b;
-    --aa-text-light:    #94a3b8;
+    /* ── Text ──────────────────────────────────────────────── */
+    --aa-text:          #1F2937;   /* Primary text              */
+    --aa-text-muted:    #6B7280;   /* Secondary / label text    */
+    --aa-text-light:    #9CA3AF;   /* Placeholder / disabled    */
 
-    /* Semantic */
-    --aa-success:       #10b981;
-    --aa-success-bg:    #ecfdf5;
-    --aa-warning:       #f59e0b;
-    --aa-warning-bg:    #fffbeb;
-    --aa-danger:        #ef4444;
-    --aa-danger-bg:     #fef2f2;
-    --aa-info:          #3b82f6;
-    --aa-info-bg:       #eff6ff;
+    /* ── Border ────────────────────────────────────────────── */
+    --aa-border:        #E5E7EB;
+    --aa-border-dark:   #D1D5DB;
 
-    /* Layout */
-    --nav-width:        260px;
-    --aa-radius:        8px;
+    /* ── Semantic Colours ──────────────────────────────────── */
+    --aa-success:       #059669;
+    --aa-success-bg:    #ECFDF5;
+    --aa-success-text:  #065F46;
+    --aa-warning:       #D97706;
+    --aa-warning-bg:    #FFFBEB;
+    --aa-warning-text:  #92400E;
+    --aa-danger:        #DC2626;
+    --aa-danger-bg:     #FEF2F2;
+    --aa-danger-text:   #991B1B;
+    --aa-info:          #1E5AA8;
+    --aa-info-bg:       #EBF2FB;
+    --aa-info-text:     #1E3A5F;
+
+    /* ── Layout ────────────────────────────────────────────── */
+    --aa-sidebar-width: 260px;
+    --aa-header-height: 64px;
+
+    /* ── Shape ─────────────────────────────────────────────── */
+    --aa-radius-sm:     4px;
+    --aa-radius:        6px;
+    --aa-radius-md:     8px;
     --aa-radius-lg:     12px;
-    --aa-shadow:        0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --aa-radius-xl:     16px;
+
+    /* ── Shadows ───────────────────────────────────────────── */
+    --aa-shadow-xs:     0 1px 2px rgba(0,0,0,.05);
+    --aa-shadow:        0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
     --aa-shadow-md:     0 4px 12px rgba(0,0,0,.08);
-    --aa-shadow-lg:     0 8px 30px rgba(0,0,0,.12);
+    --aa-shadow-lg:     0 8px 24px rgba(0,0,0,.10);
+
+    /* ── Legacy aliases (keep old names working) ───────────── */
+    --aa-navy:          var(--aa-blue);
+    --aa-navy-light:    var(--aa-blue-dark);
+    --aa-copper:        var(--aa-gold);
+    --aa-copper-light:  var(--aa-gold-light);
+    --aa-copper-pale:   var(--aa-gold-light);
+    --aa-white:         #FFFFFF;
+    --aa-border-dark:   var(--aa-border-dark);
+
+    /* ── Typography Scale ──────────────────────────────────── */
+    --aa-font-xs:       0.75rem;    /* 12px */
+    --aa-font-sm:       0.8125rem;  /* 13px */
+    --aa-font-base:     0.9375rem;  /* 15px */
+    --aa-font-md:       1rem;       /* 16px */
+    --aa-font-lg:       1.125rem;   /* 18px */
+    --aa-font-xl:       1.375rem;   /* 22px */
+    --aa-font-2xl:      1.75rem;    /* 28px */
+    --aa-font-3xl:      2rem;       /* 32px */
 }
 
-/* ─── Base Body ─────────────────────────────────────────────────── */
+/* ─── 4. Dark-Mode Tokens ───────────────────────────────────── */
+[data-theme="dark"] {
+    --aa-bg:            #111827;
+    --aa-surface:       #1F2937;
+    --aa-surface-2:     #172033;
+    --aa-sidebar-bg:    #172033;
+    --aa-header-bg:     #172033;
+
+    --aa-text:          #F3F4F6;
+    --aa-text-muted:    #D1D5DB;
+    --aa-text-light:    #9CA3AF;
+
+    --aa-border:        #374151;
+    --aa-border-dark:   #4B5563;
+
+    --aa-blue-light:    rgba(30,90,168,.18);
+    --aa-gold-light:    rgba(212,175,55,.12);
+
+    --aa-success-bg:    rgba(5,150,105,.15);
+    --aa-success-text:  #6EE7B7;
+    --aa-warning-bg:    rgba(217,119,6,.15);
+    --aa-warning-text:  #FCD34D;
+    --aa-danger-bg:     rgba(220,38,38,.15);
+    --aa-danger-text:   #FCA5A5;
+    --aa-info-bg:       rgba(30,90,168,.15);
+    --aa-info-text:     #93C5FD;
+
+    --aa-shadow-xs:     0 1px 2px rgba(0,0,0,.25);
+    --aa-shadow:        0 1px 3px rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.2);
+    --aa-shadow-md:     0 4px 12px rgba(0,0,0,.3);
+    --aa-shadow-lg:     0 8px 24px rgba(0,0,0,.4);
+}
+
+/* ─── 5. Base Body ──────────────────────────────────────────── */
 html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
@@ -68,42 +145,74 @@ html {
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
                  Roboto, Oxygen, Ubuntu, sans-serif;
-    font-size: 16px;
-    line-height: 1.5;
+    font-size: var(--aa-font-base);
+    line-height: 1.6;
     color: var(--aa-text);
     background: var(--aa-bg);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── Typography baseline ───────────────────────────────────────── */
-h1, h2, h3, h4, h5, h6 {
-    font-family: 'Inter', sans-serif;
-    font-weight: 700;
-    line-height: 1.25;
-    color: var(--aa-navy);
-}
+/* ─── 6. Typography Baseline ────────────────────────────────── */
+h1 { font-size: var(--aa-font-2xl); font-weight: 700; line-height: 1.25; color: var(--aa-text); }
+h2 { font-size: var(--aa-font-xl);  font-weight: 600; line-height: 1.3;  color: var(--aa-text); }
+h3 { font-size: var(--aa-font-lg);  font-weight: 600; line-height: 1.35; color: var(--aa-text); }
+h4 { font-size: var(--aa-font-md);  font-weight: 600; line-height: 1.4;  color: var(--aa-text); }
+h5,
+h6 { font-size: var(--aa-font-base); font-weight: 600; color: var(--aa-text); }
+
+p { margin: 0; }
 
 a {
-    color: var(--aa-navy);
+    color: var(--aa-blue);
     text-decoration: none;
+    transition: color 0.15s;
 }
-
-a:hover {
-    color: var(--aa-copper);
-}
+a:hover { color: var(--aa-blue-dark); }
 
 button, input, select, textarea {
     font-family: inherit;
     font-size: inherit;
 }
 
-img, svg {
-    display: block;
-    max-width: 100%;
+img, svg { display: block; max-width: 100%; }
+
+ul, ol { list-style: none; }
+
+/* ─── 7. Color Transition (theme toggle) ────────────────────── */
+/* Only transition colour properties — not layout — for instant feel */
+*,
+*::before,
+*::after {
+    transition:
+        background-color 0.15s ease,
+        border-color     0.15s ease,
+        color            0.15s ease,
+        box-shadow       0.15s ease;
 }
 
-/* ─── Scroll lock (used by modal-manager.js) ────────────────────── */
-body.aa-modal-open {
-    overflow: hidden !important;
+/* Elements that should NOT transition (prevent FOUC on load) */
+*, *::before, *::after {
+    transition-property: background-color, border-color, color, box-shadow;
+}
+
+/* ─── 8. Utility Helpers ────────────────────────────────────── */
+.sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Scroll lock — used by modal-manager.js */
+body.aa-modal-open { overflow: hidden !important; }
+body.nav-open      { overflow: hidden !important; }
+
+/* Focus ring — consistent across all interactive elements */
+:focus-visible {
+    outline: 2px solid var(--aa-blue);
+    outline-offset: 2px;
 }
