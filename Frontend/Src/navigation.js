@@ -46,13 +46,9 @@
         // ── Reports ────────────────────────────────────────────────────────
         { section: 'Reports' },
         { href: 'reports-dashboard.html', label: 'Reports', icon: '📈', roles: ['admin', 'headmaster', 'teacher'] },
-        { href: 'analytics-dashboard.html', label: 'Analytics', icon: '📉', roles: ['admin', 'headmaster'] },
-<<<<<<< HEAD
         // ── System ─────────────────────────────────────────────────────────
         { section: 'System' },
         { href: 'settings.html', label: 'Settings', icon: '⚙️', roles: [] },
-=======
->>>>>>> 335b50c8a614663b37689af7e27a8b9b6837eb4e
     ];
 
     /* ─────────────────────────────────────────────────────────────────
@@ -300,47 +296,50 @@
 .sb-staff-id { font-size: 9.5px; color: rgba(255,255,255,.3); letter-spacing: .03em; }
 
 /* Nav links */
-.sb-nav { list-style: none; padding: 4px 0; margin: 0; flex: 1; }
+.sb-nav { list-style: none; padding: 6px 10px; margin: 0; flex: 1; }
+.sb-item { margin-bottom: 2px; }
 .sb-link {
     display: flex; align-items: center; gap: 10px;
-    padding: 9px 16px;
-    color: rgba(255,255,255,.68); text-decoration: none;
-    font-size: 13px; font-weight: 500;
+    padding: 10px 14px;
+    color: rgba(255,255,255,.88) !important; text-decoration: none;
+    font-size: 13.5px; font-weight: 500;
+    border-radius: 6px;
     border-left: 3px solid transparent;
-    transition: background .12s, color .12s, border-color .12s;
+    transition: background .15s, color .15s, border-color .15s;
     white-space: nowrap;
 }
-.sb-link:hover { background: rgba(255,255,255,.05); color: #fff; }
+.sb-link:hover { background: rgba(255,255,255,.1) !important; color: #ffffff !important; }
 .sb-link.is-active {
-    background: rgba(41,182,212,.12);
-    color: #fff;
-    border-left-color: #29b6d4;
-    font-weight: 600;
+    background: #1565c0 !important;
+    color: #ffffff !important;
+    border-left-color: #29b6d4 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,.25);
 }
 .sb-link:focus-visible { outline: 2px solid #29b6d4; outline-offset: -2px; }
-.sb-icon { font-size: 15px; width: 18px; text-align: center; flex-shrink: 0; opacity: .8; }
+.sb-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; opacity: .95; }
 .sb-label { flex: 1; }
 
 /* Section labels */
 .sb-section-header {
-    padding: 12px 16px 3px;
-    font-size: 9px; font-weight: 700; letter-spacing: .10em;
-    text-transform: uppercase; color: rgba(255,255,255,.28);
+    padding: 14px 14px 4px;
+    font-size: 10px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; color: #29b6d4 !important;
     pointer-events: none; user-select: none;
 }
 
 /* Footer / logout */
-.sb-footer { padding: 4px 0; flex-shrink: 0; border-top: 1px solid rgba(255,255,255,.06); }
+.sb-footer { padding: 8px 10px; flex-shrink: 0; border-top: 1px solid rgba(255,255,255,.08); }
 .sb-logout-btn {
     display: flex; align-items: center; gap: 10px;
-    width: 100%; padding: 9px 16px;
+    width: 100%; padding: 10px 14px;
     background: transparent; border: none;
-    border-left: 3px solid transparent;
-    color: rgba(255,255,255,.55); font-size: 13px; font-weight: 500;
+    border-radius: 6px;
+    color: rgba(255,255,255,.82); font-size: 13.5px; font-weight: 500;
     font-family: inherit; cursor: pointer; text-align: left;
-    transition: background .12s, color .12s, border-color .12s;
+    transition: background .15s, color .15s;
 }
-.sb-logout-btn:hover { background: rgba(220,38,38,.12); color: #fca5a5; border-left-color: #dc2626; }
+.sb-logout-btn:hover { background: rgba(220,38,38,.18); color: #fca5a5; }
 
 /* ── HEADER — WHITE (Light) / DARK (Dark Mode) ────────────── */
 header {
@@ -495,6 +494,36 @@ header {
             } else {
                 header.appendChild(searchWrap);
             }
+
+            // Wire search behavior to student directory
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    var q = this.value.trim();
+                    var isStudentsPage = window.location.pathname.indexOf('students.html') !== -1;
+                    if (isStudentsPage) {
+                        var dirSearch = document.getElementById('search') || document.getElementById('searchInput');
+                        if (dirSearch) {
+                            dirSearch.value = q;
+                            dirSearch.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                    } else if (q) {
+                        window.location.href = 'students.html?q=' + encodeURIComponent(q);
+                    }
+                }
+            });
+
+            searchInput.addEventListener('input', function() {
+                var q = this.value.trim();
+                var isStudentsPage = window.location.pathname.indexOf('students.html') !== -1;
+                if (isStudentsPage) {
+                    var dirSearch = document.getElementById('search') || document.getElementById('searchInput');
+                    if (dirSearch) {
+                        dirSearch.value = q;
+                        dirSearch.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                }
+            });
         }
 
         // 3 — Notification bell button

@@ -8,48 +8,50 @@
    Duplicate :root block so aa-shared works even without theme.css
    (e.g. on pages that only link aa-shared).                      */
 :root {
-    --aa-blue:          #1E5AA8;
-    --aa-blue-dark:     #174b8f;
-    --aa-blue-light:    #EBF2FB;
+    --aa-blue:          #1565c0;
+    --aa-blue-dark:     #1043a0;
+    --aa-blue-light:    #e3f0fc;
+    --aa-teal:          #29b6d4;
+    --aa-teal-light:    rgba(41,182,212,.10);
     --aa-gold:          #D4AF37;
     --aa-gold-light:    #FBF6E3;
-    --aa-bg:            #F7F9FC;
+    --aa-bg:            #f4f6f9;
     --aa-surface:       #FFFFFF;
-    --aa-surface-2:     #F3F6FA;
-    --aa-text:          #1F2937;
-    --aa-text-muted:    #6B7280;
-    --aa-text-light:    #9CA3AF;
-    --aa-border:        #E5E7EB;
-    --aa-border-dark:   #D1D5DB;
-    --aa-success:       #059669;
-    --aa-success-bg:    #ECFDF5;
-    --aa-success-text:  #065F46;
-    --aa-warning:       #D97706;
-    --aa-warning-bg:    #FFFBEB;
-    --aa-warning-text:  #92400E;
-    --aa-danger:        #DC2626;
-    --aa-danger-bg:     #FEF2F2;
-    --aa-danger-text:   #991B1B;
-    --aa-info:          #1E5AA8;
-    --aa-info-bg:       #EBF2FB;
-    --aa-info-text:     #1E3A5F;
+    --aa-surface-2:     #f8fafc;
+    --aa-text:          #1e293b;
+    --aa-text-muted:    #64748b;
+    --aa-text-light:    #94a3b8;
+    --aa-border:        #e2e8f0;
+    --aa-border-dark:   #cbd5e1;
+    --aa-success:       #16a34a;
+    --aa-success-bg:    #f0fdf4;
+    --aa-success-text:  #15803d;
+    --aa-warning:       #d97706;
+    --aa-warning-bg:    #fffbeb;
+    --aa-warning-text:  #92400e;
+    --aa-danger:        #dc2626;
+    --aa-danger-bg:     #fef2f2;
+    --aa-danger-text:   #991b1b;
+    --aa-info:          #1565c0;
+    --aa-info-bg:       #e3f0fc;
+    --aa-info-text:     #1e3a5f;
     --aa-radius-sm:     4px;
     --aa-radius:        6px;
     --aa-radius-md:     8px;
     --aa-radius-lg:     12px;
+    --aa-radius-xl:     16px;
     --aa-shadow-xs:     0 1px 2px rgba(0,0,0,.05);
     --aa-shadow:        0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
     --aa-shadow-md:     0 4px 12px rgba(0,0,0,.08);
+    --aa-shadow-lg:     0 8px 24px rgba(0,0,0,.10);
     /* Legacy aliases */
-    --aa-navy:          #1E5AA8;
-    --aa-navy-light:    #174b8f;
+    --aa-navy:          #1565c0;
+    --aa-navy-light:    #1043a0;
     --aa-copper:        #D4AF37;
     --aa-copper-light:  #FBF6E3;
     --aa-copper-pale:   #FBF6E3;
     --aa-white:         #FFFFFF;
     --nav-width:        260px;
-    --aa-radius:        6px;
-    --aa-radius-lg:     12px;
 }
 
 [data-theme="dark"] {

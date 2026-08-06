@@ -556,7 +556,17 @@ let studentListState = {
  * Initialize student list page
  */
 function initializeStudentList() {
-  const searchInput = document.getElementById('searchStudents');
+  const searchInput = document.getElementById('searchStudents') || document.getElementById('search');
+  const urlParams = new URLSearchParams(window.location.search);
+  const qParam = urlParams.get('q') || urlParams.get('search');
+
+  if (qParam) {
+    studentListState.searchTerm = qParam;
+    if (searchInput) searchInput.value = qParam;
+    const headerSearch = document.getElementById('header-search');
+    if (headerSearch) headerSearch.value = qParam;
+  }
+
   if (searchInput) {
     let searchTimeout;
     searchInput.addEventListener('input', (e) => {
@@ -631,25 +641,39 @@ function renderStudentTable() {
   const tbody = document.querySelector('table tbody');
   if (!tbody) return;
 
-  tbody.innerHTML = studentListState.students.map((student, index) => `
-    <tr>
-      <td>${(studentListState.currentPage - 1) * studentListState.pageSize + index + 1}</td>
-      <td>${student.admissionNumber}</td>
-      <td>${student.firstName} ${student.lastName}</td>
-      <td>${student.grade}</td>
-      <td>${student.section}</td>
-      <td>${student.gender}</td>
-      <td>${new Date(student.enrollmentDate).toLocaleDateString()}</td>
-      <td><span class="badge badge-${student.status.toLowerCase()}">${student.status}</span></td>
-      <td>
-        <div class="actions">
-          <button class="action-btn view" onclick="viewStudent('${student.id}')" title="View">👁</button>
-          <button class="action-btn edit" onclick="editStudent('${student.id}')" title="Edit">✏️</button>
-          <button class="action-btn delete" onclick="confirmDelete('${student.id}')" title="Delete">🗑</button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
+  const avatarColors = ['#1565c0', '#29b6d4', '#7c3aed', '#d97706', '#059669', '#dc2626'];
+
+  tbody.innerHTML = studentListState.students.map((student, index) => {
+    const fn = student.firstName || student.first_name || '';
+    const ln = student.lastName || student.last_name || '';
+    const initials = ((fn[0] || '') + (ln[0] || '')).toUpperCase() || 'ST';
+    const colorBg = avatarColors[(student.id || index) % avatarColors.length];
+    const className = student.grade ? `${student.grade} ${student.section || ''}` : (student.class_name || '—');
+
+    return `
+      <tr>
+        <td>${(studentListState.currentPage - 1) * studentListState.pageSize + index + 1}</td>
+        <td style="font-family:monospace;font-size:12px;color:var(--aa-text-muted);">${student.admissionNumber || student.admission_number || '—'}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:50%;background:${colorBg};color:#ffffff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;user-select:none;">${initials}</div>
+            <span style="font-weight:600;color:var(--aa-text);">${fn} ${ln}</span>
+          </div>
+        </td>
+        <td>${className}</td>
+        <td>${student.gender || '—'}</td>
+        <td>${student.enrollmentDate ? new Date(student.enrollmentDate).toLocaleDateString() : '—'}</td>
+        <td><span class="badge badge-${(student.status || 'active').toLowerCase()}">${student.status || 'Active'}</span></td>
+        <td>
+          <div class="actions">
+            <button class="action-btn view" onclick="viewStudent('${student.id}')" title="View">👁</button>
+            <button class="action-btn edit" onclick="editStudent('${student.id}')" title="Edit">✏️</button>
+            <button class="action-btn delete" onclick="confirmDelete('${student.id}')" title="Delete">🗑</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
 /**
