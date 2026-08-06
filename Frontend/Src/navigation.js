@@ -47,9 +47,12 @@
         { section: 'Reports' },
         { href: 'reports-dashboard.html', label: 'Reports', icon: '📈', roles: ['admin', 'headmaster', 'teacher'] },
         { href: 'analytics-dashboard.html', label: 'Analytics', icon: '📉', roles: ['admin', 'headmaster'] },
+<<<<<<< HEAD
         // ── System ─────────────────────────────────────────────────────────
         { section: 'System' },
         { href: 'settings.html', label: 'Settings', icon: '⚙️', roles: [] },
+=======
+>>>>>>> 335b50c8a614663b37689af7e27a8b9b6837eb4e
     ];
 
     /* ─────────────────────────────────────────────────────────────────

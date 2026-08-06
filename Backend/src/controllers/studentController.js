@@ -84,8 +84,8 @@ const listStudents = async (req, res) => {
         const total = countRows[0].total;
 
         const [rows] = await pool.execute(
-            `SELECT * FROM students ${where} ORDER BY id DESC LIMIT ? OFFSET ?`,
-            [...params, limit, offset]
+            `SELECT * FROM students ${where} ORDER BY id DESC LIMIT ${limit} OFFSET ${offset}`,
+            params
         );
 
         res.json({ students: rows.map(toApiShape), total, page, limit });
