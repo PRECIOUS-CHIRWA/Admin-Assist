@@ -2,281 +2,548 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Reports Dashboard | Admin Assist</title>
-    <meta name="description" content="Generate and download school reports as PDF, CSV, or Excel files." />
-    <link rel="stylesheet" href="theme.css">
-  <link rel="stylesheet" href="aa-shared.css" />
-    <link rel="stylesheet" href="theme.css">
-  <link rel="stylesheet" href="navigation.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports &amp; Transcripts - Admin Assist</title>
+  <meta name="description" content="Generate academic reports and transcripts for students in Admin Assist.">
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="aa-shared.css">
+  <link rel="stylesheet" href="navigation.css">
+  <style>
+    /* ─── Reports & Transcripts unified page ─────────────────── */
 
-    <style>
-        /* ─── Reports Dashboard styles ──────────────────────────────────────── */
-        .rpt-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.25rem;
-            margin-top: 1.25rem;
-        }
+    /* Tabs bar */
+    .rt-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--aa-border);
+      margin-bottom: 24px;
+      overflow-x: auto;
+    }
+    .rt-tab-btn {
+      padding: 10px 20px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--aa-text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color .15s, border-color .15s;
+    }
+    .rt-tab-btn:hover { color: var(--aa-text); }
+    .rt-tab-btn.is-active {
+      color: var(--aa-blue);
+      border-bottom-color: var(--aa-blue);
+    }
 
-        .rpt-card {
-            background: var(--aa-surface);
-            border: 1px solid var(--aa-border);
-            border-radius: .75rem;
-            padding: 1.25rem;
-            display: flex;
-            flex-direction: column;
-            gap: .75rem;
-            transition: box-shadow .2s, transform .2s;
-        }
+    /* Tab panels */
+    .rt-panel { display: none; }
+    .rt-panel.is-active { display: block; }
 
-        .rpt-card:hover {
-            box-shadow: 0 4px 20px rgba(0,0,0,.12);
-            transform: translateY(-2px);
-        }
+    /* Filters bar */
+    .rt-filter-bar {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      padding: 16px;
+      background: var(--aa-surface);
+      border: 1px solid var(--aa-border);
+      border-radius: var(--aa-radius-lg);
+      margin-bottom: 20px;
+      box-shadow: var(--aa-shadow-xs);
+    }
+    .rt-filter-field { display: flex; flex-direction: column; gap: 4px; }
+    .rt-filter-field label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--aa-text-muted);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .rt-filter-field input,
+    .rt-filter-field select {
+      padding: 7px 11px;
+      border: 1.5px solid var(--aa-border);
+      border-radius: var(--aa-radius-md);
+      background: var(--aa-surface);
+      color: var(--aa-text);
+      font-size: 13px;
+      font-family: inherit;
+      min-width: 160px;
+    }
+    .rt-filter-field input:focus,
+    .rt-filter-field select:focus {
+      outline: none;
+      border-color: var(--aa-teal);
+      box-shadow: 0 0 0 3px rgba(41,182,212,.1);
+    }
+    .rt-generate-btn {
+      padding: 8px 20px;
+      background: var(--aa-blue);
+      color: #fff;
+      border: none;
+      border-radius: var(--aa-radius-md);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+      align-self: flex-end;
+      white-space: nowrap;
+    }
+    .rt-generate-btn:hover { background: var(--aa-blue-dark); }
 
-        .rpt-card-header {
-            display: flex;
-            align-items: flex-start;
-            gap: .75rem;
-        }
+    /* Summary card */
+    .rt-summary-card {
+      background: var(--aa-surface);
+      border: 1px solid var(--aa-border);
+      border-radius: var(--aa-radius-lg);
+      padding: 20px 24px;
+      box-shadow: var(--aa-shadow-xs);
+      margin-bottom: 20px;
+    }
+    .rt-summary-card h2 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--aa-text);
+      margin-bottom: 16px;
+    }
+    .rt-stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 700px) {
+      .rt-stats-row { grid-template-columns: repeat(2, 1fr); }
+    }
+    .rt-stat-box {
+      text-align: center;
+      padding: 12px 8px;
+      background: var(--aa-surface-2);
+      border-radius: var(--aa-radius-md);
+    }
+    .rt-stat-big {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--aa-blue);
+      line-height: 1;
+      display: block;
+    }
+    .rt-stat-lbl {
+      font-size: 11px;
+      color: var(--aa-text-muted);
+      margin-top: 4px;
+      display: block;
+    }
 
-        .rpt-icon {
-            font-size: 1.75rem;
-            line-height: 1;
-            flex-shrink: 0;
-        }
+    /* Report table */
+    .rt-table-wrap {
+      background: var(--aa-surface);
+      border: 1px solid var(--aa-border);
+      border-radius: var(--aa-radius-lg);
+      box-shadow: var(--aa-shadow-xs);
+      overflow: hidden;
+    }
+    .rt-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .rt-table thead {
+      background: var(--aa-surface-2);
+    }
+    .rt-table th {
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--aa-text-muted);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      border-bottom: 1px solid var(--aa-border);
+    }
+    .rt-table td {
+      padding: 11px 14px;
+      font-size: 13px;
+      color: var(--aa-text);
+      border-bottom: 1px solid var(--aa-border);
+    }
+    .rt-table tbody tr:last-child td { border-bottom: none; }
+    .rt-table tbody tr:hover { background: var(--aa-surface-2); }
 
-        .rpt-card-header div h3 {
-            font-size: 1rem;
-            font-weight: 700;
-            margin: 0 0 .2rem;
-            color: var(--aa-text);
-        }
+    /* Grade badge */
+    .grade-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .grade-a { background: #f0fdf4; color: #16a34a; }
+    .grade-b { background: #e3f0fc; color: #1565c0; }
+    .grade-c { background: #fffbeb; color: #d97706; }
+    .grade-f { background: #fef2f2; color: #dc2626; }
 
-        .rpt-card-header div p {
-            font-size: .8125rem;
-            color: var(--aa-text-muted);
-            margin: 0;
-            line-height: 1.4;
-        }
+    /* Export panel */
+    .rt-export-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+    }
+    .rt-export-card {
+      background: var(--aa-surface);
+      border: 1px solid var(--aa-border);
+      border-radius: var(--aa-radius-lg);
+      padding: 18px 16px;
+      box-shadow: var(--aa-shadow-xs);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .rt-export-card h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--aa-text);
+      margin: 0;
+    }
+    .rt-export-card p {
+      font-size: 12.5px;
+      color: var(--aa-text-muted);
+      margin: 0;
+    }
+    .rt-export-actions { display: flex; gap: 8px; }
+    .rt-export-btn {
+      flex: 1;
+      padding: 7px 12px;
+      border-radius: var(--aa-radius-md);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid transparent;
+      transition: all .15s;
+      text-align: center;
+    }
+    .rt-export-btn.primary { background: var(--aa-blue); color: #fff; }
+    .rt-export-btn.primary:hover { background: var(--aa-blue-dark); }
+    .rt-export-btn.secondary { background: transparent; border-color: var(--aa-border); color: var(--aa-text-muted); }
+    .rt-export-btn.secondary:hover { border-color: var(--aa-border-dark); color: var(--aa-text); }
 
-        .rpt-card-actions {
-            display: flex;
-            gap: .5rem;
-            flex-wrap: wrap;
-        }
+    /* Placeholder */
+    .rt-placeholder {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--aa-text-muted);
+    }
+    .rt-placeholder h3 { font-size: 16px; font-weight: 600; color: var(--aa-text); margin-bottom: 6px; }
+    .rt-placeholder p  { font-size: 13px; }
 
-        .rpt-card-actions .aa-btn {
-            flex: 1;
-            min-width: 100px;
-            font-size: .8125rem;
-            padding: .45rem .75rem;
-            text-align: center;
-        }
-
-        .rpt-section-title {
-            font-size: .75rem;
-            font-weight: 700;
-            letter-spacing: .08em;
-            text-transform: uppercase;
-            color: var(--aa-text-muted);
-            margin: 1.5rem 0 .25rem;
-            padding-bottom: .5rem;
-            border-bottom: 1px solid var(--aa-border);
-        }
-
-        .rpt-badge-new {
-            display: inline-block;
-            background: var(--aa-accent);
-            color: #fff;
-            font-size: .65rem;
-            font-weight: 700;
-            padding: .1rem .4rem;
-            border-radius: 999px;
-            vertical-align: middle;
-            margin-left: .4rem;
-        }
-
-        #statusMsg {
-            margin-bottom: 1rem;
-        }
-
-        .rpt-at-risk { border-left: 3px solid #dc2626; }
-        .rpt-top     { border-left: 3px solid #16a34a; }
-    </style>
+    /* Attendance summary boxes */
+    .att-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .att-stat-box {
+      background: var(--aa-surface-2);
+      border: 1px solid var(--aa-border);
+      border-radius: var(--aa-radius-md);
+      padding: 14px;
+      text-align: center;
+    }
+    .att-stat-box strong {
+      display: block;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--aa-text);
+    }
+    .att-stat-box span {
+      display: block;
+      font-size: 11px;
+      color: var(--aa-text-muted);
+      margin-top: 3px;
+    }
+  </style>
 </head>
 
 <body data-page="reports-dashboard">
-    <div id="navigation-root"></div>
+  <header>
+    <div class="logo">Admin Assist</div>
+    <div class="user-profile">
+      <div class="user-avatar" id="headerAvatar">?</div>
+      <span id="headerUserName">…</span>
+      <span id="roleBadge" class="role-badge"></span>
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </header>
 
-    <main class="aa-main">
-        <header class="aa-page-header">
-            <div>
-                <p class="aa-kicker">Reports &amp; Analytics</p>
-                <h1>Reports Dashboard</h1>
-                <p class="aa-subtitle">Generate school reports and download as PDF or CSV.</p>
-            </div>
-            <div class="aa-header-actions">
-                <a class="aa-btn aa-btn-secondary" href="analytics-dashboard.html">📉 Analytics</a>
-                <a class="aa-btn aa-btn-secondary" href="student-transcript.html">🎓 Transcripts</a>
-            </div>
-        </header>
+  <main class="aa-main">
+    <header class="aa-page-header">
+      <div>
+        <p class="aa-kicker">Academics &amp; Reports</p>
+        <h1>Reports &amp; Transcripts</h1>
+        <p class="aa-subtitle">Generate academic reports, view transcripts, and export data.</p>
+      </div>
+    </header>
 
-        <!-- School Summary KPIs -->
-        <div class="aa-stats-grid" id="summaryGrid">
-            <div class="aa-stat-card aa-accent">
-                <span class="aa-stat-label">Total Students</span>
-                <span class="aa-stat-value" id="kpiStudents">—</span>
+    <!-- Tab navigation -->
+    <div class="rt-tabs" role="tablist">
+      <button class="rt-tab-btn is-active" role="tab" aria-selected="true"  data-tab="academic">Academic Report</button>
+      <button class="rt-tab-btn"            role="tab" aria-selected="false" data-tab="transcript">Transcript</button>
+      <button class="rt-tab-btn"            role="tab" aria-selected="false" data-tab="attendance">Attendance</button>
+      <button class="rt-tab-btn"            role="tab" aria-selected="false" data-tab="export">Export</button>
+    </div>
+
+    <!-- ── ACADEMIC REPORT TAB ──────────────────────────────────── -->
+    <div class="rt-panel is-active" id="panel-academic">
+      <div class="rt-filter-bar">
+        <div class="rt-filter-field" style="flex:2;">
+          <label>Student</label>
+          <input type="text" id="acStudentSearch" placeholder="Search student name or admission no…" autocomplete="off">
+        </div>
+        <div class="rt-filter-field">
+          <label>Academic Year</label>
+          <select id="acYearFilter">
+            <option value="">All Years</option>
+          </select>
+        </div>
+        <div class="rt-filter-field">
+          <label>Term</label>
+          <select id="acTermFilter">
+            <option value="">All Terms</option>
+          </select>
+        </div>
+        <button class="rt-generate-btn" type="button" id="generateAcBtn">Generate Report</button>
+      </div>
+
+      <!-- Results — hidden until generated -->
+      <div id="acResults" hidden>
+        <div class="rt-summary-card">
+          <h2>Academic Summary</h2>
+          <div class="rt-stats-row">
+            <div class="rt-stat-box">
+              <span class="rt-stat-big" id="acOverallPct">—</span>
+              <span class="rt-stat-lbl">Overall Average</span>
             </div>
-            <div class="aa-stat-card aa-accent">
-                <span class="aa-stat-label">Total Classes</span>
-                <span class="aa-stat-value" id="kpiClasses">—</span>
+            <div class="rt-stat-box">
+              <span class="rt-stat-big" id="acTotalSubj">—</span>
+              <span class="rt-stat-lbl">Total Subjects</span>
             </div>
-            <div class="aa-stat-card aa-accent">
-                <span class="aa-stat-label">Attendance Rate (30d)</span>
-                <span class="aa-stat-value" id="kpiAttendance">—</span>
+            <div class="rt-stat-box">
+              <span class="rt-stat-big" id="acPassed">—</span>
+              <span class="rt-stat-lbl">Passed Subjects</span>
             </div>
-            <div class="aa-stat-card aa-accent">
-                <span class="aa-stat-label">Academic Average</span>
-                <span class="aa-stat-value" id="kpiAvg">—</span>
+            <div class="rt-stat-box">
+              <span class="rt-stat-big" id="acFailed">—</span>
+              <span class="rt-stat-lbl">Failed Subjects</span>
             </div>
-            <div class="aa-stat-card aa-accent">
-                <span class="aa-stat-label">Pass Rate</span>
-                <span class="aa-stat-value" id="kpiPass">—</span>
-            </div>
+          </div>
         </div>
 
-        <!-- Global filter bar -->
-        <section class="aa-filter-bar" style="margin-top:1.5rem">
-            <div class="aa-filter-field">
-                <label for="filterClass">Class <span style="font-weight:400;color:var(--aa-text-muted)">(optional)</span></label>
-                <select id="filterClass">
-                    <option value="">All Classes</option>
-                </select>
-            </div>
-            <div class="aa-filter-field">
-                <label for="filterTerm">Term <span style="font-weight:400;color:var(--aa-text-muted)">(optional)</span></label>
-                <select id="filterTerm">
-                    <option value="">All Terms</option>
-                </select>
-            </div>
-            <div class="aa-filter-field">
-                <label for="filterYear">Academic Year</label>
-                <select id="filterYear">
-                    <option value="">All Years</option>
-                </select>
-            </div>
-        </section>
-
-        <div id="statusMsg" class="aa-alert aa-alert-info" hidden></div>
-
-        <!-- Standard Reports -->
-        <p class="rpt-section-title">Standard Reports</p>
-        <div class="rpt-grid">
-
-            <div class="rpt-card">
-                <div class="rpt-card-header">
-                    <span class="rpt-icon">📋</span>
-                    <div>
-                        <h3>Enrollment Report</h3>
-                        <p>All enrolled students with class placement, gender, and enrollment date.</p>
-                    </div>
-                </div>
-                <div class="rpt-card-actions">
-                    <button class="aa-btn aa-btn-primary" id="dlEnrollCsvBtn" type="button">⬇ CSV</button>
-                    <button class="aa-btn aa-btn-secondary" id="dlEnrollPdfBtn" type="button">🖨 PDF</button>
-                </div>
-            </div>
-
-            <div class="rpt-card">
-                <div class="rpt-card-header">
-                    <span class="rpt-icon">📊</span>
-                    <div>
-                        <h3>Attendance Report</h3>
-                        <p>Per-student summary: present, absent, late, excused, and overall rate.</p>
-                    </div>
-                </div>
-                <div class="rpt-card-actions">
-                    <button class="aa-btn aa-btn-primary" id="dlAttendCsvBtn" type="button">⬇ CSV</button>
-                    <button class="aa-btn aa-btn-secondary" id="dlAttendPdfBtn" type="button">🖨 PDF</button>
-                </div>
-            </div>
-
-            <div class="rpt-card">
-                <div class="rpt-card-header">
-                    <span class="rpt-icon">📄</span>
-                    <div>
-                        <h3>Academic Results Report</h3>
-                        <p>Student marks, percentages, ECZ grades, and class positions by subject.</p>
-                    </div>
-                </div>
-                <div class="rpt-card-actions">
-                    <button class="aa-btn aa-btn-primary" id="dlAcadCsvBtn" type="button">⬇ CSV</button>
-                    <button class="aa-btn aa-btn-secondary" id="dlAcadPdfBtn" type="button">🖨 PDF</button>
-                </div>
-            </div>
-
+        <div class="rt-table-wrap">
+          <table class="rt-table">
+            <thead>
+              <tr>
+                <th>Subject</th>
+                <th>Score (%)</th>
+                <th>Grade</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody id="acTableBody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
         </div>
+      </div>
 
-        <!-- Performance Reports -->
-        <p class="rpt-section-title">Performance Reports <span class="rpt-badge-new">New</span></p>
-        <div class="rpt-grid">
+      <div class="rt-placeholder" id="acPlaceholder">
+        <h3>Search for a student</h3>
+        <p>Enter a student name or admission number above and click Generate Report.</p>
+      </div>
+    </div>
 
-            <div class="rpt-card rpt-top">
-                <div class="rpt-card-header">
-                    <span class="rpt-icon">🏆</span>
-                    <div>
-                        <h3>Top Performers</h3>
-                        <p>Students ranked by overall average percentage across all subjects.</p>
-                    </div>
-                </div>
-                <div class="rpt-card-actions">
-                    <button class="aa-btn aa-btn-primary" id="dlTopCsvBtn" type="button">⬇ CSV</button>
-                    <button class="aa-btn aa-btn-secondary" id="dlTopPdfBtn" type="button">🖨 PDF</button>
-                </div>
-            </div>
-
-            <div class="rpt-card">
-                <div class="rpt-card-header">
-                    <span class="rpt-icon">📚</span>
-                    <div>
-                        <h3>Subject Performance</h3>
-                        <p>Average marks, pass rates, and grade distribution per subject.</p>
-                    </div>
-                </div>
-                <div class="rpt-card-actions">
-                    <button class="aa-btn aa-btn-primary" id="dlSubjCsvBtn" type="button">⬇ CSV</button>
-                    <button class="aa-btn aa-btn-secondary" id="dlSubjPdfBtn" type="button">🖨 PDF</button>
-                </div>
-            </div>
-
-            <div class="rpt-card rpt-at-risk">
-                <div class="rpt-card-header">
-                    <span class="rpt-icon">⚠️</span>
-                    <div>
-                        <h3>Students at Risk</h3>
-                        <p>Students averaging below 50% — for early academic intervention. Includes parent contact.</p>
-                    </div>
-                </div>
-                <div class="rpt-card-actions">
-                    <button class="aa-btn aa-btn-primary" id="dlRiskCsvBtn" type="button">⬇ CSV</button>
-                    <button class="aa-btn aa-btn-secondary" id="dlRiskPdfBtn" type="button">🖨 PDF</button>
-                </div>
-            </div>
-
+    <!-- ── TRANSCRIPT TAB ──────────────────────────────────────── -->
+    <div class="rt-panel" id="panel-transcript">
+      <div class="rt-filter-bar">
+        <div class="rt-filter-field" style="flex:2;">
+          <label>Student Name or Admission No</label>
+          <input type="text" id="tsStudentSearch" placeholder="Type to search…" autocomplete="off">
         </div>
-    </main>
+        <div class="rt-filter-field">
+          <label>Academic Year</label>
+          <select id="tsYearFilter">
+            <option value="">All Years</option>
+          </select>
+        </div>
+        <button class="rt-generate-btn" type="button" id="generateTsBtn">Load Transcript</button>
+      </div>
 
-    <!-- jsPDF + AutoTable CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+      <!-- Export bar — shown when transcript loaded -->
+      <div id="tsExportBar" style="display:none;gap:10px;margin-bottom:16px;align-items:center;">
+        <span style="font-size:13px;font-weight:600;color:var(--aa-text-muted);margin-right:auto;">Export:</span>
+        <button class="rt-export-btn primary" type="button" id="tsPdfBtn">⬇ Download PDF</button>
+        <button class="rt-export-btn secondary" type="button" id="tsCsvBtn">📄 Download CSV</button>
+      </div>
 
-    <script src="auth.js"></script>
-    <script src="auth-guard.js"></script>
-    <script src="navigation.js"></script>
-    <script src="reports-dashboard.js"></script>
+      <div id="tsCard" hidden></div>
+
+      <div class="rt-placeholder" id="tsPlaceholder">
+        <h3>Search for a student</h3>
+        <p>Enter a name or admission number above to view their full academic transcript.</p>
+      </div>
+    </div>
+
+    <!-- ── ATTENDANCE TAB ──────────────────────────────────────── -->
+    <div class="rt-panel" id="panel-attendance">
+      <div class="rt-filter-bar">
+        <div class="rt-filter-field" style="flex:2;">
+          <label>Student</label>
+          <input type="text" id="attStudentSearch" placeholder="Search student…" autocomplete="off">
+        </div>
+        <div class="rt-filter-field">
+          <label>Academic Year</label>
+          <select id="attYearFilter">
+            <option value="">All Years</option>
+          </select>
+        </div>
+        <button class="rt-generate-btn" type="button" id="generateAttBtn">Load Attendance</button>
+      </div>
+
+      <div id="attResults" hidden>
+        <div class="att-summary-grid">
+          <div class="att-stat-box">
+            <strong id="attTotal">—</strong>
+            <span>Total Sessions</span>
+          </div>
+          <div class="att-stat-box">
+            <strong id="attPresent" style="color:var(--aa-success);">—</strong>
+            <span>Present</span>
+          </div>
+          <div class="att-stat-box">
+            <strong id="attAbsent" style="color:var(--aa-danger);">—</strong>
+            <span>Absent</span>
+          </div>
+          <div class="att-stat-box">
+            <strong id="attLate" style="color:var(--aa-warning);">—</strong>
+            <span>Late</span>
+          </div>
+          <div class="att-stat-box">
+            <strong id="attRate" style="color:var(--aa-blue);">—</strong>
+            <span>Attendance Rate</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="rt-placeholder" id="attPlaceholder">
+        <h3>Search for a student</h3>
+        <p>Enter a student name to view their attendance summary.</p>
+      </div>
+    </div>
+
+    <!-- ── EXPORT TAB ──────────────────────────────────────────── -->
+    <div class="rt-panel" id="panel-export">
+      <div class="rt-filter-bar">
+        <div class="rt-filter-field">
+          <label>Class (optional)</label>
+          <select id="expFilterClass"><option value="">All Classes</option></select>
+        </div>
+        <div class="rt-filter-field">
+          <label>Term (optional)</label>
+          <select id="expFilterTerm"><option value="">All Terms</option></select>
+        </div>
+        <div class="rt-filter-field">
+          <label>Academic Year</label>
+          <select id="expFilterYear"><option value="">All Years</option></select>
+        </div>
+      </div>
+
+      <div class="rt-export-grid">
+        <div class="rt-export-card">
+          <h3>📋 Enrollment Report</h3>
+          <p>All enrolled students with class, gender, and enrollment date.</p>
+          <div class="rt-export-actions">
+            <button class="rt-export-btn primary" id="dlEnrollCsvBtn" type="button">⬇ CSV</button>
+            <button class="rt-export-btn secondary" id="dlEnrollPdfBtn" type="button">🖨 PDF</button>
+          </div>
+        </div>
+        <div class="rt-export-card">
+          <h3>📊 Attendance Report</h3>
+          <p>Per-student summary: present, absent, late, excused, overall rate.</p>
+          <div class="rt-export-actions">
+            <button class="rt-export-btn primary" id="dlAttendCsvBtn" type="button">⬇ CSV</button>
+            <button class="rt-export-btn secondary" id="dlAttendPdfBtn" type="button">🖨 PDF</button>
+          </div>
+        </div>
+        <div class="rt-export-card">
+          <h3>📄 Academic Results</h3>
+          <p>Student marks, percentages, ECZ grades, and positions by subject.</p>
+          <div class="rt-export-actions">
+            <button class="rt-export-btn primary" id="dlAcadCsvBtn" type="button">⬇ CSV</button>
+            <button class="rt-export-btn secondary" id="dlAcadPdfBtn" type="button">🖨 PDF</button>
+          </div>
+        </div>
+        <div class="rt-export-card" style="border-left:3px solid #16a34a;">
+          <h3>🏆 Top Performers</h3>
+          <p>Students ranked by overall average percentage across all subjects.</p>
+          <div class="rt-export-actions">
+            <button class="rt-export-btn primary" id="dlTopCsvBtn" type="button">⬇ CSV</button>
+            <button class="rt-export-btn secondary" id="dlTopPdfBtn" type="button">🖨 PDF</button>
+          </div>
+        </div>
+        <div class="rt-export-card">
+          <h3>📚 Subject Performance</h3>
+          <p>Average marks, pass rates, and grade distribution per subject.</p>
+          <div class="rt-export-actions">
+            <button class="rt-export-btn primary" id="dlSubjCsvBtn" type="button">⬇ CSV</button>
+            <button class="rt-export-btn secondary" id="dlSubjPdfBtn" type="button">🖨 PDF</button>
+          </div>
+        </div>
+        <div class="rt-export-card" style="border-left:3px solid #dc2626;">
+          <h3>⚠️ Students at Risk</h3>
+          <p>Students averaging below 50% — for early academic intervention.</p>
+          <div class="rt-export-actions">
+            <button class="rt-export-btn primary" id="dlRiskCsvBtn" type="button">⬇ CSV</button>
+            <button class="rt-export-btn secondary" id="dlRiskPdfBtn" type="button">🖨 PDF</button>
+          </div>
+        </div>
+      </div>
+    </div><!-- /#panel-export -->
+
+  </main><!-- /.aa-main -->
+
+  <!-- jsPDF + AutoTable -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+  <script src="auth.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="navigation.js"></script>
+  <script src="reports-dashboard.js"></script>
+  <script src="student-transcript.js"></script>
+
+  <script>
+    /* ── Tab switching ────────────────────────────────────────── */
+    var tabs = document.querySelectorAll('.rt-tab-btn');
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        tabs.forEach(function(t) {
+          t.classList.remove('is-active');
+          t.setAttribute('aria-selected', 'false');
+        });
+        document.querySelectorAll('.rt-panel').forEach(function(p) {
+          p.classList.remove('is-active');
+        });
+        this.classList.add('is-active');
+        this.setAttribute('aria-selected', 'true');
+        var panel = document.getElementById('panel-' + this.dataset.tab);
+        if (panel) panel.classList.add('is-active');
+      });
+    });
+  </script>
 </body>
 
 </html>

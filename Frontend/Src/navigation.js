@@ -32,24 +32,24 @@
     var NAV_LINKS = [
         // ── Core ───────────────────────────────────────────────────────────
         { href: 'dashboard.html', label: 'Dashboard', icon: '🏠', roles: [] },
-        { href: 'students.html', label: 'Student Directory', icon: '👥', roles: [] },
+        { href: 'students.html', label: 'Students', icon: '👥', roles: [] },
         { href: 'enroll-student.html', label: 'Enroll Student', icon: '📝', roles: ['admin', 'headmaster', 'staff'] },
-        // ── Attendance (Sprint 3) ───────────────────────────────────────────
+        // ── Attendance ────────────────────────────────────────────────────
         { section: 'Attendance' },
         { href: 'attendance-management.html', label: 'Take Attendance', icon: '📋', roles: [] },
         { href: 'attendance-history.html', label: 'Session History', icon: '📅', roles: [] },
-        { href: 'attendance-summary.html', label: 'Summary', icon: '📊', roles: [] },
-        { href: 'attendance-reports.html', label: 'Export CSV', icon: '⬇', roles: ['admin', 'headmaster', 'teacher'] },
-        // ── Academics (Sprint 4) ────────────────────────────────────────────
+        { href: 'attendance-summary.html', label: 'Att. Summary', icon: '📊', roles: [] },
+        // ── Academics ────────────────────────────────────────────────────
         { section: 'Academics' },
         { href: 'academic-records.html', label: 'Academic Records', icon: '📄', roles: [] },
         { href: 'subject-management.html', label: 'Subjects', icon: '📚', roles: ['admin', 'headmaster'] },
-        { href: 'student-transcript.html', label: 'Transcripts', icon: '🎓', roles: [] },
-        // ── Reports & Analytics (Sprint 5) ──────────────────────────────────
-        { section: 'Reports & Analytics' },
+        // ── Reports ────────────────────────────────────────────────────────
+        { section: 'Reports' },
         { href: 'reports-dashboard.html', label: 'Reports', icon: '📈', roles: ['admin', 'headmaster', 'teacher'] },
         { href: 'analytics-dashboard.html', label: 'Analytics', icon: '📉', roles: ['admin', 'headmaster'] },
-        { href: 'student-search.html', label: 'Student Search', icon: '🔍', roles: [] },
+        // ── System ─────────────────────────────────────────────────────────
+        { section: 'System' },
+        { href: 'settings.html', label: 'Settings', icon: '⚙️', roles: [] },
     ];
 
     /* ─────────────────────────────────────────────────────────────────
@@ -108,7 +108,7 @@
             'position:fixed!important;' +
             'top:0!important;left:0!important;' +
             'width:270px!important;height:100vh!important;' +
-            'background:var(--aa-sidebar-bg,#172033)!important;color:#fff!important;' +
+            'background:var(--aa-sidebar-bg,#0f2137)!important;color:#fff!important;' +
             'z-index:9999!important;' +
             'display:flex!important;flex-direction:column!important;' +
             'overflow-y:auto!important;overflow-x:hidden!important;' +
@@ -230,163 +230,136 @@
         s.id = 'nav-ui';
         s.textContent = `
 /* ═══════════════════════════════════════════════════════
-   SIDEBAR — Brand New Design System
-   Primary Blue: #1E5AA8 | Academic Gold: #D4AF37
-   Dark sidebar background: #172033
+   Admin Assist — Navigation Shell v3
+   Mockup-accurate: white header, #0f2137 sidebar, #29b6d4 active
 ════════════════════════════════════════════════════════ */
 
-/* ── Sidebar header bar ───────────────────────────────── */
+/* ── SIDEBAR SHELL ────────────────────────────────────── */
+#app-sidebar { font-family: 'Inter', -apple-system, sans-serif; }
+
+/* Sidebar header bar */
 .sb-head {
     display: flex; align-items: center; justify-content: space-between;
     padding: 0 1rem; min-height: 64px; flex-shrink: 0;
-    border-bottom: 1px solid rgba(255,255,255,.07);
-    gap: 8px;
+    border-bottom: 1px solid rgba(255,255,255,.07); gap: 8px;
 }
 .sb-brand { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
 .sb-brand-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .sb-school-name {
-    font-size: 12.5px; font-weight: 700; color: #ffffff;
+    font-size: 12px; font-weight: 700; color: #fff;
     line-height: 1.25; white-space: nowrap;
     overflow: hidden; text-overflow: ellipsis; max-width: 155px;
 }
 .sb-system-tag {
-    font-size: 9px; color: #D4AF37; font-weight: 700;
+    font-size: 9px; color: #29b6d4; font-weight: 700;
     letter-spacing: .07em; text-transform: uppercase; margin-top: 1px;
 }
-
-/* AA brand mark — square with gold border */
 .sb-brand-mark {
-    width: 36px; height: 36px; border-radius: 8px;
-    background: #1E5AA8;
-    border: 2px solid #D4AF37;
-    color: #D4AF37; font-size: 12px; font-weight: 800;
-    letter-spacing: .04em;
+    width: 34px; height: 34px; border-radius: 8px;
+    background: #1565c0;
+    border: 2px solid #29b6d4;
+    color: #fff; font-size: 11px; font-weight: 800;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0; user-select: none;
 }
-
-/* Close X button */
 .sb-close-btn {
     background: transparent; border: none;
     color: rgba(255,255,255,.5); font-size: 17px;
-    cursor: pointer; width: 30px; height: 30px; border-radius: 5px;
+    cursor: pointer; width: 28px; height: 28px; border-radius: 5px;
     display: flex; align-items: center; justify-content: center;
     transition: background .15s, color .15s; flex-shrink: 0;
-    line-height: 1;
 }
-.sb-close-btn:hover { background: rgba(255,255,255,.09); color: #fff; }
-.sb-close-btn:focus-visible { outline: 2px solid #D4AF37; outline-offset: 2px; }
+.sb-close-btn:hover { background: rgba(255,255,255,.08); color: #fff; }
 
-/* ── Sidebar user card ────────────────────────────────── */
+/* Sidebar user card */
 .sb-user {
     display: flex; align-items: center; gap: 10px;
-    padding: 12px 16px; flex-shrink: 0;
+    padding: 10px 14px; flex-shrink: 0;
     background: rgba(255,255,255,.03);
     border-bottom: 1px solid rgba(255,255,255,.06);
-    cursor: pointer;
-    transition: background .15s;
+    cursor: pointer; transition: background .15s;
 }
-.sb-user:hover { background: rgba(30,90,168,.2) !important; }
-.sb-user::after {
-    content: '✎'; margin-left: auto;
-    font-size: 12px; color: rgba(255,255,255,.25); padding-right: 2px;
-}
-
+.sb-user:hover { background: rgba(41,182,212,.1) !important; }
 .sb-avatar {
-    width: 36px; height: 36px; border-radius: 50%;
-    background: #D4AF37;
-    color: #172033; font-size: 13px; font-weight: 700;
+    width: 34px; height: 34px; border-radius: 50%;
+    background: #29b6d4; color: #0f2137;
+    font-size: 12px; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; letter-spacing: .5px; user-select: none;
+    flex-shrink: 0; user-select: none;
     border: 1.5px solid rgba(255,255,255,.15);
 }
 .sb-user-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
 .sb-name {
-    font-size: 13px; font-weight: 600; color: #fff;
+    font-size: 12.5px; font-weight: 600; color: #fff;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.sb-role   { font-size: 11px; color: rgba(255,255,255,.5); }
-.sb-staff-id {
-    font-size: 10px; color: rgba(255,255,255,.35);
-    font-variant-numeric: tabular-nums; letter-spacing: .03em;
-}
+.sb-role   { font-size: 10.5px; color: rgba(255,255,255,.5); }
+.sb-staff-id { font-size: 9.5px; color: rgba(255,255,255,.3); letter-spacing: .03em; }
 
-/* ── Nav links ────────────────────────────────────────── */
-.sb-nav { list-style: none; padding: 6px 0; margin: 0; flex: 1; }
-
+/* Nav links */
+.sb-nav { list-style: none; padding: 4px 0; margin: 0; flex: 1; }
 .sb-link {
     display: flex; align-items: center; gap: 10px;
-    padding: 10px 18px;
-    color: rgba(255,255,255,.65); text-decoration: none;
-    font-size: 13.5px; font-weight: 500;
+    padding: 9px 16px;
+    color: rgba(255,255,255,.68); text-decoration: none;
+    font-size: 13px; font-weight: 500;
     border-left: 3px solid transparent;
     transition: background .12s, color .12s, border-color .12s;
-    white-space: nowrap; border-radius: 0;
+    white-space: nowrap;
 }
-.sb-link:hover {
-    background: rgba(30,90,168,.15);
-    color: #fff;
-}
+.sb-link:hover { background: rgba(255,255,255,.05); color: #fff; }
 .sb-link.is-active {
-    background: rgba(30,90,168,.25);
-    color: #ffffff;
-    border-left-color: #1E5AA8;
+    background: rgba(41,182,212,.12);
+    color: #fff;
+    border-left-color: #29b6d4;
     font-weight: 600;
 }
-.sb-link:focus-visible { outline: 2px solid #D4AF37; outline-offset: -2px; }
-.sb-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; opacity: .85; }
+.sb-link:focus-visible { outline: 2px solid #29b6d4; outline-offset: -2px; }
+.sb-icon { font-size: 15px; width: 18px; text-align: center; flex-shrink: 0; opacity: .8; }
+.sb-label { flex: 1; }
 
-/* ── Section labels in nav ────────────────────────────── */
+/* Section labels */
 .sb-section-header {
-    padding: 14px 18px 3px;
-    font-size: 9.5px; font-weight: 700; letter-spacing: .10em;
-    text-transform: uppercase; color: rgba(255,255,255,.3);
+    padding: 12px 16px 3px;
+    font-size: 9px; font-weight: 700; letter-spacing: .10em;
+    text-transform: uppercase; color: rgba(255,255,255,.28);
     pointer-events: none; user-select: none;
 }
 
-/* ── Sidebar footer ───────────────────────────────────── */
-.sb-footer {
-    padding: 6px 0; flex-shrink: 0;
-    border-top: 1px solid rgba(255,255,255,.06);
-}
+/* Footer / logout */
+.sb-footer { padding: 4px 0; flex-shrink: 0; border-top: 1px solid rgba(255,255,255,.06); }
 .sb-logout-btn {
     display: flex; align-items: center; gap: 10px;
-    width: 100%; padding: 10px 18px;
+    width: 100%; padding: 9px 16px;
     background: transparent; border: none;
     border-left: 3px solid transparent;
-    color: rgba(255,255,255,.55); font-size: 13.5px; font-weight: 500;
+    color: rgba(255,255,255,.55); font-size: 13px; font-weight: 500;
     font-family: inherit; cursor: pointer; text-align: left;
     transition: background .12s, color .12s, border-color .12s;
 }
-.sb-logout-btn:hover {
-    background: rgba(220,38,38,.12);
-    color: #fca5a5; border-left-color: #DC2626;
+.sb-logout-btn:hover { background: rgba(220,38,38,.12); color: #fca5a5; border-left-color: #dc2626; }
+
+/* ── HEADER — WHITE (Light) / DARK (Dark Mode) ────────────── */
+header {
+    background: var(--aa-header-bg, #ffffff) !important;
+    border-bottom: 1px solid var(--aa-header-border, rgba(0,0,0,.07)) !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06) !important;
+    color: var(--aa-header-text, #1e293b) !important;
 }
-.sb-logout-btn:focus-visible { outline: 2px solid #D4AF37; outline-offset: -2px; }
 
-/* ═══════════════════════════════════════════════════════
-   HEADER CHROME
-════════════════════════════════════════════════════════ */
-
-/* ── Hamburger button ─────────────────────────────────── */
+/* Hamburger — dark lines on white header */
 #hamburger-btn {
     display: flex; flex-direction: column;
     justify-content: center; align-items: center; gap: 4.5px;
-    width: 38px; height: 38px; padding: 8px;
+    width: 36px; height: 36px; padding: 7px;
     background: transparent; border: none;
     border-radius: 6px; cursor: pointer;
-    flex-shrink: 0;
+    flex-shrink: 0; margin-right: 4px;
     transition: background .15s;
 }
-#hamburger-btn:hover { background: rgba(255,255,255,.1); }
-#hamburger-btn:focus-visible { outline: 2px solid #D4AF37; outline-offset: 2px; }
+#hamburger-btn:hover { background: rgba(0,0,0,.06); }
 .hb-line {
     display: block; width: 18px; height: 2px;
-    background: currentColor; border-radius: 2px; pointer-events: none;
-    transition: background .15s;
-}
-
-/* ── Theme toggle button ──────────────────────────────── */
 #aa-theme-btn {
     display: flex; align-items: center; justify-content: center;
     width: 36px; height: 36px;
@@ -479,6 +452,7 @@
         var header = document.querySelector('header');
         if (!header) return;
 
+        // 1 — Hamburger button (first child of header)
         var btn = document.createElement('button');
         btn.id = 'hamburger-btn';
         btn.type = 'button';
@@ -489,21 +463,58 @@
             '<span class="hb-line"></span>' +
             '<span class="hb-line"></span>' +
             '<span class="hb-line"></span>';
-
-        // insertBefore with firstChild puts it at the very left of the header
         header.insertBefore(btn, header.firstChild);
 
-        // ── Theme toggle button — inject into header right side ──────────
+        // 2 — Global search bar (center of header)
+        if (!document.getElementById('header-search-wrap')) {
+            var searchWrap = document.createElement('div');
+            searchWrap.id = 'header-search-wrap';
+
+            var searchIcon = document.createElement('span');
+            searchIcon.className = 'header-search-icon';
+            searchIcon.setAttribute('aria-hidden', 'true');
+            searchIcon.textContent = '🔍';
+
+            var searchInput = document.createElement('input');
+            searchInput.type = 'search';
+            searchInput.id = 'header-search';
+            searchInput.placeholder = 'Search students, teachers, classes…';
+            searchInput.setAttribute('aria-label', 'Global search');
+            searchInput.autocomplete = 'off';
+
+            searchWrap.appendChild(searchIcon);
+            searchWrap.appendChild(searchInput);
+
+            // Insert after logo (second child)
+            var logo = header.querySelector('.logo, .brand-group, [class*="logo"]');
+            if (logo && logo.nextSibling) {
+                header.insertBefore(searchWrap, logo.nextSibling);
+            } else {
+                header.appendChild(searchWrap);
+            }
+        }
+
+        // 3 — Notification bell button
+        if (!document.getElementById('aa-bell-btn')) {
+            var bellBtn = document.createElement('button');
+            bellBtn.id = 'aa-bell-btn';
+            bellBtn.className = 'header-icon-btn';
+            bellBtn.type = 'button';
+            bellBtn.setAttribute('aria-label', 'Notifications');
+            bellBtn.title = 'Notifications';
+            bellBtn.textContent = '🔔';
+            header.appendChild(bellBtn);
+        }
+
+        // 4 — Theme toggle button
         if (!document.getElementById('aa-theme-btn')) {
             var themeBtn = document.createElement('button');
             themeBtn.id = 'aa-theme-btn';
             themeBtn.type = 'button';
             themeBtn.setAttribute('aria-label', 'Toggle dark/light theme');
             themeBtn.title = 'Toggle theme';
-            // Set correct icon based on current theme
             var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            themeBtn.textContent = isDark ? '☀' : '🌙';
-            // Append near the end of header (before last child, typically logout/user)
+            themeBtn.textContent = isDark ? '☀️' : '🌙';
             header.appendChild(themeBtn);
 
             themeBtn.addEventListener('click', function () {
@@ -517,43 +528,38 @@
                 } else {
                     html.setAttribute('data-theme', 'dark');
                     localStorage.setItem('aa-theme', 'dark');
-                    themeBtn.textContent = '☀';
+                    themeBtn.textContent = '☀️';
                     themeBtn.setAttribute('aria-label', 'Switch to light mode');
                 }
             });
         }
     }
 
+
     function _fixBranding() {
         var schoolName = window.SCHOOL_NAME || 'Admin Assist Secondary School';
 
-        // Standard pages header (e.g. header:not(.app-header) .logo)
+        // Standard pages header — white header, so use dark text
         var logoEl = document.querySelector('header:not(.app-header) .logo');
         if (logoEl) {
             logoEl.innerHTML =
-                '<div class="brand-group" style="display:flex;align-items:center;gap:10px;">' +
-                '<div class="logo-mark" style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#1a5580,#2b84d9);border:2px solid #d4af37;color:#d4af37;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;">AA</div>' +
-                '<div class="brand-titles" style="display:flex;flex-direction:column;">' +
-                '<span class="school-title" style="font-size:14px;font-weight:700;color:#ffffff;line-height:1.2;">' + _escapeHtml(schoolName) + '</span>' +
-                '<span class="sub-title" style="font-size:10px;color:#d4af37;font-weight:600;letter-spacing:.05em;text-transform:uppercase;">Admin Assist SIS</span>' +
+                '<div class="brand-group" style="display:flex;align-items:center;gap:8px;">' +
+                '<div class="logo-mark" style="width:32px;height:32px;border-radius:8px;background:#1565c0;border:2px solid #29b6d4;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;">AA</div>' +
+                '<div class="brand-titles" style="display:flex;flex-direction:column;line-height:1.2;">' +
+                '<span class="school-title" style="font-size:13px;font-weight:700;color:var(--aa-header-text,#1e293b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;">' + _escapeHtml(schoolName) + '</span>' +
+                '<span class="sub-title" style="font-size:9px;color:var(--aa-text-muted,#64748b);font-weight:500;letter-spacing:.04em;text-transform:uppercase;">Admin Assist SIS</span>' +
                 '</div>' +
                 '</div>';
-            logoEl.style.background = 'none';
-            logoEl.style.border = 'none';
-            logoEl.style.padding = '0';
+            logoEl.style.cssText = 'background:none;border:none;padding:0;font-size:inherit;font-weight:inherit;color:inherit;';
         }
 
-        // Admin-pages header (.app-header)
-        var appLogoGroup = document.querySelector('.app-header .logo-group');
-        if (appLogoGroup) {
-            var logoCopy = appLogoGroup.querySelector('.logo-copy');
-            if (logoCopy) {
-                logoCopy.innerHTML =
-                    '<div class="logo" style="display:block!important;font-size:14px;font-weight:700;color:#ffffff;">' + _escapeHtml(schoolName) + '</div>' +
-                    '<span style="display:block!important;font-size:11px;color:rgba(255,255,255,.6);">School Management System</span>';
-            }
+        // Also update sidebar school name if it still shows the default
+        var sbSchoolName = document.getElementById('sidebar-school-name');
+        if (sbSchoolName && sbSchoolName.textContent === 'Admin Assist Secondary School') {
+            sbSchoolName.textContent = schoolName;
         }
     }
+
 
 
     function _fixUserInfoLayout() {

@@ -1,27 +1,16 @@
 /*
- * theme.css — Admin Assist Global Design System
- * =============================================
+ * theme.css — Admin Assist Global Design System v3
+ * =================================================
  * Single source of truth for all design tokens.
- * Loaded FIRST on every page.
- *
- * Sections:
- *   1. Google Fonts
- *   2. CSS Reset
- *   3. Light-mode tokens (default)
- *   4. Dark-mode tokens  ([data-theme="dark"] on <html>)
- *   5. Base body styles
- *   6. Typography baseline
- *   7. Color transition
- *   8. Utility helpers
+ * Loaded FIRST on every authenticated page.
+ * Mockup-aligned: #1565c0 primary blue, #29b6d4 teal accent, white header.
  */
 
 /* ─── 1. Google Fonts ───────────────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 /* ─── 2. CSS Reset ──────────────────────────────────────────── */
-*,
-*::before,
-*::after {
+*, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -29,108 +18,125 @@
 
 /* ─── 3. Light-Mode Tokens (default) ───────────────────────── */
 :root {
-    /* ── Brand ─────────────────────────────────────────────── */
-    --aa-blue:          #1E5AA8;   /* Primary brand blue        */
-    --aa-blue-dark:     #174b8f;   /* Hover / pressed state     */
-    --aa-blue-light:    #EBF2FB;   /* Blue tint background      */
-    --aa-gold:          #D4AF37;   /* Academic gold             */
-    --aa-gold-light:    #FBF6E3;   /* Gold tint background      */
+    /* ── Primary Brand ─────────────────────────────────────── */
+    --aa-blue:          #1565c0;   /* Primary deep blue — buttons, active states */
+    --aa-blue-dark:     #1043a0;   /* Hover / pressed                           */
+    --aa-blue-light:    #e3f0fc;   /* Light blue tint — row hover, pill bg      */
+    --aa-teal:          #29b6d4;   /* Sidebar active indicator, accent           */
+    --aa-teal-light:    rgba(41,182,212,.10); /* Sidebar active background       */
+    --aa-gold:          #D4AF37;   /* Academic gold — logo border                */
+    --aa-gold-light:    #FBF6E3;   /* Gold tint background                       */
 
-    /* ── Surfaces ──────────────────────────────────────────── */
-    --aa-bg:            #F7F9FC;   /* Page background           */
-    --aa-surface:       #FFFFFF;   /* Card / panel surface      */
-    --aa-surface-2:     #F3F6FA;   /* Nested surface (sidebar)  */
-    --aa-sidebar-bg:    #FFFFFF;
-    --aa-header-bg:     #FFFFFF;
+    /* ── Sidebar (always dark regardless of theme) ────────── */
+    --aa-sidebar-bg:        #0f2137;
+    --aa-sidebar-hover:     rgba(255,255,255,.05);
+    --aa-sidebar-active:    rgba(41,182,212,.12);
+    --aa-sidebar-border:    #29b6d4;
+    --aa-sidebar-text:      rgba(255,255,255,.72);
+    --aa-sidebar-text-dim:  rgba(255,255,255,.38);
+    --aa-sidebar-divider:   rgba(255,255,255,.06);
 
-    /* ── Text ──────────────────────────────────────────────── */
-    --aa-text:          #1F2937;   /* Primary text              */
-    --aa-text-muted:    #6B7280;   /* Secondary / label text    */
-    --aa-text-light:    #9CA3AF;   /* Placeholder / disabled    */
+    /* ── Header (light = white, dark = dark card) ──────────── */
+    --aa-header-bg:         #ffffff;
+    --aa-header-text:       #1e293b;
+    --aa-header-icon:       #64748b;
+    --aa-header-border:     rgba(0,0,0,.07);
+    --aa-header-height:     64px;
 
-    /* ── Border ────────────────────────────────────────────── */
-    --aa-border:        #E5E7EB;
-    --aa-border-dark:   #D1D5DB;
+    /* ── Page Surfaces ──────────────────────────────────────── */
+    --aa-bg:            #f4f6f9;   /* Page background (light gray from mockup)  */
+    --aa-surface:       #ffffff;   /* Card / panel                               */
+    --aa-surface-2:     #f8fafc;   /* Nested surface, table header               */
 
-    /* ── Semantic Colours ──────────────────────────────────── */
-    --aa-success:       #059669;
-    --aa-success-bg:    #ECFDF5;
-    --aa-success-text:  #065F46;
-    --aa-warning:       #D97706;
-    --aa-warning-bg:    #FFFBEB;
-    --aa-warning-text:  #92400E;
-    --aa-danger:        #DC2626;
-    --aa-danger-bg:     #FEF2F2;
-    --aa-danger-text:   #991B1B;
-    --aa-info:          #1E5AA8;
-    --aa-info-bg:       #EBF2FB;
-    --aa-info-text:     #1E3A5F;
+    /* ── Text ───────────────────────────────────────────────── */
+    --aa-text:          #1e293b;
+    --aa-text-muted:    #64748b;
+    --aa-text-light:    #94a3b8;
 
-    /* ── Layout ────────────────────────────────────────────── */
-    --aa-sidebar-width: 260px;
-    --aa-header-height: 64px;
+    /* ── Border ─────────────────────────────────────────────── */
+    --aa-border:        #e2e8f0;
+    --aa-border-dark:   #cbd5e1;
 
-    /* ── Shape ─────────────────────────────────────────────── */
+    /* ── Semantic ───────────────────────────────────────────── */
+    --aa-success:       #16a34a;
+    --aa-success-bg:    #f0fdf4;
+    --aa-success-text:  #15803d;
+    --aa-warning:       #d97706;
+    --aa-warning-bg:    #fffbeb;
+    --aa-warning-text:  #92400e;
+    --aa-danger:        #dc2626;
+    --aa-danger-bg:     #fef2f2;
+    --aa-danger-text:   #991b1b;
+    --aa-info:          #1565c0;
+    --aa-info-bg:       #e3f0fc;
+    --aa-info-text:     #1e3a5f;
+
+    /* ── Shadows ────────────────────────────────────────────── */
+    --aa-shadow-xs:     0 1px 2px rgba(0,0,0,.05);
+    --aa-shadow:        0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
+    --aa-shadow-md:     0 4px 12px rgba(0,0,0,.08);
+    --aa-shadow-lg:     0 8px 24px rgba(0,0,0,.10);
+
+    /* ── Shape ──────────────────────────────────────────────── */
     --aa-radius-sm:     4px;
     --aa-radius:        6px;
     --aa-radius-md:     8px;
     --aa-radius-lg:     12px;
     --aa-radius-xl:     16px;
 
-    /* ── Shadows ───────────────────────────────────────────── */
-    --aa-shadow-xs:     0 1px 2px rgba(0,0,0,.05);
-    --aa-shadow:        0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
-    --aa-shadow-md:     0 4px 12px rgba(0,0,0,.08);
-    --aa-shadow-lg:     0 8px 24px rgba(0,0,0,.10);
+    /* ── Typography Scale ───────────────────────────────────── */
+    --aa-font-xs:       0.75rem;
+    --aa-font-sm:       0.8125rem;
+    --aa-font-base:     0.9375rem;
+    --aa-font-md:       1rem;
+    --aa-font-lg:       1.125rem;
+    --aa-font-xl:       1.375rem;
+    --aa-font-2xl:      1.75rem;
+    --aa-font-3xl:      2rem;
 
-    /* ── Legacy aliases (keep old names working) ───────────── */
+    /* ── Legacy aliases ─────────────────────────────────────── */
     --aa-navy:          var(--aa-blue);
-    --aa-navy-light:    var(--aa-blue-dark);
+    --aa-accent:        var(--aa-blue);
     --aa-copper:        var(--aa-gold);
-    --aa-copper-light:  var(--aa-gold-light);
-    --aa-copper-pale:   var(--aa-gold-light);
-    --aa-white:         #FFFFFF;
-    --aa-border-dark:   var(--aa-border-dark);
-
-    /* ── Typography Scale ──────────────────────────────────── */
-    --aa-font-xs:       0.75rem;    /* 12px */
-    --aa-font-sm:       0.8125rem;  /* 13px */
-    --aa-font-base:     0.9375rem;  /* 15px */
-    --aa-font-md:       1rem;       /* 16px */
-    --aa-font-lg:       1.125rem;   /* 18px */
-    --aa-font-xl:       1.375rem;   /* 22px */
-    --aa-font-2xl:      1.75rem;    /* 28px */
-    --aa-font-3xl:      2rem;       /* 32px */
+    --aa-sidebar-width: 260px;
 }
 
 /* ─── 4. Dark-Mode Tokens ───────────────────────────────────── */
 [data-theme="dark"] {
+    /* Header becomes dark card */
+    --aa-header-bg:     #1e2a3a;
+    --aa-header-text:   #f1f5f9;
+    --aa-header-icon:   #94a3b8;
+    --aa-header-border: rgba(255,255,255,.06);
+
+    /* Page surfaces */
     --aa-bg:            #111827;
-    --aa-surface:       #1F2937;
+    --aa-surface:       #1e2a3a;
     --aa-surface-2:     #172033;
-    --aa-sidebar-bg:    #172033;
-    --aa-header-bg:     #172033;
 
-    --aa-text:          #F3F4F6;
-    --aa-text-muted:    #D1D5DB;
-    --aa-text-light:    #9CA3AF;
+    /* Text */
+    --aa-text:          #f1f5f9;
+    --aa-text-muted:    #94a3b8;
+    --aa-text-light:    #64748b;
 
-    --aa-border:        #374151;
-    --aa-border-dark:   #4B5563;
+    /* Borders */
+    --aa-border:        #2d3748;
+    --aa-border-dark:   #374151;
 
-    --aa-blue-light:    rgba(30,90,168,.18);
+    /* Semantic */
+    --aa-blue-light:    rgba(21,101,192,.18);
     --aa-gold-light:    rgba(212,175,55,.12);
-
-    --aa-success-bg:    rgba(5,150,105,.15);
-    --aa-success-text:  #6EE7B7;
+    --aa-success-bg:    rgba(22,163,74,.15);
+    --aa-success-text:  #4ade80;
     --aa-warning-bg:    rgba(217,119,6,.15);
-    --aa-warning-text:  #FCD34D;
+    --aa-warning-text:  #fbbf24;
     --aa-danger-bg:     rgba(220,38,38,.15);
-    --aa-danger-text:   #FCA5A5;
-    --aa-info-bg:       rgba(30,90,168,.15);
-    --aa-info-text:     #93C5FD;
+    --aa-danger-text:   #f87171;
+    --aa-info-bg:       rgba(21,101,192,.15);
+    --aa-info-text:     #93c5fd;
 
-    --aa-shadow-xs:     0 1px 2px rgba(0,0,0,.25);
+    /* Shadows (darker) */
+    --aa-shadow-xs:     0 1px 2px rgba(0,0,0,.2);
     --aa-shadow:        0 1px 3px rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.2);
     --aa-shadow-md:     0 4px 12px rgba(0,0,0,.3);
     --aa-shadow-lg:     0 8px 24px rgba(0,0,0,.4);
@@ -140,6 +146,7 @@
 html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
+    scroll-padding-top: 80px;
 }
 
 body {
@@ -161,39 +168,26 @@ h4 { font-size: var(--aa-font-md);  font-weight: 600; line-height: 1.4;  color: 
 h5,
 h6 { font-size: var(--aa-font-base); font-weight: 600; color: var(--aa-text); }
 
-p { margin: 0; }
+p  { margin: 0; }
 
-a {
+a  {
     color: var(--aa-blue);
     text-decoration: none;
     transition: color 0.15s;
 }
 a:hover { color: var(--aa-blue-dark); }
 
-button, input, select, textarea {
-    font-family: inherit;
-    font-size: inherit;
-}
-
+button, input, select, textarea { font-family: inherit; font-size: inherit; }
 img, svg { display: block; max-width: 100%; }
+ul, ol   { list-style: none; }
 
-ul, ol { list-style: none; }
-
-/* ─── 7. Color Transition (theme toggle) ────────────────────── */
-/* Only transition colour properties — not layout — for instant feel */
+/* ─── 7. Color Transitions (theme toggle — no layout shift) ── */
 *,
 *::before,
 *::after {
-    transition:
-        background-color 0.15s ease,
-        border-color     0.15s ease,
-        color            0.15s ease,
-        box-shadow       0.15s ease;
-}
-
-/* Elements that should NOT transition (prevent FOUC on load) */
-*, *::before, *::after {
     transition-property: background-color, border-color, color, box-shadow;
+    transition-duration: 150ms;
+    transition-timing-function: ease;
 }
 
 /* ─── 8. Utility Helpers ────────────────────────────────────── */
@@ -207,12 +201,10 @@ ul, ol { list-style: none; }
     border: 0;
 }
 
-/* Scroll lock — used by modal-manager.js */
 body.aa-modal-open { overflow: hidden !important; }
 body.nav-open      { overflow: hidden !important; }
 
-/* Focus ring — consistent across all interactive elements */
 :focus-visible {
-    outline: 2px solid var(--aa-blue);
+    outline: 2px solid var(--aa-teal);
     outline-offset: 2px;
 }

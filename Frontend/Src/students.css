@@ -6,25 +6,29 @@
 
 /* ─── Token fallbacks (if theme.css not loaded first) ─────── */
 :root {
-    --aa-blue:          #1E5AA8;
-    --aa-blue-dark:     #174b8f;
-    --aa-blue-light:    #EBF2FB;
+    --aa-blue:          #1565c0;
+    --aa-blue-dark:     #1043a0;
+    --aa-blue-light:    #e3f0fc;
+    --aa-teal:          #29b6d4;
     --aa-gold:          #D4AF37;
     --aa-gold-light:    #FBF6E3;
-    --aa-bg:            #F7F9FC;
+    --aa-bg:            #f4f6f9;
     --aa-surface:       #FFFFFF;
-    --aa-surface-2:     #F3F6FA;
-    --aa-text:          #1F2937;
-    --aa-text-muted:    #6B7280;
-    --aa-text-light:    #9CA3AF;
-    --aa-border:        #E5E7EB;
-    --aa-border-dark:   #D1D5DB;
-    --aa-success:       #059669;
-    --aa-success-bg:    #ECFDF5;
-    --aa-success-text:  #065F46;
-    --aa-danger:        #DC2626;
-    --aa-danger-bg:     #FEF2F2;
-    --aa-danger-text:   #991B1B;
+    --aa-surface-2:     #f8fafc;
+    --aa-header-bg:     #ffffff;
+    --aa-header-text:   #1e293b;
+    --aa-header-border: rgba(0,0,0,.07);
+    --aa-text:          #1e293b;
+    --aa-text-muted:    #64748b;
+    --aa-text-light:    #94a3b8;
+    --aa-border:        #e2e8f0;
+    --aa-border-dark:   #cbd5e1;
+    --aa-success:       #16a34a;
+    --aa-success-bg:    #f0fdf4;
+    --aa-success-text:  #15803d;
+    --aa-danger:        #dc2626;
+    --aa-danger-bg:     #fef2f2;
+    --aa-danger-text:   #991b1b;
     --aa-shadow-xs:     0 1px 2px rgba(0,0,0,.05);
     --aa-shadow:        0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
     --aa-shadow-md:     0 4px 12px rgba(0,0,0,.08);
@@ -57,8 +61,8 @@ body {
 
 /* ─── Header ─────────────────────────────────────────────────── */
 header {
-    background: var(--aa-blue);
-    border-bottom: 3px solid var(--aa-gold);
+    background: var(--aa-header-bg, #ffffff);
+    border-bottom: 1px solid var(--aa-header-border, rgba(0,0,0,.07));
     padding: 0 1.5rem;
     height: 64px;
     display: flex;
@@ -68,51 +72,52 @@ header {
     position: sticky;
     top: 0;
     z-index: 100;
-    box-shadow: 0 1px 4px rgba(0,0,0,.12);
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    flex-wrap: nowrap;
 }
 
-.logo    { font-size: 1.0625rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+.logo    { font-size: 1rem; font-weight: 700; color: var(--aa-header-text, #1e293b); flex-shrink: 0; }
 
 .user-profile {
     display: flex;
     align-items: center;
     gap: 0.625rem;
-    color: #fff;
+    color: var(--aa-header-text, #1e293b);
     flex-shrink: 0;
 }
 
 .user-avatar {
-    width: 36px; height: 36px;
+    width: 32px; height: 32px;
     border-radius: 50%;
-    background: var(--aa-gold);
-    color: #172033;
-    font-size: 0.8125rem; font-weight: 700;
+    background: var(--aa-blue, #1565c0);
+    color: #fff;
+    font-size: 0.75rem; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; border: 1.5px solid rgba(255,255,255,.2);
+    flex-shrink: 0; border: 2px solid var(--aa-teal, #29b6d4);
     user-select: none;
 }
 
 .role-badge {
     display: inline-block;
-    padding: 0.2rem 0.55rem;
-    border-radius: 999px;
-    font-size: 0.7rem; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.05em;
-    background: rgba(255,255,255,.15); color: #fff;
+    font-size: 0.7rem;
+    color: var(--aa-text-muted, #64748b);
+    background: transparent;
+    padding: 0;
 }
 
-header button {
+header button#logoutBtn {
     background: transparent;
-    border: 1.5px solid rgba(255,255,255,.45);
-    color: #fff;
-    padding: 0.35rem 0.875rem;
-    border-radius: 6px; font-size: 0.8125rem;
+    border: 1.5px solid var(--aa-border-dark, #cbd5e1);
+    color: var(--aa-text-muted, #64748b);
+    padding: 0.3rem 0.75rem;
+    border-radius: 6px; font-size: 0.75rem;
     cursor: pointer; font-family: inherit;
-    transition: background 0.15s, border-color 0.15s;
+    transition: all 0.15s;
 }
-header button:hover {
-    background: rgba(255,255,255,.1);
-    border-color: rgba(255,255,255,.7);
+header button#logoutBtn:hover {
+    background: var(--aa-danger-bg, #fef2f2);
+    border-color: var(--aa-danger, #dc2626);
+    color: var(--aa-danger, #dc2626);
 }
 
 /* ─── Page Layout ────────────────────────────────────────────── */
