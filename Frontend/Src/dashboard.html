@@ -5,12 +5,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - Admin Assist</title>
+  <meta name="description" content="Admin Assist school management dashboard overview.">
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="aa-shared.css">
   <link rel="stylesheet" href="dashboard.css">
   <link rel="stylesheet" href="navigation.css">
-
 </head>
 
-<body>
+<body data-page="dashboard">
   <header>
     <div class="logo">Admin Assist</div>
     <div class="user-profile">
@@ -22,134 +24,194 @@
   </header>
 
   <div class="main-container">
-    <h1 class="dashboard-title" id="welcomeTitle">Welcome!</h1>
 
-    <!-- School Banner & Staff Identity Card -->
-    <div class="dashboard-banner" style="margin-bottom: 1.5rem; padding: 1.25rem; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <span>Dashboard</span>
+    </div>
+
+    <!-- Page heading -->
+    <div class="page-header">
       <div>
-        <h2 id="dashSchoolName" style="font-size: 1.25rem; font-weight: 700; color: #ffffff; margin: 0 0 0.25rem;">Admin Assist Secondary School</h2>
-        <p style="font-size: 0.875rem; color: rgba(255,255,255,0.7); margin: 0;">School Information System — Official Staff Portal</p>
-      </div>
-      <div style="text-align: right; background: rgba(10,22,40,0.8); padding: 0.6rem 1rem; border-radius: 0.5rem; border: 1px solid rgba(212,175,55,0.4);">
-        <span style="display: block; font-size: 0.7rem; color: #d4af37; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Staff Identity</span>
-        <strong id="dashStaffId" style="display: block; font-size: 0.95rem; color: #ffffff; font-family: monospace; letter-spacing: 0.05em;">—</strong>
-        <span id="dashDepartment" style="display: block; font-size: 0.75rem; color: rgba(255,255,255,0.6);">—</span>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle" id="welcomeTitle">Welcome back!</p>
       </div>
     </div>
 
-    <!-- STAT CARDS — values start at "—" and are filled by loadDashboardStats() -->
-    <div class="stats-grid">
-      <div class="stat-card blue">
-        <div class="stat-header">
-          <div>
-            <div class="stat-label">Total Students</div>
-            <div class="stat-value" data-stat="totalStudents">—</div>
-          </div>
-          <div class="stat-icon">👥</div>
+    <!-- ── STAT CARDS ───────────────────────────────────────────────────── -->
+    <div class="dash-stats-row">
+
+      <div class="dash-stat-card">
+        <div class="dash-stat-icon" style="background:#e3f0fc; color:#1565c0;">👥</div>
+        <div class="dash-stat-body">
+          <div class="dash-stat-value" id="statStudents">—</div>
+          <div class="dash-stat-label">Students</div>
         </div>
-        <div class="stat-bar blue"></div>
+        <a href="students.html" class="dash-stat-link">View All</a>
       </div>
 
-      <div class="stat-card green">
-        <div class="stat-header">
-          <div>
-            <div class="stat-label">Total Teachers</div>
-            <div class="stat-value" data-stat="totalTeachers">—</div>
-          </div>
-          <div class="stat-icon">👨‍🏫</div>
+      <div class="dash-stat-card">
+        <div class="dash-stat-icon" style="background:#f0fdf4; color:#16a34a;">👨‍🏫</div>
+        <div class="dash-stat-body">
+          <div class="dash-stat-value" id="statTeachers">—</div>
+          <div class="dash-stat-label">Teachers</div>
         </div>
-        <div class="stat-bar green"></div>
+        <a href="#" class="dash-stat-link">View All</a>
       </div>
 
-      <div class="stat-card blue">
-        <div class="stat-header">
-          <div>
-            <div class="stat-label">Enrolled Students</div>
-            <div class="stat-value" data-stat="pendingEnrollments">—</div>
-          </div>
-          <div class="stat-icon">📋</div>
+      <div class="dash-stat-card">
+        <div class="dash-stat-icon" style="background:#fffbeb; color:#d97706;">📋</div>
+        <div class="dash-stat-body">
+          <div class="dash-stat-value" id="statAttendance">—</div>
+          <div class="dash-stat-label">Attendance Today</div>
         </div>
-        <div class="stat-bar blue"></div>
+        <a href="attendance-management.html" class="dash-stat-link">View Details</a>
       </div>
 
-      <!-- Admin/Headmaster only — shown by navigation.js RBAC logic -->
-      <div class="stat-card orange admin-only" id="pendingApprovalsCard">
-        <div class="stat-header">
-          <div>
-            <div class="stat-label">Pending Approvals</div>
-            <div class="stat-value" data-stat="pendingApprovals">—</div>
-          </div>
-          <div class="stat-icon">✓</div>
+      <div class="dash-stat-card">
+        <div class="dash-stat-icon" style="background:#fef2f2; color:#dc2626;">🏫</div>
+        <div class="dash-stat-body">
+          <div class="dash-stat-value" id="statClasses">—</div>
+          <div class="dash-stat-label">Classes</div>
         </div>
-        <div class="stat-bar orange"></div>
+        <a href="#" class="dash-stat-link">View All</a>
+      </div>
+
+      <div class="dash-stat-card admin-only">
+        <div class="dash-stat-icon" style="background:#f3e8ff; color:#7c3aed;">📚</div>
+        <div class="dash-stat-body">
+          <div class="dash-stat-value" id="statSubjects">—</div>
+          <div class="dash-stat-label">Subjects</div>
+        </div>
+        <a href="subject-management.html" class="dash-stat-link">View All</a>
+      </div>
+
+    </div>
+
+    <!-- ── ACTIVITY + EVENTS PANELS ─────────────────────────────────────── -->
+    <div class="dash-panels-row">
+
+      <!-- Recent Activity -->
+      <div class="dash-panel">
+        <div class="dash-panel-header">
+          <h2 class="dash-panel-title">Recent Activity</h2>
+          <span class="dash-panel-badge" id="activityBadge"></span>
+        </div>
+        <ul class="dash-activity-list" id="recentActivityList">
+          <li class="dash-activity-empty">Loading activity…</li>
+        </ul>
+      </div>
+
+      <!-- Upcoming Events -->
+      <div class="dash-panel">
+        <div class="dash-panel-header">
+          <h2 class="dash-panel-title">Upcoming Events</h2>
+          <a href="#" class="dash-panel-link">See all</a>
+        </div>
+        <ul class="dash-events-list" id="upcomingEventsList">
+          <li class="dash-event-item">
+            <div class="dash-event-date">
+              <span class="dash-event-day" id="evtDay1">—</span>
+              <span class="dash-event-month" id="evtMon1">—</span>
+            </div>
+            <div class="dash-event-body">
+              <div class="dash-event-name">Staff Meeting</div>
+              <div class="dash-event-meta" id="evtMeta1">Thursday, 10:00 AM</div>
+            </div>
+          </li>
+          <li class="dash-event-item">
+            <div class="dash-event-date">
+              <span class="dash-event-day" id="evtDay2">—</span>
+              <span class="dash-event-month" id="evtMon2">—</span>
+            </div>
+            <div class="dash-event-body">
+              <div class="dash-event-name">End of Term Exams</div>
+              <div class="dash-event-meta" id="evtMeta2">In 3 weeks</div>
+            </div>
+          </li>
+          <li class="dash-event-item">
+            <div class="dash-event-date">
+              <span class="dash-event-day">15</span>
+              <span class="dash-event-month">Aug</span>
+            </div>
+            <div class="dash-event-body">
+              <div class="dash-event-name">Parent-Teacher Meeting</div>
+              <div class="dash-event-meta">Friday, 2:00 PM</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- ── QUICK ACCESS LIST ─────────────────────────────────────────────── -->
+    <div class="dash-quick-section">
+      <h2 class="dash-quick-title">Quick Access</h2>
+      <div class="dash-quick-grid">
+
+        <a href="students.html" class="dash-quick-card">
+          <div class="dash-quick-icon" style="background:#e3f0fc; color:#1565c0;">👥</div>
+          <div class="dash-quick-body">
+            <div class="dash-quick-name">Student Directory</div>
+            <div class="dash-quick-desc">Browse and manage enrolled students</div>
+          </div>
+          <span class="dash-quick-chevron">›</span>
+        </a>
+
+        <a href="enroll-student.html" class="dash-quick-card">
+          <div class="dash-quick-icon" style="background:#f0fdf4; color:#16a34a;">📝</div>
+          <div class="dash-quick-body">
+            <div class="dash-quick-name">Enroll Student</div>
+            <div class="dash-quick-desc">Add a new student to the system</div>
+          </div>
+          <span class="dash-quick-chevron">›</span>
+        </a>
+
+        <a href="attendance-management.html" class="dash-quick-card">
+          <div class="dash-quick-icon" style="background:#fffbeb; color:#d97706;">📋</div>
+          <div class="dash-quick-body">
+            <div class="dash-quick-name">Take Attendance</div>
+            <div class="dash-quick-desc">Record class attendance for today</div>
+          </div>
+          <span class="dash-quick-chevron">›</span>
+        </a>
+
+        <a href="academic-records.html" class="dash-quick-card">
+          <div class="dash-quick-icon" style="background:#fef2f2; color:#dc2626;">📄</div>
+          <div class="dash-quick-body">
+            <div class="dash-quick-name">Academic Records</div>
+            <div class="dash-quick-desc">View and manage student results</div>
+          </div>
+          <span class="dash-quick-chevron">›</span>
+        </a>
+
+        <a href="reports-dashboard.html" class="dash-quick-card admin-only">
+          <div class="dash-quick-icon" style="background:#f3e8ff; color:#7c3aed;">📊</div>
+          <div class="dash-quick-body">
+            <div class="dash-quick-name">Reports</div>
+            <div class="dash-quick-desc">Generate and export school reports</div>
+          </div>
+          <span class="dash-quick-chevron">›</span>
+        </a>
+
+        <a href="student-transcript.html" class="dash-quick-card">
+          <div class="dash-quick-icon" style="background:#e0f2fe; color:#0284c7;">🎓</div>
+          <div class="dash-quick-body">
+            <div class="dash-quick-name">Transcripts</div>
+            <div class="dash-quick-desc">View student academic transcripts</div>
+          </div>
+          <span class="dash-quick-chevron">›</span>
+        </a>
+
       </div>
     </div>
 
-    <!-- QUICK ACCESS — data-href replaces inline onclick (Rule 2 compliance) -->
-    <div class="activity-section">
-      <h2 class="activity-title">Quick Access</h2>
-      <div class="activity-grid">
+  </div><!-- /.main-container -->
 
-        <!-- Admin / Headmaster only -->
-        <div class="activity-card admin-only" id="enrollCard" data-href="enroll-student.html">
-          <div class="activity-image enrollment">📝</div>
-          <div class="activity-content">
-            <div class="activity-title-small">Student Enrollment</div>
-            <div class="activity-description">Register a new student.</div>
-          </div>
-        </div>
-
-        <!-- All roles -->
-        <div class="activity-card" data-href="students.html">
-          <div class="activity-image enrollment">👥</div>
-          <div class="activity-content">
-            <div class="activity-title-small">Student Directory</div>
-            <div class="activity-description">Browse and manage all enrolled students.</div>
-          </div>
-        </div>
-
-        <div class="activity-card" data-href="attendance-management.html">
-          <div class="activity-image attendance">📊</div>
-          <div class="activity-content">
-            <div class="activity-title-small">Attendance Management</div>
-            <div class="activity-description">Monitor and track student attendance.</div>
-          </div>
-        </div>
-
-        <div class="activity-card" data-href="academic-records.html">
-          <div class="activity-image records">📄</div>
-          <div class="activity-content">
-            <div class="activity-title-small">Academic Records</div>
-            <div class="activity-description">Manage grades, report cards, and transcripts.</div>
-          </div>
-        </div>
-
-        <!-- Admin / Headmaster only -->
-        <div class="activity-card admin-only" id="reportCard" data-href="generate-report.html">
-          <div class="activity-image reports">📈</div>
-          <div class="activity-content">
-            <div class="activity-title-small">Generate Reports</div>
-            <div class="activity-description">Create and manage school reports.</div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- RECENT ACTIVITY — populated by loadRecentActivity() -->
-    <section class="recent-activity-section">
-      <h2 class="activity-title">Recent Activity</h2>
-      <ul class="activity-list" id="activity-list">
-        <!-- Skeleton shown while loading; replaced by dashboard.js -->
-      </ul>
-    </section>
-  </div>
-
-  <!-- Scripts: auth first, then guard, then shared nav, then page-specific -->
-  <script src="auth.js"></script>
-  <script src="auth-guard.js"></script>
+  <script src="auth.js" defer></script>
+  <script src="auth-guard.js" defer></script>
   <script src="navigation.js"></script>
-  <script src="dashboard.js"></script>
+  <script src="dashboard.js" defer></script>
 </body>
 
 </html>

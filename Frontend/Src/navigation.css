@@ -1,53 +1,22 @@
-/**
- * navigation.css
- * Supplementary navigation styles.
- *
- * NOTE: All critical sidebar positioning (hidden by default, fixed overlay)
- * is injected directly by navigation.js to guarantee it applies regardless
- * of whether this file is linked. This file provides visual polish
- * and responsive overrides that are safe to defer.
- *
- * Link this file in <head> on every authenticated page:
- *   <link rel="stylesheet" href="navigation.css">
+/*
+ * navigation.css — Admin Assist Navigation Supplements
+ * Provides static fallback styles for the navigation shell.
+ * navigation.js injects the main sidebar styles dynamically;
+ * this file supplements with page-layout helpers.
  */
 
-/* ── Smooth scroll when sidebar opens/closes ── */
+/* ─── Sidebar font inheritance ──────────────────────────────── */
+#app-sidebar {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ─── Scroll padding to account for sticky header ───────────── */
 html {
-    scroll-behavior: smooth;
+    scroll-padding-top: 80px;
 }
 
-/* ── Prevent iOS bounce scroll while sidebar is open ── */
-@media (max-width: 768px) {
-    body.nav-open {
-        position: fixed;
-        width: 100%;
-        /* Keeps the page at the same scroll position */
-    }
-}
-
-/* ── Sidebar width on very small screens ── */
-@media (max-width: 360px) {
-    #app-sidebar {
-        width: 100% !important;
-        max-width: 280px !important;
-    }
-}
-
-/* ── Ensure hamburger is visible on dark AND light backgrounds ── */
-/* Some pages might have a white header — the lines need to adapt */
-header.light-header #hamburger-btn .hb-line {
-    background: #1a3a52;
-}
-
-/* ── Focus-visible ring uses the accent color ── */
-*:focus-visible {
-    outline: 2px solid #d4af37;
-    outline-offset: 2px;
-}
-
-/* ── Skip this outline on inputs (they have their own focus styles) ── */
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-    outline: none;
+/* ─── Ensure sidebar text colors update on theme change ─────── */
+[data-theme="dark"] #app-sidebar {
+    background: var(--aa-sidebar-bg, #172033) !important;
+    border-right-color: rgba(255,255,255,.06) !important;
 }

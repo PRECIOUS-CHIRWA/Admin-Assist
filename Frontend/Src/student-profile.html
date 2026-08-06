@@ -6,9 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Profile - Admin Assist</title>
   <meta name="description" content="View full student profile in Admin Assist school management.">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap"
-    rel="stylesheet">
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="aa-shared.css">
   <link rel="stylesheet" href="students.css">
   <link rel="stylesheet" href="navigation.css">
 </head>
@@ -17,9 +16,9 @@
   <header>
     <div class="logo">Admin Assist</div>
     <div class="user-profile">
+      <div class="user-avatar" id="headerAvatar" data-user-initials>?</div>
       <span id="headerUserName" data-user-name>…</span>
       <span id="roleBadge" class="role-badge" data-user-role></span>
-      <div class="user-avatar" id="headerAvatar" data-user-initials>?</div>
       <button id="logoutBtn">Logout</button>
     </div>
   </header>

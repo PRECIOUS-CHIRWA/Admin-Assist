@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - Admin Assist</title>
+  <meta name="description" content="Configure your Admin Assist school management settings.">
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="aa-shared.css">
+  <link rel="stylesheet" href="navigation.css">
+  <style>
+    /* ─── Settings Page ─────────────────────────────────────── */
+    .settings-layout {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 640px) {
+      .settings-layout { grid-template-columns: 1fr; }
+    }
+    .settings-nav {
+      background: var(--aa-surface);
+      border: 1px solid var(--aa-border);
+      border-radius: var(--aa-radius-lg);
+      padding: 8px;
+      box-shadow: var(--aa-shadow-xs);
+    }
+    .settings-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 9px 12px;
+      border: none;
+      background: transparent;
+      border-radius: var(--aa-radius-md);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--aa-text-muted);
+      cursor: pointer;
+      text-align: left;
+      transition: background .12s, color .12s;
+    }
+    .settings-nav-item:hover {
+      background: var(--aa-surface-2);
+      color: var(--aa-text);
+    }
+    .settings-nav-item.is-active {
+      background: var(--aa-blue-light);
+      color: var(--aa-blue);
+      font-weight: 600;
+    }
+    .settings-panel {
+      background: var(--aa-surface);
+      border: 1px solid var(--aa-border);
+      border-radius: var(--aa-radius-lg);
+      padding: 28px 24px;
+      box-shadow: var(--aa-shadow-xs);
+    }
+    .settings-panel h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--aa-text);
+      margin-bottom: 6px;
+    }
+    .settings-panel .settings-desc {
+      font-size: 13px;
+      color: var(--aa-text-muted);
+      margin-bottom: 24px;
+    }
+    .settings-section { display: none; }
+    .settings-section.is-active { display: block; }
+    .settings-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 640px) {
+      .settings-group { grid-template-columns: 1fr; }
+    }
+    .settings-group.full { grid-template-columns: 1fr; }
+    .form-field { display: flex; flex-direction: column; gap: 5px; }
+    .form-field label {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--aa-text);
+    }
+    .form-field input,
+    .form-field select,
+    .form-field textarea {
+      padding: 8px 12px;
+      border: 1.5px solid var(--aa-border);
+      border-radius: var(--aa-radius-md);
+      background: var(--aa-surface);
+      color: var(--aa-text);
+      font-size: 13px;
+      font-family: inherit;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .form-field input:focus,
+    .form-field select:focus,
+    .form-field textarea:focus {
+      outline: none;
+      border-color: var(--aa-teal);
+      box-shadow: 0 0 0 3px rgba(41,182,212,.1);
+    }
+    .form-field textarea { resize: vertical; min-height: 80px; }
+    .settings-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      padding-top: 20px;
+      border-top: 1px solid var(--aa-border);
+      margin-top: 24px;
+    }
+    .btn-primary {
+      padding: 9px 20px;
+      background: var(--aa-blue);
+      color: #fff;
+      border: none;
+      border-radius: var(--aa-radius-md);
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-primary:hover { background: var(--aa-blue-dark); }
+    .btn-secondary {
+      padding: 9px 20px;
+      background: transparent;
+      color: var(--aa-text-muted);
+      border: 1.5px solid var(--aa-border);
+      border-radius: var(--aa-radius-md);
+      font-size: 13.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-secondary:hover { border-color: var(--aa-border-dark); color: var(--aa-text); }
+  </style>
+</head>
+
+<body data-page="settings">
+  <header>
+    <div class="logo">Admin Assist</div>
+    <div class="user-profile">
+      <div class="user-avatar" id="headerAvatar">?</div>
+      <span id="headerUserName">…</span>
+      <span id="roleBadge" class="role-badge"></span>
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </header>
+
+  <main class="aa-main">
+    <header class="aa-page-header">
+      <div>
+        <p class="aa-kicker">System</p>
+        <h1>Settings</h1>
+        <p class="aa-subtitle">Configure your school information and system preferences.</p>
+      </div>
+    </header>
+
+    <div class="settings-layout">
+      <!-- Settings Nav -->
+      <nav class="settings-nav" aria-label="Settings sections">
+        <button class="settings-nav-item is-active" data-target="general" type="button">⚙️ General</button>
+        <button class="settings-nav-item" data-target="profile" type="button">👤 Profile</button>
+        <button class="settings-nav-item" data-target="security" type="button">🔒 Security</button>
+        <button class="settings-nav-item" data-target="system" type="button">🖥️ System</button>
+        <button class="settings-nav-item" data-target="notifications" type="button">🔔 Notifications</button>
+      </nav>
+
+      <!-- Settings Content -->
+      <div class="settings-panel">
+
+        <!-- GENERAL -->
+        <section class="settings-section is-active" id="general">
+          <h2>General Settings</h2>
+          <p class="settings-desc">Manage your school information and academic year details.</p>
+          <div class="settings-group">
+            <div class="form-field">
+              <label for="schoolName">School Name</label>
+              <input type="text" id="schoolName" placeholder="e.g. Greenfields Secondary School">
+            </div>
+            <div class="form-field">
+              <label for="academicYear">Academic Year</label>
+              <input type="text" id="academicYear" placeholder="e.g. 2024/2025">
+            </div>
+          </div>
+          <div class="settings-group">
+            <div class="form-field">
+              <label for="schoolDept">School Dept</label>
+              <input type="text" id="schoolDept" placeholder="e.g. Ministry of Education">
+            </div>
+            <div class="form-field">
+              <label for="country">Country</label>
+              <input type="text" id="country" placeholder="e.g. Zambia">
+            </div>
+          </div>
+          <div class="settings-group">
+            <div class="form-field">
+              <label for="phoneNumber">Phone Number</label>
+              <input type="tel" id="phoneNumber" placeholder="+260 97 0000000">
+            </div>
+            <div class="form-field">
+              <label for="timezone">Timezone</label>
+              <select id="timezone">
+                <option value="Africa/Lusaka">Africa/Lusaka (GMT+2)</option>
+                <option value="Africa/Nairobi">Africa/Nairobi (GMT+3)</option>
+                <option value="Africa/Johannesburg">Africa/Johannesburg (GMT+2)</option>
+                <option value="UTC">UTC (GMT+0)</option>
+              </select>
+            </div>
+          </div>
+          <div class="settings-group full">
+            <div class="form-field">
+              <label for="schoolAddress">Address</label>
+              <textarea id="schoolAddress" placeholder="e.g. 1234 Independence Avenue, Lusaka"></textarea>
+            </div>
+          </div>
+          <div class="settings-actions">
+            <button class="btn-secondary" type="button">Discard Changes</button>
+            <button class="btn-primary" type="button" id="saveGeneralBtn">Save Changes</button>
+          </div>
+        </section>
+
+        <!-- PROFILE -->
+        <section class="settings-section" id="profile">
+          <h2>Profile Settings</h2>
+          <p class="settings-desc">Update your personal account information.</p>
+          <div class="settings-group">
+            <div class="form-field">
+              <label for="profileName">Full Name</label>
+              <input type="text" id="profileName" placeholder="Your full name">
+            </div>
+            <div class="form-field">
+              <label for="profileEmail">Email Address</label>
+              <input type="email" id="profileEmail" placeholder="your@email.com">
+            </div>
+          </div>
+          <div class="settings-group">
+            <div class="form-field">
+              <label for="profileRole">Role</label>
+              <input type="text" id="profileRole" disabled placeholder="Administrator">
+            </div>
+            <div class="form-field">
+              <label for="profilePhone">Phone</label>
+              <input type="tel" id="profilePhone" placeholder="+260 97 0000000">
+            </div>
+          </div>
+          <div class="settings-actions">
+            <button class="btn-secondary" type="button">Discard Changes</button>
+            <button class="btn-primary" type="button">Save Profile</button>
+          </div>
+        </section>
+
+        <!-- SECURITY -->
+        <section class="settings-section" id="security">
+          <h2>Security Settings</h2>
+          <p class="settings-desc">Manage your password and account security.</p>
+          <div class="settings-group">
+            <div class="form-field">
+              <label for="currentPassword">Current Password</label>
+              <input type="password" id="currentPassword" placeholder="Enter current password">
+            </div>
+          </div>
+          <div class="settings-group">
+            <div class="form-field">
+              <label for="newPassword">New Password</label>
+              <input type="password" id="newPassword" placeholder="Enter new password">
+            </div>
+            <div class="form-field">
+              <label for="confirmPassword">Confirm Password</label>
+              <input type="password" id="confirmPassword" placeholder="Confirm new password">
+            </div>
+          </div>
+          <div class="settings-actions">
+            <button class="btn-primary" type="button">Change Password</button>
+          </div>
+        </section>
+
+        <!-- SYSTEM -->
+        <section class="settings-section" id="system">
+          <h2>System Settings</h2>
+          <p class="settings-desc">Configure system-level preferences and data management.</p>
+          <div class="settings-group">
+            <div class="form-field">
+              <label for="dateFormat">Date Format</label>
+              <select id="dateFormat">
+                <option>DD/MM/YYYY</option>
+                <option>MM/DD/YYYY</option>
+                <option>YYYY-MM-DD</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="language">Language</label>
+              <select id="language">
+                <option>English</option>
+              </select>
+            </div>
+          </div>
+          <div class="settings-actions">
+            <button class="btn-secondary" type="button">Discard</button>
+            <button class="btn-primary" type="button">Save</button>
+          </div>
+        </section>
+
+        <!-- NOTIFICATIONS -->
+        <section class="settings-section" id="notifications">
+          <h2>Notification Settings</h2>
+          <p class="settings-desc">Choose what notifications you want to receive.</p>
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;">
+              <input type="checkbox" checked style="width:16px;height:16px;"> Attendance alerts
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;">
+              <input type="checkbox" checked style="width:16px;height:16px;"> New student enrollments
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;">
+              <input type="checkbox" style="width:16px;height:16px;"> Report generation complete
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;">
+              <input type="checkbox" checked style="width:16px;height:16px;"> System announcements
+            </label>
+          </div>
+          <div class="settings-actions">
+            <button class="btn-primary" type="button">Save Preferences</button>
+          </div>
+        </section>
+
+      </div><!-- /.settings-panel -->
+    </div><!-- /.settings-layout -->
+  </main>
+
+  <script src="auth.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="navigation.js"></script>
+  <script>
+    // Tab switching
+    document.querySelectorAll('.settings-nav-item').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var target = this.dataset.target;
+        document.querySelectorAll('.settings-nav-item').forEach(function(b) { b.classList.remove('is-active'); });
+        document.querySelectorAll('.settings-section').forEach(function(s) { s.classList.remove('is-active'); });
+        this.classList.add('is-active');
+        var section = document.getElementById(target);
+        if (section) section.classList.add('is-active');
+      });
+    });
+  </script>
+</body>
+
+</html>
