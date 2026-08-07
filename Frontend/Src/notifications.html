@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications - Admin Assist</title>
+  <meta name="description" content="View system notifications, alerts, announcements, and activity logs.">
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="aa-shared.css">
+  <link rel="stylesheet" href="navigation.css">
+  <style>
+    .notif-filter-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid var(--aa-border, #e2e8f0);
+      padding-bottom: 10px;
+    }
+    .notif-tab-btn {
+      padding: 8px 16px;
+      border: none;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--aa-text-muted, #64748b);
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all .15s;
+    }
+    .notif-tab-btn.is-active {
+      background: var(--primary-navy, #06204A);
+      color: #ffffff;
+    }
+    .notif-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .notif-card {
+      background: var(--aa-surface, #ffffff);
+      border: 1px solid var(--aa-border, #e2e8f0);
+      border-radius: 10px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.04);
+      transition: border-color .15s;
+    }
+    .notif-card.unread {
+      border-left: 4px solid var(--royal-blue, #174A8B);
+      background: #f8fafc;
+    }
+    .notif-icon-box {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: var(--light-blue, #EEF4FA);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .notif-content {
+      flex: 1;
+    }
+    .notif-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-navy, #102A56);
+      margin-bottom: 4px;
+    }
+    .notif-desc {
+      font-size: 13px;
+      color: var(--text-gray, #64748B);
+      margin-bottom: 6px;
+    }
+    .notif-meta {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+    .notif-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      color: #475569;
+    }
+  </style>
+</head>
+
+<body data-page="notifications">
+  <header>
+    <div class="logo">Admin Assist</div>
+    <div class="user-profile">
+      <div class="user-avatar" id="headerAvatar">?</div>
+      <span id="headerUserName">…</span>
+      <span id="roleBadge" class="role-badge"></span>
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </header>
+
+  <main class="aa-main">
+    <header class="aa-page-header">
+      <div>
+        <p class="aa-kicker">Communication</p>
+        <h1>Notifications &amp; Announcements</h1>
+        <p class="aa-subtitle">System alerts, academic notices, attendance reminders, and audit activities.</p>
+      </div>
+      <div class="aa-header-actions">
+        <button class="aa-btn aa-btn-secondary" id="markAllReadBtn">Mark All as Read</button>
+      </div>
+    </header>
+
+    <div class="notif-filter-bar">
+      <button class="notif-tab-btn is-active" data-filter="all">All Notifications</button>
+      <button class="notif-tab-btn" data-filter="unread">Unread</button>
+      <button class="notif-tab-btn" data-filter="announcements">Announcements</button>
+      <button class="notif-tab-btn" data-filter="system">System Logs</button>
+    </div>
+
+    <div class="notif-list" id="notificationsContainer">
+      <div class="notif-card unread">
+        <div class="notif-icon-box">📢</div>
+        <div class="notif-content">
+          <div class="notif-title">End of Term Examinations Schedule Published</div>
+          <div class="notif-desc">The official timetable for Grade 9 and Grade 12 exams is now available for download.</div>
+          <div class="notif-meta">1 hour ago &bull; <span class="notif-badge">Announcements</span></div>
+        </div>
+      </div>
+
+      <div class="notif-card unread">
+        <div class="notif-icon-box">📋</div>
+        <div class="notif-content">
+          <div class="notif-title">Daily Attendance Reminder</div>
+          <div class="notif-desc">Class teachers are reminded to record morning attendance registers before 09:00 AM.</div>
+          <div class="notif-meta">2 hours ago &bull; <span class="notif-badge">Attendance</span></div>
+        </div>
+      </div>
+
+      <div class="notif-card">
+        <div class="notif-icon-box">👤</div>
+        <div class="notif-content">
+          <div class="notif-title">New Student Registration</div>
+          <div class="notif-desc">Student Precious Chirwa has been successfully enrolled into Grade 10A.</div>
+          <div class="notif-meta">4 hours ago &bull; <span class="notif-badge">Students</span></div>
+        </div>
+      </div>
+
+      <div class="notif-card">
+        <div class="notif-icon-box">🎓</div>
+        <div class="notif-content">
+          <div class="notif-title">Term 2 Results Pending Approval</div>
+          <div class="notif-desc">Grade 12 Mathematics exam results have been uploaded and require headteacher sign-off.</div>
+          <div class="notif-meta">1 day ago &bull; <span class="notif-badge">Results</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="auth.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="navigation.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const res = await authFetch(`${API_BASE}/notifications`);
+        if (res && res.ok) {
+          const data = await res.json();
+          if (data.notifications && data.notifications.length > 0) {
+            renderNotifications(data.notifications);
+          }
+        }
+      } catch (err) {
+        console.warn("Could not load notifications API:", err.message);
+      }
+
+      document.querySelectorAll('.notif-tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.notif-tab-btn').forEach(b => b.classList.remove('is-active'));
+          this.classList.add('is-active');
+        });
+      });
+
+      const markBtn = document.getElementById('markAllReadBtn');
+      if (markBtn) {
+        markBtn.addEventListener('click', () => {
+          document.querySelectorAll('.notif-card.unread').forEach(c => c.classList.remove('unread'));
+          alert('All notifications marked as read.');
+        });
+      }
+    });
+
+    function renderNotifications(items) {
+      const container = document.getElementById('notificationsContainer');
+      if (!container) return;
+
+      container.innerHTML = items.map(n => `
+        <div class="notif-card ${n.read ? '' : 'unread'}">
+          <div class="notif-icon-box">${_getIcon(n.type)}</div>
+          <div class="notif-content">
+            <div class="notif-title">${_esc(n.title)}</div>
+            <div class="notif-desc">${_esc(n.description)}</div>
+            <div class="notif-meta">${new Date(n.timestamp).toLocaleString()} &bull; <span class="notif-badge">${_esc(n.category || 'General')}</span></div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function _getIcon(type) {
+      switch(type) {
+        case 'announcement': return '📢';
+        case 'attendance': return '📋';
+        case 'enrollment': return '👤';
+        case 'results': return '🎓';
+        default: return '🔔';
+      }
+    }
+    function _esc(str) { return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  </script>
+</body>
+
+</html>

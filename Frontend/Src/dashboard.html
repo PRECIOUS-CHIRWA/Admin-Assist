@@ -38,14 +38,14 @@
       </div>
     </div>
 
-    <!-- ── STAT CARDS ───────────────────────────────────────────────────── -->
+    <!-- ── 4 TOP SUMMARY STAT CARDS ────────────────────────────────────────── -->
     <div class="dash-stats-row">
 
       <div class="dash-stat-card">
-        <div class="dash-stat-icon" style="background:#e3f0fc; color:#1565c0;">👥</div>
+        <div class="dash-stat-icon" style="background:#e3f0fc; color:#174A8B;">👥</div>
         <div class="dash-stat-body">
           <div class="dash-stat-value" id="statStudents">—</div>
-          <div class="dash-stat-label">Students</div>
+          <div class="dash-stat-label">Total Students</div>
         </div>
         <a href="students.html" class="dash-stat-link">View All</a>
       </div>
@@ -54,155 +54,85 @@
         <div class="dash-stat-icon" style="background:#f0fdf4; color:#16a34a;">👨‍🏫</div>
         <div class="dash-stat-body">
           <div class="dash-stat-value" id="statTeachers">—</div>
-          <div class="dash-stat-label">Teachers</div>
+          <div class="dash-stat-label">Total Teachers</div>
         </div>
-        <a href="#" class="dash-stat-link">View All</a>
+        <a href="teachers.html" class="dash-stat-link">View All</a>
       </div>
 
       <div class="dash-stat-card">
-        <div class="dash-stat-icon" style="background:#fffbeb; color:#d97706;">📋</div>
+        <div class="dash-stat-icon" style="background:#fffbeb; color:#d97706;">📝</div>
         <div class="dash-stat-body">
-          <div class="dash-stat-value" id="statAttendance">—</div>
-          <div class="dash-stat-label">Attendance Today</div>
+          <div class="dash-stat-value" id="statEnrolled">—</div>
+          <div class="dash-stat-label">Enrolled Students</div>
         </div>
-        <a href="attendance-management.html" class="dash-stat-link">View Details</a>
+        <a href="students.html" class="dash-stat-link">View Details</a>
       </div>
 
       <div class="dash-stat-card">
-        <div class="dash-stat-icon" style="background:#fef2f2; color:#dc2626;">🏫</div>
+        <div class="dash-stat-icon" style="background:#fef2f2; color:#dc2626;">⏳</div>
         <div class="dash-stat-body">
-          <div class="dash-stat-value" id="statClasses">—</div>
-          <div class="dash-stat-label">Classes</div>
+          <div class="dash-stat-value" id="statPending">—</div>
+          <div class="dash-stat-label">Pending Approvals</div>
         </div>
-        <a href="#" class="dash-stat-link">View All</a>
-      </div>
-
-      <div class="dash-stat-card admin-only">
-        <div class="dash-stat-icon" style="background:#f3e8ff; color:#7c3aed;">📚</div>
-        <div class="dash-stat-body">
-          <div class="dash-stat-value" id="statSubjects">—</div>
-          <div class="dash-stat-label">Subjects</div>
-        </div>
-        <a href="subject-management.html" class="dash-stat-link">View All</a>
+        <a href="settings.html" class="dash-stat-link">Manage</a>
       </div>
 
     </div>
 
-    <!-- ── ACTIVITY + EVENTS PANELS ─────────────────────────────────────── -->
-    <div class="dash-panels-row">
-
-      <!-- Recent Activity -->
-      <div class="dash-panel">
-        <div class="dash-panel-header">
-          <h2 class="dash-panel-title">Recent Activity</h2>
-          <span class="dash-panel-badge" id="activityBadge"></span>
-        </div>
-        <ul class="dash-activity-list" id="recentActivityList">
-          <li class="dash-activity-empty">Loading activity…</li>
-        </ul>
+    <!-- ── DASHBOARD QUICK ACCESS ────────────────────────────────────────── -->
+    <div class="dash-section" style="margin-top:32px;">
+      <div class="dash-section-header">
+        <h2 class="dash-section-title">Quick Access</h2>
       </div>
 
-      <!-- Upcoming Events -->
-      <div class="dash-panel">
-        <div class="dash-panel-header">
-          <h2 class="dash-panel-title">Upcoming Events</h2>
-          <a href="#" class="dash-panel-link">See all</a>
-        </div>
-        <ul class="dash-events-list" id="upcomingEventsList">
-          <li class="dash-event-item">
-            <div class="dash-event-date">
-              <span class="dash-event-day" id="evtDay1">—</span>
-              <span class="dash-event-month" id="evtMon1">—</span>
-            </div>
-            <div class="dash-event-body">
-              <div class="dash-event-name">Staff Meeting</div>
-              <div class="dash-event-meta" id="evtMeta1">Thursday, 10:00 AM</div>
-            </div>
-          </li>
-          <li class="dash-event-item">
-            <div class="dash-event-date">
-              <span class="dash-event-day" id="evtDay2">—</span>
-              <span class="dash-event-month" id="evtMon2">—</span>
-            </div>
-            <div class="dash-event-body">
-              <div class="dash-event-name">End of Term Exams</div>
-              <div class="dash-event-meta" id="evtMeta2">In 3 weeks</div>
-            </div>
-          </li>
-          <li class="dash-event-item">
-            <div class="dash-event-date">
-              <span class="dash-event-day">15</span>
-              <span class="dash-event-month">Aug</span>
-            </div>
-            <div class="dash-event-body">
-              <div class="dash-event-name">Parent-Teacher Meeting</div>
-              <div class="dash-event-meta">Friday, 2:00 PM</div>
-            </div>
-          </li>
-        </ul>
-      </div>
-
-    </div>
-
-    <!-- ── QUICK ACCESS LIST ─────────────────────────────────────────────── -->
-    <div class="dash-quick-section">
-      <h2 class="dash-quick-title">Quick Access</h2>
-      <div class="dash-quick-grid">
-
-        <a href="students.html" class="dash-quick-card">
-          <div class="dash-quick-icon" style="background:#e3f0fc; color:#1565c0;">👥</div>
-          <div class="dash-quick-body">
-            <div class="dash-quick-name">Student Directory</div>
-            <div class="dash-quick-desc">Browse and manage enrolled students</div>
+      <div class="dash-quick-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:16px;">
+        <a href="enroll-student.html" class="dash-quick-card" style="display:flex;align-items:center;gap:14px;padding:18px 20px;background:var(--white,#fff);border:1px solid var(--border-gray,#e2e8f0);border-radius:12px;text-decoration:none;box-shadow:0 2px 6px rgba(0,0,0,0.03);">
+          <div class="dash-quick-icon" style="font-size:24px;width:44px;height:44px;border-radius:10px;background:#EEF4FA;color:#174A8B;display:flex;align-items:center;justify-content:center;flex-shrink:0;">📝</div>
+          <div>
+            <div style="font-size:15px;font-weight:700;color:var(--text-navy,#102A56);">Add Student</div>
+            <div style="font-size:12px;color:var(--text-gray,#64748B);">Enrol a new student into the system</div>
           </div>
-          <span class="dash-quick-chevron">›</span>
         </a>
 
-        <a href="enroll-student.html" class="dash-quick-card">
-          <div class="dash-quick-icon" style="background:#f0fdf4; color:#16a34a;">📝</div>
-          <div class="dash-quick-body">
-            <div class="dash-quick-name">Enroll Student</div>
-            <div class="dash-quick-desc">Add a new student to the system</div>
+        <a href="teachers.html" class="dash-quick-card" style="display:flex;align-items:center;gap:14px;padding:18px 20px;background:var(--white,#fff);border:1px solid var(--border-gray,#e2e8f0);border-radius:12px;text-decoration:none;box-shadow:0 2px 6px rgba(0,0,0,0.03);">
+          <div class="dash-quick-icon" style="font-size:24px;width:44px;height:44px;border-radius:10px;background:#f0fdf4;color:#16a34a;display:flex;align-items:center;justify-content:center;flex-shrink:0;">👨‍🏫</div>
+          <div>
+            <div style="font-size:15px;font-weight:700;color:var(--text-navy,#102A56);">Add Teacher</div>
+            <div style="font-size:12px;color:var(--text-gray,#64748B);">Register or assign new teaching staff</div>
           </div>
-          <span class="dash-quick-chevron">›</span>
         </a>
 
-        <a href="attendance-management.html" class="dash-quick-card">
-          <div class="dash-quick-icon" style="background:#fffbeb; color:#d97706;">📋</div>
-          <div class="dash-quick-body">
-            <div class="dash-quick-name">Take Attendance</div>
-            <div class="dash-quick-desc">Record class attendance for today</div>
+        <a href="attendance-management.html" class="dash-quick-card" style="display:flex;align-items:center;gap:14px;padding:18px 20px;background:var(--white,#fff);border:1px solid var(--border-gray,#e2e8f0);border-radius:12px;text-decoration:none;box-shadow:0 2px 6px rgba(0,0,0,0.03);">
+          <div class="dash-quick-icon" style="font-size:24px;width:44px;height:44px;border-radius:10px;background:#fffbeb;color:#d97706;display:flex;align-items:center;justify-content:center;flex-shrink:0;">📋</div>
+          <div>
+            <div style="font-size:15px;font-weight:700;color:var(--text-navy,#102A56);">Mark Attendance</div>
+            <div style="font-size:12px;color:var(--text-gray,#64748B);">Record daily class attendance register</div>
           </div>
-          <span class="dash-quick-chevron">›</span>
         </a>
 
-        <a href="academic-records.html" class="dash-quick-card">
-          <div class="dash-quick-icon" style="background:#fef2f2; color:#dc2626;">📄</div>
-          <div class="dash-quick-body">
-            <div class="dash-quick-name">Academic Records</div>
-            <div class="dash-quick-desc">View and manage student results</div>
+        <a href="academic-records.html" class="dash-quick-card" style="display:flex;align-items:center;gap:14px;padding:18px 20px;background:var(--white,#fff);border:1px solid var(--border-gray,#e2e8f0);border-radius:12px;text-decoration:none;box-shadow:0 2px 6px rgba(0,0,0,0.03);">
+          <div class="dash-quick-icon" style="font-size:24px;width:44px;height:44px;border-radius:10px;background:#e3f0fc;color:#174A8B;display:flex;align-items:center;justify-content:center;flex-shrink:0;">📄</div>
+          <div>
+            <div style="font-size:15px;font-weight:700;color:var(--text-navy,#102A56);">Enter Results</div>
+            <div style="font-size:12px;color:var(--text-gray,#64748B);">Upload subject grades and exam marks</div>
           </div>
-          <span class="dash-quick-chevron">›</span>
         </a>
 
-        <a href="reports-dashboard.html" class="dash-quick-card admin-only">
-          <div class="dash-quick-icon" style="background:#f3e8ff; color:#7c3aed;">📊</div>
-          <div class="dash-quick-body">
-            <div class="dash-quick-name">Reports</div>
-            <div class="dash-quick-desc">Generate and export school reports</div>
+        <a href="reports-dashboard.html" class="dash-quick-card" style="display:flex;align-items:center;gap:14px;padding:18px 20px;background:var(--white,#fff);border:1px solid var(--border-gray,#e2e8f0);border-radius:12px;text-decoration:none;box-shadow:0 2px 6px rgba(0,0,0,0.03);">
+          <div class="dash-quick-icon" style="font-size:24px;width:44px;height:44px;border-radius:10px;background:#fef2f2;color:#dc2626;display:flex;align-items:center;justify-content:center;flex-shrink:0;">💳</div>
+          <div>
+            <div style="font-size:15px;font-weight:700;color:var(--text-navy,#102A56);">School Fees</div>
+            <div style="font-size:12px;color:var(--text-gray,#64748B);">Track fee payments and balances</div>
           </div>
-          <span class="dash-quick-chevron">›</span>
         </a>
 
-        <a href="student-transcript.html" class="dash-quick-card">
-          <div class="dash-quick-icon" style="background:#e0f2fe; color:#0284c7;">🎓</div>
-          <div class="dash-quick-body">
-            <div class="dash-quick-name">Transcripts</div>
-            <div class="dash-quick-desc">View student academic transcripts</div>
+        <a href="reports-dashboard.html" class="dash-quick-card" style="display:flex;align-items:center;gap:14px;padding:18px 20px;background:var(--white,#fff);border:1px solid var(--border-gray,#e2e8f0);border-radius:12px;text-decoration:none;box-shadow:0 2px 6px rgba(0,0,0,0.03);">
+          <div class="dash-quick-icon" style="font-size:24px;width:44px;height:44px;border-radius:10px;background:#f3e8ff;color:#7c3aed;display:flex;align-items:center;justify-content:center;flex-shrink:0;">📊</div>
+          <div>
+            <div style="font-size:15px;font-weight:700;color:var(--text-navy,#102A56);">School Reports</div>
+            <div style="font-size:12px;color:var(--text-gray,#64748B);">Generate analytics, transcripts & summaries</div>
           </div>
-          <span class="dash-quick-chevron">›</span>
         </a>
-
       </div>
     </div>
 
