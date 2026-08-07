@@ -36,25 +36,12 @@ async function loadDashboardStats() {
         console.warn("loadDashboardStats /reports/summary:", err.message);
     }
 
-    // 3. Fetch subjects count
-    try {
-        const res = await authFetch(`${API_BASE}/subjects`);
-        if (res && res.ok) {
-            const subjects = await res.json();
-            if (Array.isArray(subjects)) {
-                _setText("statSubjects", subjects.length);
-            }
-        }
-    } catch (err) {
-        console.warn("loadDashboardStats /subjects:", err.message);
-    }
-
-    // Set defaults if still placeholder
+    // Keep dashboard metrics focused on operations. Academic performance,
+    // subject totals, and overview analytics belong on Reports.
     _fallbackIfEmpty("statStudents", "1,245");
     _fallbackIfEmpty("statTeachers", "128");
     _fallbackIfEmpty("statAttendance", "96%");
     _fallbackIfEmpty("statClasses", "48");
-    _fallbackIfEmpty("statSubjects", "24");
 }
 
 async function loadRecentActivity() {

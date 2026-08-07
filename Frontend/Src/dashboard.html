@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - Admin Assist</title>
-  <meta name="description" content="Admin Assist school management dashboard overview.">
+  <meta name="description" content="Admin Assist school operations dashboard for students, staff, attendance, and classes.">
   <link rel="stylesheet" href="theme.css">
   <link rel="stylesheet" href="aa-shared.css">
   <link rel="stylesheet" href="dashboard.css">
@@ -34,7 +34,7 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">Dashboard</h1>
-        <p class="page-subtitle" id="welcomeTitle">Welcome back!</p>
+        <p class="page-subtitle" id="welcomeTitle">Monitor school operations at a glance.</p>
       </div>
     </div>
 
@@ -56,7 +56,7 @@
           <div class="dash-stat-value" id="statTeachers">—</div>
           <div class="dash-stat-label">Teachers</div>
         </div>
-        <a href="#" class="dash-stat-link">View All</a>
+        <span class="dash-stat-note">Active staff</span>
       </div>
 
       <div class="dash-stat-card">
@@ -74,16 +74,7 @@
           <div class="dash-stat-value" id="statClasses">—</div>
           <div class="dash-stat-label">Classes</div>
         </div>
-        <a href="#" class="dash-stat-link">View All</a>
-      </div>
-
-      <div class="dash-stat-card admin-only">
-        <div class="dash-stat-icon" style="background:#f3e8ff; color:#7c3aed;">📚</div>
-        <div class="dash-stat-body">
-          <div class="dash-stat-value" id="statSubjects">—</div>
-          <div class="dash-stat-label">Subjects</div>
-        </div>
-        <a href="subject-management.html" class="dash-stat-link">View All</a>
+        <span class="dash-stat-note">Current timetable</span>
       </div>
 
     </div>
@@ -106,7 +97,7 @@
       <div class="dash-panel">
         <div class="dash-panel-header">
           <h2 class="dash-panel-title">Upcoming Events</h2>
-          <a href="#" class="dash-panel-link">See all</a>
+          <a href="reports-dashboard.html" class="dash-panel-link">See all reports</a>
         </div>
         <ul class="dash-events-list" id="upcomingEventsList">
           <li class="dash-event-item">
@@ -176,29 +167,11 @@
           <span class="dash-quick-chevron">›</span>
         </a>
 
-        <a href="academic-records.html" class="dash-quick-card">
-          <div class="dash-quick-icon" style="background:#fef2f2; color:#dc2626;">📄</div>
-          <div class="dash-quick-body">
-            <div class="dash-quick-name">Academic Records</div>
-            <div class="dash-quick-desc">View and manage student results</div>
-          </div>
-          <span class="dash-quick-chevron">›</span>
-        </a>
-
-        <a href="reports-dashboard.html" class="dash-quick-card admin-only">
+        <a href="reports-dashboard.html" class="dash-quick-card">
           <div class="dash-quick-icon" style="background:#f3e8ff; color:#7c3aed;">📊</div>
           <div class="dash-quick-body">
             <div class="dash-quick-name">Reports</div>
             <div class="dash-quick-desc">Generate and export school reports</div>
-          </div>
-          <span class="dash-quick-chevron">›</span>
-        </a>
-
-        <a href="student-transcript.html" class="dash-quick-card">
-          <div class="dash-quick-icon" style="background:#e0f2fe; color:#0284c7;">🎓</div>
-          <div class="dash-quick-body">
-            <div class="dash-quick-name">Transcripts</div>
-            <div class="dash-quick-desc">View student academic transcripts</div>
           </div>
           <span class="dash-quick-chevron">›</span>
         </a>
