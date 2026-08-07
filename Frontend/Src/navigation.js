@@ -39,7 +39,7 @@
         { href: 'attendance-summary.html', label: 'Att. Summary', icon: '📊', roles: [] },
         // ── Academics ────────────────────────────────────────────────────
         { section: 'Academics' },
-        { href: 'academic-records.html', label: 'Academic Records', icon: '📄', roles: [] },
+        { href: 'student-transcript.html', label: 'Results', icon: '📄', roles: [] },
         { href: 'subject-management.html', label: 'Subjects', icon: '📚', roles: ['admin', 'headmaster'] },
         // ── Reports ────────────────────────────────────────────────────────
         { section: 'Reports' },
@@ -366,17 +366,17 @@ header {
 #aa-theme-btn {
     display: flex; align-items: center; justify-content: center;
     width: 36px; height: 36px;
-    background: transparent;
-    border: 1.5px solid rgba(255,255,255,.25);
+    background: var(--aa-surface-2, #f8fafc);
+    border: 1.5px solid var(--aa-border, #e2e8f0);
     border-radius: 50%;
     cursor: pointer; font-size: 16px; line-height: 1;
     flex-shrink: 0;
     transition: background .15s, border-color .15s;
-    color: inherit;
+    color: var(--aa-header-text, #1e293b);
 }
 #aa-theme-btn:hover {
-    background: rgba(255,255,255,.1);
-    border-color: rgba(255,255,255,.5);
+    background: var(--aa-blue-light, #e3f0fc);
+    border-color: var(--aa-blue, #1565c0);
 }
 #aa-theme-btn:focus-visible { outline: 2px solid #D4AF37; outline-offset: 2px; }
 
@@ -410,8 +410,8 @@ header {
     text-align: left !important;
     display: flex !important; flex-direction: column !important; gap: 1px !important;
 }
-.app-header .user-meta strong { font-size: 13.5px !important; font-weight: 600 !important; color: #ffffff !important; }
-.app-header .user-meta span   { font-size: 11px !important;   color: rgba(255,255,255,.55) !important; }
+.app-header .user-meta strong { font-size: 13.5px !important; font-weight: 600 !important; color: var(--aa-header-text, #1e293b) !important; }
+.app-header .user-meta span   { font-size: 11px !important;   color: var(--aa-text-muted, #64748b) !important; }
 
 .app-header .logo-copy .logo,
 .app-header .logo-copy > span { display: none !important; }
@@ -450,10 +450,10 @@ header {
         pointer-events: all !important;
     }
     #sidebar-backdrop { display: none !important; }
-    header,     .main-container, .aa-main, .students-container {
-        margin-left: 0 !important;
+    header, .main-container, .aa-main, .students-container {
+        margin-left: 270px !important;
     }
-    header { width: 100% !important; }
+    header { width: calc(100% - 270px) !important; }
     #hamburger-btn { display: none !important; }
 }
         `;
