@@ -19,19 +19,19 @@
 /* ─── 3. Light-Mode Tokens (default) ───────────────────────── */
 :root {
     /* ── Primary Brand ─────────────────────────────────────── */
-    --aa-blue:          #1565c0;   /* Primary deep blue — buttons, active states */
-    --aa-blue-dark:     #1043a0;   /* Hover / pressed                           */
-    --aa-blue-light:    #e3f0fc;   /* Light blue tint — row hover, pill bg      */
-    --aa-teal:          #29b6d4;   /* Sidebar active indicator, accent           */
-    --aa-teal-light:    rgba(41,182,212,.10); /* Sidebar active background       */
-    --aa-gold:          #D4AF37;   /* Academic gold — logo border                */
-    --aa-gold-light:    #FBF6E3;   /* Gold tint background                       */
+    --aa-blue:          #0b4f9c;   /* Reference primary blue */
+    --aa-blue-dark:     #083d78;   /* Reference hover blue */
+    --aa-blue-light:    #e7f0fb;   /* Light blue surface */
+    --aa-teal:          #1671c9;   /* Active indicator */
+    --aa-teal-light:    rgba(22,113,201,.10);
+    --aa-gold:          #e7a51a;   /* Academic gold */
+    --aa-gold-light:    #fff8e8;   /* Gold tint background */
 
     /* ── Sidebar (always dark regardless of theme) ────────── */
-    --aa-sidebar-bg:        #0f2137;
-    --aa-sidebar-hover:     rgba(255,255,255,.05);
-    --aa-sidebar-active:    rgba(41,182,212,.12);
-    --aa-sidebar-border:    #29b6d4;
+    --aa-sidebar-bg:        #062b55;
+    --aa-sidebar-hover:     rgba(255,255,255,.07);
+    --aa-sidebar-active:    rgba(22,113,201,.24);
+    --aa-sidebar-border:    #e7a51a;
     --aa-sidebar-text:      rgba(255,255,255,.72);
     --aa-sidebar-text-dim:  rgba(255,255,255,.38);
     --aa-sidebar-divider:   rgba(255,255,255,.06);
