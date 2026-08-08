@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Directory - Admin Assist</title>
+  <meta name="description" content="Browse and manage school teaching staff in Admin Assist.">
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="aa-shared.css">
+  <link rel="stylesheet" href="students.css">
+  <link rel="stylesheet" href="navigation.css">
+</head>
+
+<body data-page="teachers">
+  <header>
+    <div class="logo">Admin Assist</div>
+    <div class="user-profile">
+      <div class="user-avatar" id="headerAvatar">?</div>
+      <span id="headerUserName">…</span>
+      <span id="roleBadge" class="role-badge"></span>
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <div class="breadcrumb">
+      <a href="dashboard.html">Dashboard</a> &gt; <span>Teacher Directory</span>
+    </div>
+
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Teachers Directory</h1>
+        <p class="page-subtitle">Manage teaching staff, assigned subjects, and contact information.</p>
+      </div>
+      <button id="addTeacherBtn" class="btn-add" onclick="alert('Add Teacher feature: Enter teacher name and assigned subject.');">+ Add New Teacher</button>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="table-controls">
+      <div class="search-box">
+        <input type="text" id="searchTeachers" placeholder="Search by teacher name, email, or subject...">
+      </div>
+      <div class="filters">
+        <select id="filterTeacherStatus">
+          <option value="">All Statuses</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Teacher</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="teachersTbody">
+          <tr>
+            <td>1</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:32px;height:32px;border-radius:50%;background:#174A8B;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">JM</div>
+                <span style="font-weight:600;color:var(--text-navy);">John Mulenga</span>
+              </div>
+            </td>
+            <td>john.mulenga@school.zm</td>
+            <td>Senior Teacher (Mathematics)</td>
+            <td><span class="badge badge-active">Active</span></td>
+            <td>
+              <div class="actions">
+                <button class="action-btn view" title="View Profile">👁</button>
+                <button class="action-btn edit" title="Edit Teacher">✏️</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:32px;height:32px;border-radius:50%;background:#059669;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">LM</div>
+                <span style="font-weight:600;color:var(--text-navy);">Lucy Mwansa</span>
+              </div>
+            </td>
+            <td>lucy.mwansa@school.zm</td>
+            <td>Teacher (English Language)</td>
+            <td><span class="badge badge-active">Active</span></td>
+            <td>
+              <div class="actions">
+                <button class="action-btn view" title="View Profile">👁</button>
+                <button class="action-btn edit" title="Edit Teacher">✏️</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="auth.js" defer></script>
+  <script src="auth-guard.js" defer></script>
+  <script src="navigation.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const res = await authFetch(`${API_BASE}/users/teachers`);
+        if (res && res.ok) {
+          const teachers = await res.json();
+          if (Array.isArray(teachers) && teachers.length > 0) {
+            renderTeachersTable(teachers);
+          }
+        }
+      } catch (err) {
+        console.warn("Could not load teachers API:", err.message);
+      }
+    });
+
+    function renderTeachersTable(teachers) {
+      const tbody = document.getElementById('teachersTbody');
+      if (!tbody) return;
+
+      tbody.innerHTML = teachers.map((t, idx) => {
+        const initials = String(t.name || 'T').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+        return `
+          <tr>
+            <td>${idx + 1}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:32px;height:32px;border-radius:50%;background:#174A8B;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${initials}</div>
+                <span style="font-weight:600;color:var(--text-navy);">${_esc(t.name)}</span>
+              </div>
+            </td>
+            <td>${_esc(t.email)}</td>
+            <td>${_esc(t.role === 'staff' ? 'Teacher' : t.role)}</td>
+            <td><span class="badge badge-${t.is_active ? 'active' : 'inactive'}">${t.is_active ? 'Active' : 'Inactive'}</span></td>
+            <td>
+              <div class="actions">
+                <button class="action-btn view" title="View Profile">👁</button>
+                <button class="action-btn edit" title="Edit Teacher">✏️</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function _esc(str) { return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  </script>
+</body>
+
+</html>

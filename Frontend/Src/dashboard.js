@@ -1,35 +1,35 @@
 /**
  * dashboard.js
  * Admin Assist Dashboard Logic
- * Loads live stat card counts, recent activity, and attendance summaries.
+ * Fetches live 4-card statistics from GET /api/dashboard/stats and updates UI.
  */
 
 document.addEventListener("DOMContentLoaded", () => {
     loadDashboardStats();
-    loadRecentActivity();
 });
 
 async function loadDashboardStats() {
-    // 1. Fetch main dashboard stats
     try {
         const res = await authFetch(`${API_BASE}/dashboard/stats`);
         if (res && res.ok) {
             const data = await res.json();
             if (data.totalStudents !== undefined) _setText("statStudents", Number(data.totalStudents).toLocaleString());
             if (data.totalTeachers !== undefined) _setText("statTeachers", Number(data.totalTeachers).toLocaleString());
+            if (data.totalStudents !== undefined) _setText("statEnrolled", Number(data.totalStudents).toLocaleString());
+            if (data.pendingApprovals !== undefined) _setText("statPending", Number(data.pendingApprovals).toLocaleString());
         }
     } catch (err) {
         console.warn("loadDashboardStats /stats:", err.message);
     }
 
-    // 2. Fetch report summary stats (total classes, overall attendance)
+    // Secondary query to reports summary for fallback
     try {
         const res = await authFetch(`${API_BASE}/reports/summary`);
         if (res && res.ok) {
             const summary = await res.json();
-            if (summary.total_classes !== undefined) _setText("statClasses", summary.total_classes);
-            if (summary.overall_attendance_rate !== undefined && summary.overall_attendance_rate !== null) {
-                _setText("statAttendance", summary.overall_attendance_rate + "%");
+            if (summary.total_students !== undefined) {
+                _setText("statStudents", Number(summary.total_students).toLocaleString());
+                _setText("statEnrolled", Number(summary.total_students).toLocaleString());
             }
         }
     } catch (err) {

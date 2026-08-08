@@ -28,7 +28,6 @@
        roles: ['admin'] means only admins see this link.
     ───────────────────────────────────────────────────────────────── */
     var NAV_LINKS = [
-        // ── Core ───────────────────────────────────────────────────────────
         { href: 'dashboard.html', label: 'Dashboard', icon: '🏠', roles: [] },
         { href: 'students.html', label: 'Students', icon: '👥', roles: [] },
         { href: 'enroll-student.html', label: 'Enroll Student', icon: '📝', roles: ['admin', 'headmaster', 'staff'] },
@@ -542,8 +541,11 @@ header {
             });
         }
 
-        // 3 — Notification bell button
+        // 3 — Notification bell button & dropdown
         if (!document.getElementById('aa-bell-btn')) {
+            var bellWrap = document.createElement('div');
+            bellWrap.style.cssText = 'position:relative;display:inline-block;';
+
             var bellBtn = document.createElement('button');
             bellBtn.id = 'aa-bell-btn';
             bellBtn.className = 'header-icon-btn';
@@ -551,7 +553,44 @@ header {
             bellBtn.setAttribute('aria-label', 'Notifications');
             bellBtn.title = 'Notifications';
             bellBtn.textContent = '🔔';
-            header.appendChild(bellBtn);
+
+            var notifBadge = document.createElement('span');
+            notifBadge.style.cssText = 'position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:#ef4444;border-radius:50%;';
+            bellWrap.appendChild(bellBtn);
+            bellWrap.appendChild(notifBadge);
+
+            var dropdown = document.createElement('div');
+            dropdown.id = 'aa-notif-dropdown';
+            dropdown.style.cssText = 'display:none;position:absolute;right:0;top:40px;width:300px;background:var(--white,#fff);border:1px solid var(--border-gray,#e2e8f0);border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,0.15);z-index:99999;padding:12px;color:var(--text-navy,#102A56);';
+            dropdown.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e2e8f0;">
+                    <strong style="font-size:13px;">Notifications</strong>
+                    <span style="font-size:10px;color:#174A8B;font-weight:700;">2 Unread</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;margin-bottom:10px;">
+                    <div style="padding:6px;border-radius:6px;background:#f8fafc;">
+                        <strong>Exam Schedule Published</strong>
+                        <div style="font-size:11px;color:#64748b;">Grade 9 & 12 exam timetable is out.</div>
+                    </div>
+                    <div style="padding:6px;border-radius:6px;background:#f8fafc;">
+                        <strong>Attendance Alert</strong>
+                        <div style="font-size:11px;color:#64748b;">Morning register pending for 10B.</div>
+                    </div>
+                </div>
+                <a href="notifications.html" style="display:block;text-align:center;font-size:12px;font-weight:700;color:#174A8B;text-decoration:none;padding-top:6px;border-top:1px solid #e2e8f0;">View all notifications →</a>
+            `;
+
+            bellWrap.appendChild(dropdown);
+            header.appendChild(bellWrap);
+
+            bellBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+            });
+
+            document.addEventListener('click', function() {
+                dropdown.style.display = 'none';
+            });
         }
 
         // 4 — Theme toggle button
