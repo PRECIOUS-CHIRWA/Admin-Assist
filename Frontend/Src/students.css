@@ -679,6 +679,25 @@ header button#logoutBtn:hover {
     flex-wrap: wrap;
 }
 
+/* Teachers reference: compact data table with blue controls and subtle rows. */
+.main-container { max-width: 1180px; padding: 20px 28px 36px; }
+.page-header { margin-bottom: 16px; }
+.page-title { color: #102a4c; font-size: 20px; }
+.page-subtitle { font-size: 11px; color: #61718a; }
+.table-controls { gap: 8px; margin-bottom: 10px; }
+.search-box input, .table-controls select, .filters select {
+    min-height: 34px; border: 1px solid #dfe7f1; border-radius: 4px; background: #fff; color: #102a4c; font-size: 11px;
+}
+.btn-add { min-height: 34px; border-radius: 4px; background: #0b4f9c; border-color: #0b4f9c; font-size: 11px; box-shadow: none; }
+.table-wrapper { overflow: hidden; border: 1px solid #dfe7f1; border-radius: 5px; background: #fff; box-shadow: 0 2px 8px rgba(16,42,76,.05); }
+table { width: 100%; border-collapse: collapse; }
+thead th { background: #f7f9fc; color: #61718a; font-size: 10px; font-weight: 700; padding: 10px 12px; border-bottom: 1px solid #dfe7f1; }
+tbody td { color: #294463; font-size: 10px; padding: 10px 12px; border-bottom: 1px solid #edf1f6; }
+tbody tr:hover { background: #f7fbff; }
+.badge-active { background: #e3f6ed; color: #198754; border: 1px solid #b9e7cf; font-size: 9px; padding: 3px 7px; border-radius: 4px; }
+.action-btn { width: 28px; height: 26px; border: 1px solid #dfe7f1; border-radius: 4px; background: #fff; color: #0b4f9c; font-size: 12px; }
+.action-btn:hover { background: #e7f0fb; border-color: #9dbfe5; }
+
 /* ─── Form Fields ────────────────────────────────────────────── */
 .form-group { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 1rem; }
 

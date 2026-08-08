@@ -473,3 +473,21 @@ header {
     font-weight: 300;
     line-height: 1;
 }
+
+/* Reference proportions: compact white cards and dense operational overview. */
+.dashboard-page { background: #f7f9fc; }
+.dash-stats-row { gap: 10px; }
+.dash-stat-card { min-height: 76px; padding: 12px 14px; border-radius: 5px; box-shadow: 0 2px 8px rgba(16,42,76,.05); }
+.dash-stat-icon { width: 32px; height: 32px; border-radius: 5px; font-size: 15px; }
+.dash-stat-value { font-size: 21px; line-height: 1.1; color: #102a4c; }
+.dash-stat-label { font-size: 10px; color: #61718a; }
+.dash-stat-link, .dash-stat-note { font-size: 9px; color: #0b4f9c; }
+.dash-panels-row { gap: 10px; }
+.dash-panel { border-radius: 5px; box-shadow: 0 2px 8px rgba(16,42,76,.05); }
+.dash-panel-header { padding: 11px 13px; }
+.dash-panel-title, .dash-quick-title { font-size: 12px; color: #102a4c; }
+.dash-quick-grid { gap: 8px; }
+.dash-quick-card { min-height: 54px; padding: 9px 10px; border-radius: 5px; border-color: #dfe7f1; }
+.dash-quick-icon { width: 27px; height: 27px; font-size: 13px; }
+.dash-quick-name { font-size: 10px; color: #102a4c; }
+.dash-quick-desc { font-size: 9px; color: #61718a; }
