@@ -9,6 +9,7 @@
 /* ─── HEADER ────────────────────────────────────────────────── */
 header {
     display: flex;
+    border-top: 3px solid var(--aa-gold, #e7a51a);
     align-items: center;
     gap: 12px;
     padding: 0 20px;
