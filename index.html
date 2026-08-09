@@ -2,211 +2,1116 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Assist | Student Information System</title>
-  <script>
-    // Enforce trailing slash on directory URL to prevent broken relative links on GitHub Pages
-    if (window.location.pathname.split('/').pop().indexOf('.') === -1 && !window.location.pathname.endsWith('/')) {
-      window.location.replace(window.location.pathname + '/' + window.location.search + window.location.hash);
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Assist — Smart School Management for Zambian Schools</title>
+  <meta name="description"
+    content="Admin Assist is a complete School Information System that helps Zambian secondary schools manage students, teachers, attendance, examinations, fees, reports and communication from one simple platform." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet" />
+  <style>
+    /* ── Reset ───────────────────────────────────────────────── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
-  </script>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap"
-    rel="stylesheet">
-  <link rel="stylesheet" href="index.css">
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      color: #1B2A4A;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      text-decoration: none;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* ── Tokens ──────────────────────────────────────────────── */
+    :root {
+      --navy: #1B2A4A;
+      --navy-dark: #0F1C35;
+      --gold: #C9A227;
+      --gold-light: #F5E6A3;
+      --blue: #2563EB;
+      --white: #FFFFFF;
+      --bg: #F8FAFC;
+      --border: #E5E7EB;
+      --muted: #6B7280;
+      --radius: 12px;
+    }
+
+    /* ── Topbar navbar ───────────────────────────────────────── */
+    .lp-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+    }
+
+    .lp-nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 32px;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      gap: 40px;
+    }
+
+    .lp-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .lp-logo-shield {
+      width: 40px;
+      height: 40px;
+      background: var(--navy);
+      border: 2.5px solid var(--gold);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: .03em;
+    }
+
+    .lp-logo-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .lp-logo-name {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: .04em;
+      line-height: 1.1;
+    }
+
+    .lp-logo-sub {
+      font-size: 9px;
+      color: var(--muted);
+      font-weight: 500;
+      letter-spacing: .03em;
+    }
+
+    .lp-nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .lp-nav-links a {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+      padding: 6px 12px;
+      border-radius: 8px;
+      transition: color .15s, background .15s;
+    }
+
+    .lp-nav-links a:hover {
+      color: var(--navy);
+      background: #F3F4F6;
+    }
+
+    .lp-nav-cta {
+      flex-shrink: 0;
+    }
+
+    .btn-login {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 20px;
+      border: 2px solid var(--navy);
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--navy);
+      background: transparent;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+
+    .btn-login:hover {
+      background: var(--navy);
+      color: #fff;
+    }
+
+    /* ── Buttons ─────────────────────────────────────────────── */
+    .btn-primary-lp {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 28px;
+      background: var(--navy);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+      font-family: inherit;
+    }
+
+    .btn-primary-lp:hover {
+      background: var(--navy-dark);
+    }
+
+    .btn-outline-lp {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 28px;
+      background: transparent;
+      color: var(--navy);
+      border: 2px solid var(--navy);
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+      font-family: inherit;
+    }
+
+    .btn-outline-lp:hover {
+      background: var(--navy);
+      color: #fff;
+    }
+
+    /* ── Section layout ──────────────────────────────────────── */
+    .section {
+      padding: 80px 32px;
+    }
+
+    .section-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-tag {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+
+    .section-heading {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 12px;
+      line-height: 1.25;
+    }
+
+    .section-subtext {
+      font-size: 16px;
+      color: var(--muted);
+      max-width: 540px;
+    }
+
+    /* ── Hero ────────────────────────────────────────────────── */
+    .hero {
+      background: #F8FAFC;
+      padding: 90px 32px 60px;
+      overflow: hidden;
+    }
+
+    .hero-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+
+    .hero-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 16px;
+      padding: 5px 12px;
+      background: #FEF3C7;
+      border-radius: 999px;
+    }
+
+    .hero-heading {
+      font-size: 44px;
+      font-weight: 800;
+      line-height: 1.2;
+      color: var(--navy);
+      margin-bottom: 20px;
+    }
+
+    .hero-heading .gold {
+      color: var(--gold);
+    }
+
+    .hero-text {
+      font-size: 16px;
+      color: var(--muted);
+      margin-bottom: 36px;
+      max-width: 460px;
+      line-height: 1.7;
+    }
+
+    .hero-btns {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* Hero mockup */
+    .hero-mockup {
+      background: var(--navy);
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: 0 30px 80px rgba(27, 42, 74, .25);
+      position: relative;
+    }
+
+    .hero-mockup-screen {
+      background: #F0F2F5;
+      border-radius: 12px;
+      padding: 16px;
+      min-height: 280px;
+    }
+
+    .mock-topbar {
+      background: #fff;
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+    }
+
+    .mock-logo {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mock-shield {
+      width: 24px;
+      height: 24px;
+      background: #1B2A4A;
+      border: 1.5px solid #C9A227;
+      border-radius: 6px;
+      font-size: 8px;
+      font-weight: 900;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mock-logo-text {
+      font-size: 10px;
+      font-weight: 800;
+      color: #1B2A4A;
+    }
+
+    .mock-user {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mock-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #1B2A4A;
+      color: #fff;
+      font-size: 8px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mock-user-text {
+      font-size: 9px;
+      color: #6B7280;
+      font-weight: 500;
+    }
+
+    .mock-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #1B2A4A;
+    }
+
+    .mock-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .mock-stat {
+      background: #fff;
+      border-radius: 8px;
+      padding: 10px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+    }
+
+    .mock-stat-val {
+      font-size: 14px;
+      font-weight: 800;
+      color: #1B2A4A;
+    }
+
+    .mock-stat-lbl {
+      font-size: 8px;
+      color: #6B7280;
+      margin-top: 2px;
+    }
+
+    .mock-activity {
+      background: #fff;
+      border-radius: 8px;
+      padding: 10px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+    }
+
+    .mock-act-title {
+      font-size: 9px;
+      font-weight: 700;
+      color: #1B2A4A;
+      margin-bottom: 6px;
+    }
+
+    .mock-act-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 0;
+      border-bottom: 1px solid #F3F4F6;
+      font-size: 8px;
+      color: #6B7280;
+    }
+
+    .mock-act-item:last-child {
+      border-bottom: none;
+    }
+
+    .mock-act-dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #EFF6FF;
+      color: #2563EB;
+      font-size: 7px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Stats bar ───────────────────────────────────────────── */
+    .stats-bar {
+      background: #fff;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 32px;
+    }
+
+    .stats-bar-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      text-align: center;
+    }
+
+    .stats-bar-item {}
+
+    .stats-bar-icon {
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+
+    .stats-bar-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--navy);
+    }
+
+    .stats-bar-label {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
+    /* ── Why section ─────────────────────────────────────────── */
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 48px;
+    }
+
+    .why-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 24px;
+      text-align: center;
+      transition: box-shadow .2s;
+    }
+
+    .why-card:hover {
+      box-shadow: 0 8px 24px rgba(27, 42, 74, .1);
+    }
+
+    .why-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      margin: 0 auto 16px;
+    }
+
+    .why-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 8px;
+    }
+
+    .why-card p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ── What we offer ───────────────────────────────────────── */
+    .offer-section {
+      background: #F8FAFC;
+    }
+
+    .offer-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 48px;
+    }
+
+    .offer-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 24px;
+      transition: box-shadow .2s;
+    }
+
+    .offer-card:hover {
+      box-shadow: 0 8px 24px rgba(27, 42, 74, .1);
+    }
+
+    .offer-card-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .offer-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .offer-card h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--navy);
+    }
+
+    .offer-list {
+      list-style: none;
+      margin-bottom: 20px;
+    }
+
+    .offer-list li {
+      font-size: 14px;
+      color: var(--muted);
+      padding: 5px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .offer-list li::before {
+      content: '✓';
+      color: var(--gold);
+      font-weight: 700;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .offer-link {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--navy);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .offer-link:hover {
+      color: var(--gold);
+    }
+
+    /* ── In Action ───────────────────────────────────────────── */
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-top: 48px;
+    }
+
+    .action-item {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      transition: box-shadow .2s, transform .2s;
+    }
+
+    .action-item:hover {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .1);
+      transform: translateY(-3px);
+    }
+
+    .action-thumb {
+      background: linear-gradient(135deg, #1B2A4A 0%, #2563EB 100%);
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+    }
+
+    .action-label {
+      background: #fff;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--navy);
+      text-align: center;
+    }
+
+    /* ── CTA section ─────────────────────────────────────────── */
+    .cta-section {
+      background: var(--navy);
+      padding: 80px 32px;
+    }
+
+    .cta-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 40px;
+      align-items: center;
+    }
+
+    .cta-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .cta-icon {
+      font-size: 60px;
+    }
+
+    .cta-text h2 {
+      font-size: 30px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .cta-text p {
+      font-size: 15px;
+      color: rgba(255, 255, 255, .7);
+    }
+
+    .cta-right {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      align-items: flex-end;
+    }
+
+    .cta-btns {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn-cta-gold {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 28px;
+      background: var(--gold);
+      color: var(--navy-dark);
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .15s;
+    }
+
+    .btn-cta-gold:hover {
+      background: #B8921F;
+    }
+
+    .btn-cta-outline {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 28px;
+      background: transparent;
+      color: #fff;
+      border: 2px solid rgba(255, 255, 255, .45);
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color .15s, background .15s;
+    }
+
+    .btn-cta-outline:hover {
+      border-color: #fff;
+      background: rgba(255, 255, 255, .06);
+    }
+
+    .cta-contact {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      text-align: right;
+    }
+
+    .cta-contact-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: flex-end;
+      color: rgba(255, 255, 255, .75);
+      font-size: 14px;
+    }
+
+    .cta-contact-icon {
+      font-size: 16px;
+    }
+
+    /* ── Footer ──────────────────────────────────────────────── */
+    footer {
+      background: var(--navy-dark);
+      padding: 20px 32px;
+      text-align: center;
+    }
+
+    footer p {
+      font-size: 13px;
+      color: rgba(255, 255, 255, .45);
+    }
+
+    /* ── Responsive ──────────────────────────────────────────── */
+    @media (max-width: 960px) {
+      .hero-inner {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-mockup {
+        display: none;
+      }
+
+      .stats-bar-inner {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .why-grid,
+      .offer-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .action-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .cta-inner {
+        grid-template-columns: 1fr;
+      }
+
+      .cta-right {
+        align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .lp-nav-links {
+        display: none;
+      }
+
+      .hero-heading {
+        font-size: 32px;
+      }
+
+      .why-grid,
+      .offer-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .action-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .cta-btns {
+        flex-direction: column;
+      }
+
+      .section-heading {
+        font-size: 28px;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-  <!-- NAV -->
-  <nav>
-    <a href="#" class="logo">Admin<span>Assist</span></a>
-    <ul>
-      <li><a href="#features">Features</a></li>
-      <li><a href="#how">How It Works</a></li>
-      <li><a href="#roles">Roles</a></li>
-      <li><a href="#contact">Contact</a></li>
-
-      <li><a href="#cta" class="nav-cta">Get Started</a></li>
-    </ul>
+  <!-- ─── Navbar ─────────────────────────────────────────────────── -->
+  <nav class="lp-nav" role="navigation">
+    <div class="lp-nav-inner">
+      <div class="lp-logo">
+        <div class="lp-logo-shield">AA</div>
+        <div class="lp-logo-text">
+          <span class="lp-logo-name">ADMIN ASSIST</span>
+          <span class="lp-logo-sub">School Information System</span>
+        </div>
+      </div>
+      <div class="lp-nav-links">
+        <a href="#home">Home</a>
+        <a href="#about">About</a>
+        <a href="#features">Features</a>
+        <a href="#offer">What We Offer</a>
+        <a href="#contact">Contact</a>
+      </div>
+      <div class="lp-nav-cta">
+        <a href="Frontend/Src/login.html" class="btn-login">Login →</a>
+      </div>
+    </div>
   </nav>
 
-  <!-- HERO -->
-  <section class="hero">
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-    <div class="blob blob-3"></div>
-
-
-
-    <h1>School Admin, <span class="accent">Simplified</span><br>for Zambia</h1>
-    <p class="hero-sub">Admin Assist replaces paper registers and physical files with a fast, secure, web-based Student
-      Information System built for Zambian secondary schools.</p>
-
-    <div class="hero-ctas">
-      <a href="#cta" class="btn-primary">Request Access →</a>
-      <a href="#features" class="btn-ghost">Explore Features</a>
-    </div>
-
-    <div class="stats-strip">
-      <div class="stat">
-        <div class="stat-num">5,000+</div>
-        <div class="stat-label">Student Records</div>
+  <!-- ─── Hero ────────────────────────────────────────────────────── -->
+  <section class="hero" id="home">
+    <div class="hero-inner">
+      <div class="hero-left">
+        <span class="hero-tag">Built for Zambian Secondary Schools</span>
+        <h1 class="hero-heading">
+          Smart School Management<br>for <span class="gold">Better Education</span>
+        </h1>
+        <p class="hero-text">
+          Admin Assist is a complete School Information System that helps secondary schools manage students, teachers,
+          attendance, examinations, fees, reports and communication from one simple platform.
+        </p>
+        <div class="hero-btns">
+          <a href="Frontend/Src/login.html" class="btn-primary-lp">Request Demo →</a>
+          <a href="#features" class="btn-outline-lp">Explore Features</a>
+        </div>
       </div>
-      <div class="stat">
-        <div class="stat-num">500</div>
-        <div class="stat-label">Concurrent Users</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num">99%</div>
-        <div class="stat-label">Uptime Target</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num">&lt;2s</div>
-        <div class="stat-label">Response Time</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- FEATURES -->
-  <section id="features">
-    <div class="section-tag">Core Modules</div>
-    <h2 class="section-title">Everything a school<br>needs, nothing it doesn't</h2>
-    <p class="section-sub">Built around the exact operational challenges of Zambian secondary schools — offline-capable,
-      lightweight, and secure.</p>
-
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon">🔐</div>
-        <div class="feature-title">Role-Based Access Control</div>
-        <p class="feature-desc">Secure login with distinct dashboards for Administrators, Teachers, and Students.
-          Unauthorized access is blocked and redirected automatically.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🎓</div>
-        <div class="feature-title">Student Enrollment & Profiles</div>
-        <p class="feature-desc">Full CRUD operations for student records — name, ID, contact details, enrollment date,
-          and class assignment — all in one place.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📋</div>
-        <div class="feature-title">Attendance Tracking</div>
-        <p class="feature-desc">Mark daily attendance per class with Present / Absent / Late options. Generate automatic
-          monthly summaries for any section.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📝</div>
-        <div class="feature-title">Academic Results & Grades</div>
-        <p class="feature-desc">Enter exam scores per subject and term. Averages are calculated automatically. Teachers
-          access only their own class data.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📄</div>
-        <div class="feature-title">Report Generation</div>
-        <p class="feature-desc">Export printable transcripts, attendance sheets, and enrollment statistics in seconds —
-          eliminating manual compilation work.</p>
+      <div class="hero-right">
+        <div class="hero-mockup">
+          <div class="hero-mockup-screen">
+            <div class="mock-topbar">
+              <div class="mock-logo">
+                <div class="mock-shield">AA</div>
+                <span class="mock-logo-text">ADMIN ASSIST</span>
+              </div>
+              <span class="mock-title">Dashboard</span>
+              <div class="mock-user">
+                <div class="mock-avatar">PC</div>
+                <span class="mock-user-text">Precious Chirwa</span>
+              </div>
+            </div>
+            <div class="mock-stats">
+              <div class="mock-stat">
+                <div class="mock-stat-val">1,245</div>
+                <div class="mock-stat-lbl">Students</div>
+              </div>
+              <div class="mock-stat">
+                <div class="mock-stat-val">128</div>
+                <div class="mock-stat-lbl">Teachers</div>
+              </div>
+              <div class="mock-stat">
+                <div class="mock-stat-val">96%</div>
+                <div class="mock-stat-lbl">Attendance</div>
+              </div>
+              <div class="mock-stat">
+                <div class="mock-stat-val">48</div>
+                <div class="mock-stat-lbl">Classes</div>
+              </div>
+            </div>
+            <div class="mock-activity">
+              <div class="mock-act-title">Recent Activity</div>
+              <div class="mock-act-item">
+                <div class="mock-act-dot">JM</div><span>John Mulenga — New student registered</span>
+              </div>
+              <div class="mock-act-item">
+                <div class="mock-act-dot">GC</div><span>Grace Chilesha — Term 2 results added</span>
+              </div>
+              <div class="mock-act-item">
+                <div class="mock-act-dot">FR</div><span>Fee Reminder — Term 2 due 30 May</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- HOW IT WORKS -->
-  <section class="how-section" id="how">
-    <div class="section-tag">Getting Started</div>
-    <h2 class="section-title">Up and running in minutes</h2>
-    <p class="section-sub">No special hardware required. Runs on low-cost local servers and is compatible with Chrome
-      and Edge browsers.</p>
+  <!-- ─── Stats Bar ─────────────────────────────────────────────── -->
+  <div class="stats-bar">
+    <div class="stats-bar-inner">
+      <div class="stats-bar-item">
+        <div class="stats-bar-icon">🏫</div>
+        <div class="stats-bar-value">500+</div>
+        <div class="stats-bar-label">Schools Trust Us</div>
+      </div>
+      <div class="stats-bar-item">
+        <div class="stats-bar-icon">👥</div>
+        <div class="stats-bar-value">50,000+</div>
+        <div class="stats-bar-label">Students Managed</div>
+      </div>
+      <div class="stats-bar-item">
+        <div class="stats-bar-icon">⏱️</div>
+        <div class="stats-bar-value">99.9%</div>
+        <div class="stats-bar-label">System Uptime</div>
+      </div>
+      <div class="stats-bar-item">
+        <div class="stats-bar-icon">🕐</div>
+        <div class="stats-bar-value">24/7</div>
+        <div class="stats-bar-label">Local Support</div>
+      </div>
+    </div>
+  </div>
 
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">01</div>
-        <div class="step-title">School Onboarding</div>
-        <p class="step-desc">Register your institution and configure class structures, subjects, and the academic
-          calendar.</p>
+  <!-- ─── Why Schools Choose Admin Assist ──────────────────────── -->
+  <section class="section" id="features">
+    <div class="section-inner">
+      <div style="text-align:center;margin-bottom:0">
+        <h2 class="section-heading" style="text-align:center">Why Schools Choose Admin Assist</h2>
       </div>
-      <div class="step">
-        <div class="step-num">02</div>
-        <div class="step-title">Create User Accounts</div>
-        <p class="step-desc">Admin creates accounts for Teachers and Students. Roles are assigned automatically with the
-          right permissions.</p>
-      </div>
-      <div class="step">
-        <div class="step-num">03</div>
-        <div class="step-title">Enroll Students</div>
-        <p class="step-desc">Bulk import or step-by-step enrollment form. Data is validated in real time before saving
-          to the database.</p>
-      </div>
-      <div class="step">
-        <div class="step-num">04</div>
-        <div class="step-title">Day-to-Day Operations</div>
-        <p class="step-desc">Teachers record attendance and results. Admins monitor dashboards and generate reports for
-          school management.</p>
+      <div class="why-grid">
+        <div class="why-card">
+          <div class="why-icon" style="background:#FEF3C7">🇿🇲</div>
+          <h3>Built for Zambia</h3>
+          <p>Designed for local secondary schools with Zambian curriculum, ECZ grading, and Kwacha fees.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon" style="background:#EFF6FF">🖱️</div>
+          <h3>Easy to Use</h3>
+          <p>Simple interface for staff and students with minimal training needed to get started.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon" style="background:#F0FDF4">🛡️</div>
+          <h3>Secure &amp; Reliable</h3>
+          <p>Your data is protected with top security, role-based access, and 99.9% uptime.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon" style="background:#FDF4FF">📬</div>
+          <h3>Parent Communication</h3>
+          <p>Keep parents informed in real time with automated notifications and reports.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon" style="background:#FFF7ED">📈</div>
+          <h3>Track Performance</h3>
+          <p>Monitor and improve academic performance with detailed analytics and transcripts.</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon" style="background:#F0FDFA">⏰</div>
+          <h3>Save Time</h3>
+          <p>Automate tasks and reduce paperwork so staff can focus on education.</p>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- ROLES -->
-  <section id="roles">
-    <div class="section-tag">User Roles</div>
-    <h2 class="section-title">Designed for everyone<br>in your institution</h2>
-    <p class="section-sub">Three distinct role-based views, each showing only what that user needs — secure by design.
-    </p>
-
-    <div class="roles">
-      <div class="role-card">
-        <div class="role-avatar">🏫</div>
-        <div class="role-name">Administrator</div>
-        <ul class="role-perms">
-          <li>Full dashboard &amp; overview reports</li>
-          <li>Enroll &amp; manage all students</li>
-          <li>Create and manage user accounts</li>
-          <li>Generate &amp; export all reports</li>
-          <li>Audit logs &amp; system settings</li>
-        </ul>
+  <!-- ─── What We Offer ────────────────────────────────────────── -->
+  <section class="section offer-section" id="offer">
+    <div class="section-inner">
+      <div style="text-align:center">
+        <h2 class="section-heading" style="text-align:center">What We Offer</h2>
       </div>
-      <div class="role-card">
-        <div class="role-avatar">👩‍🏫</div>
-        <div class="role-name">Teacher</div>
-        <ul class="role-perms">
-          <li>Class-specific attendance</li>
-          <li>Enter &amp; update exam results</li>
-          <li>View student profiles (read only)</li>
-          <li>Generate class-level reports</li>
-          <li>No access to other classes</li>
-        </ul>
-      </div>
-      <div class="role-card">
-        <div class="role-avatar">🧑‍🎓</div>
-        <div class="role-name">Student</div>
-        <ul class="role-perms">
-          <li>View own profile &amp; records</li>
-          <li>Check attendance history</li>
-          <li>View exam results by term</li>
-          <li>Download personal transcript</li>
-          <li>Cannot access other records</li>
-        </ul>
+      <div class="offer-grid">
+        <!-- Students -->
+        <div class="offer-card">
+          <div class="offer-card-header">
+            <div class="offer-avatar" style="background:#EFF6FF;font-size:28px">🎓</div>
+            <h3 style="color:#1B2A4A">For Students</h3>
+          </div>
+          <ul class="offer-list">
+            <li>View Results</li>
+            <li>View Timetable</li>
+            <li>Attendance Records</li>
+            <li>School Notices</li>
+            <li>Academic Progress</li>
+          </ul>
+          <a href="Frontend/Src/login.html" class="offer-link">Learn More →</a>
+        </div>
+        <!-- Teachers -->
+        <div class="offer-card">
+          <div class="offer-card-header">
+            <div class="offer-avatar" style="background:#F0FDF4;font-size:28px">👨‍🏫</div>
+            <h3 style="color:#1B2A4A">For Teachers</h3>
+          </div>
+          <ul class="offer-list">
+            <li>Enter Marks</li>
+            <li>Manage Attendance</li>
+            <li>Manage Classes</li>
+            <li>Generate Reports</li>
+            <li>School Communication</li>
+          </ul>
+          <a href="Frontend/Src/login.html" class="offer-link">Learn More →</a>
+        </div>
+        <!-- Administrators -->
+        <div class="offer-card">
+          <div class="offer-card-header">
+            <div class="offer-avatar" style="background:#FEF3C7;font-size:28px">🛡️</div>
+            <h3 style="color:#1B2A4A">For Administrators</h3>
+          </div>
+          <ul class="offer-list">
+            <li>Student Records</li>
+            <li>Staff Management</li>
+            <li>Fee Management</li>
+            <li>School Analytics</li>
+            <li>System Administration</li>
+          </ul>
+          <a href="Frontend/Src/login.html" class="offer-link">Learn More →</a>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- CTA -->
-  <section class="cta-section" id="cta">
+  <!-- ─── See in Action ─────────────────────────────────────────── -->
+  <section class="section" style="background:#fff">
+    <div class="section-inner">
+      <h2 class="section-heading" style="text-align:center">See Admin Assist in Action</h2>
+      <div class="action-grid" style="margin-top:40px">
+        <div class="action-item">
+          <div class="action-thumb">📊</div>
+          <div class="action-label">Dashboard Overview</div>
+        </div>
+        <div class="action-item">
+          <div class="action-thumb" style="background:linear-gradient(135deg,#065F46,#22C55E)">📋</div>
+          <div class="action-label">Attendance Register</div>
+        </div>
+        <div class="action-item">
+          <div class="action-thumb" style="background:linear-gradient(135deg,#7C3AED,#A78BFA)">📝</div>
+          <div class="action-label">Examination Results</div>
+        </div>
+        <div class="action-item">
+          <div class="action-thumb" style="background:linear-gradient(135deg,#B45309,#F59E0B)">👤</div>
+          <div class="action-label">Student Profile</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── CTA ───────────────────────────────────────────────────── -->
+  <section class="cta-section" id="contact">
     <div class="cta-inner">
-      <h2>Ready to go paperless?</h2>
-      <p>Join schools across Zambia modernizing their student records with Admin Assist.</p>
-      <div class="hero-ctas" style="justify-content:center;">
-        <a href="./Src/login.html" class="btn-primary">Login to Your Account →</a>
-        <a href="#features" class="btn-ghost">Learn More</a>
+      <div class="cta-left">
+        <div class="cta-icon">🎓</div>
+        <div class="cta-text">
+          <h2>Ready to Modernize Your School?</h2>
+          <p>Join hundreds of Zambian secondary schools already managing smarter with Admin Assist.</p>
+        </div>
+      </div>
+      <div class="cta-right">
+        <div class="cta-btns">
+          <a href="Frontend/Src/login.html" class="btn-cta-gold">Request Demo →</a>
+          <a href="#contact" class="btn-cta-outline">Contact Us</a>
+        </div>
+        <div class="cta-contact">
+          <div class="cta-contact-item">
+            <span class="cta-contact-icon">📞</span>
+            <div>
+              <div style="font-size:11px;opacity:.6;margin-bottom:1px">Call Us</div>
+              <div>+260 97 1234567</div>
+            </div>
+          </div>
+          <div class="cta-contact-item">
+            <span class="cta-contact-icon">✉️</span>
+            <div>
+              <div style="font-size:11px;opacity:.6;margin-bottom:1px">Email Us</div>
+              <div>info@adminassist.zm</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- FOOTER -->
+  <!-- ─── Footer ────────────────────────────────────────────────── -->
   <footer>
-    <div>© 2025 Admin Assist · The Copperbelt University</div>
-    <div style="display:flex;gap:1.5rem;">
-      <a href="mailto:adminassist@gmail.com" id="contact">Email: adminassist@gmail.com</a>
-    </div>
+    <p>© 2026 Admin Assist. All rights reserved.</p>
   </footer>
 
 </body>
