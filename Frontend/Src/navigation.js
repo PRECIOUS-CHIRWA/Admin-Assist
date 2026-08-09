@@ -1,933 +1,459 @@
+/**
+ * navigation.js — Admin Assist Navigation Shell v4
+ * Matches the Image 2 design precisely:
+ *   - Navy sidebar (220px) with AA shield logo + 7 nav items w/ SVG icons
+ *   - White sticky topbar: hamburger | page title | settings+bell+user
+ *   - Active page detection, mobile overlay, RBAC filtering
+ */
+
 (function () {
     'use strict';
 
-    /* ─────────────────────────────────────────────────────────────────
-       STEP 0 — APPLY THEME FROM LOCALSTORAGE (must happen before paint)
-    ───────────────────────────────────────────────────────────────── */
-    (function () {
-        var saved = localStorage.getItem('aa-theme');
-        if (saved === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        } else if (!saved) {
-            // Admin Assist defaults to the light reference theme. Users can
-            // still opt into dark mode with the explicit theme control.
-            document.documentElement.removeAttribute('data-theme');
-        }
-    })();
+    /* ── SVG Icon library ─────────────────────────────────────────────── */
+    var ICONS = {
+        dashboard: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
+        students: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>',
+        teachers: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>',
+        attendance: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M9 16l2 2 4-4"/></svg>',
+        results: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+        reports: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
+        settings: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>',
+        bell: '<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>',
+        gear: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>',
+        logout: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>',
+    };
 
-    /* ─────────────────────────────────────────────────────────────────
-       STEP 1 — INJECT CRITICAL CSS IMMEDIATELY (synchronous)
-       Must run before DOMContentLoaded so the sidebar never flashes
-       visible before being hidden. Uses !important to prevent override.
-    ───────────────────────────────────────────────────────────────── */
-    _injectCriticalCSS();
-
-    /* ─────────────────────────────────────────────────────────────────
-       NAV LINK DEFINITIONS
-       roles: [] means visible to all authenticated users.
-       roles: ['admin'] means only admins see this link.
-    ───────────────────────────────────────────────────────────────── */
-    var NAV_LINKS = [
-        { href: 'dashboard.html', label: 'Dashboard', icon: '🏠', roles: [] },
-        { href: 'students.html', label: 'Students', icon: '👥', roles: [] },
-        { href: 'enroll-student.html', label: 'Enroll Student', icon: '📝', roles: ['admin', 'headmaster', 'staff'] },
-        // ── Attendance ────────────────────────────────────────────────────
-        { section: 'Attendance' },
-        { href: 'attendance-management.html', label: 'Take Attendance', icon: '📋', roles: [] },
-        { href: 'attendance-history.html', label: 'Session History', icon: '📅', roles: [] },
-        { href: 'attendance-summary.html', label: 'Att. Summary', icon: '📊', roles: [] },
-        // ── Academics ────────────────────────────────────────────────────
-        { section: 'Academics' },
-        { href: 'student-transcript.html', label: 'Results', icon: '📄', roles: [] },
-        { href: 'subject-management.html', label: 'Subjects', icon: '📚', roles: ['admin', 'headmaster'] },
-        // ── Reports ────────────────────────────────────────────────────────
-        { section: 'Reports' },
-        { href: 'reports-dashboard.html', label: 'Reports', icon: '📈', roles: ['admin', 'headmaster', 'teacher'] },
-        // ── System ─────────────────────────────────────────────────────────
-        { section: 'System' },
-        { href: 'settings.html', label: 'Settings', icon: '⚙️', roles: [] },
+    /* ── Navigation config ────────────────────────────────────────────── */
+    var NAV_ITEMS = [
+        { href: 'dashboard.html', label: 'Dashboard', icon: 'dashboard', roles: [] },
+        { href: 'students.html', label: 'Students', icon: 'students', roles: [] },
+        { href: 'teachers.html', label: 'Teachers', icon: 'teachers', roles: ['admin', 'headmaster', 'staff'] },
+        { href: 'attendance-management.html', label: 'Attendance', icon: 'attendance', roles: [] },
+        { href: 'academic-records.html', label: 'Results', icon: 'results', roles: [] },
+        { href: 'reports-dashboard.html', label: 'Reports', icon: 'reports', roles: ['admin', 'headmaster', 'teacher'] },
+        { href: 'settings.html', label: 'Settings', icon: 'settings', roles: [] },
     ];
 
-    /* ─────────────────────────────────────────────────────────────────
-       MAIN INIT — runs after DOM is parsed
-    ───────────────────────────────────────────────────────────────── */
-    function _init() {
-        _injectSidebar();
-        _injectHamburger();
-        _fixBranding();
-        _fixUserInfoLayout();
-        _wireEvents();
-        _markActiveLink();
+    /* ── Page title map ───────────────────────────────────────────────── */
+    var PAGE_TITLES = {
+        'dashboard.html': 'Dashboard',
+        'students.html': 'Students',
+        'teachers.html': 'Teachers',
+        'attendance-management.html': 'Attendance',
+        'attendance-history.html': 'Attendance History',
+        'attendance-summary.html': 'Attendance Summary',
+        'attendance-reports.html': 'Attendance Reports',
+        'academic-records.html': 'Academic Results',
+        'subject-management.html': 'Subject Management',
+        'student-transcript.html': 'Student Transcript',
+        'reports-dashboard.html': 'Reports',
+        'analytics-dashboard.html': 'Analytics',
+        'student-search.html': 'Student Search',
+        'generate-report.html': 'Report Builder',
+        'enroll-student.html': 'Enroll Student',
+        'settings.html': 'Settings',
+    };
 
-        // Fast path: display from localStorage with zero network delay
-        var stored = (typeof getUser === 'function') ? getUser() : null;
-        if (stored) {
-            _displayUser(stored);
-            _applyRbac(stored.role);
+    /* ── Init ─────────────────────────────────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', function () {
+        _injectStyles();
+        _buildSidebar();
+        _buildTopbar();
+        _markActivePage();
+        _loadUser();
+        _bindEvents();
+        _wrapContent();
+    });
+
+    /* ── Wrap existing page content in .page-body ─────────────────────── */
+    function _wrapContent() {
+        // If the page already uses .page-body, skip
+        if (document.querySelector('.page-body')) return;
+
+        var main = document.querySelector('main') ||
+            document.querySelector('.main-container') ||
+            document.querySelector('#main-content');
+
+        if (main && !main.classList.contains('page-body')) {
+            main.classList.add('page-content');
+            var wrapper = document.createElement('div');
+            wrapper.className = 'page-body';
+            main.parentNode.insertBefore(wrapper, main);
+            wrapper.appendChild(main);
         }
-
-        // Accurate path: confirm with the API and overwrite if different
-        if (typeof loadCurrentUser === 'function') {
-            loadCurrentUser().then(function (apiUser) {
-                if (apiUser) {
-                    _displayUser(apiUser);
-                    _applyRbac(apiUser.role);
-                }
-            });
-        }
-
-        _wireLogout();
     }
 
-    // Run when DOM is ready, however the script was loaded
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', _init);
-    } else {
-        _init();
-    }
-
-    /* ─────────────────────────────────────────────────────────────────
-       CRITICAL CSS INJECTION
-       All rules use !important so they win over any page-level styles.
-       Two <style> blocks are injected:
-         1. #nav-critical  — sidebar positioning (hidden by default)
-         2. #nav-ui        — visual styles for sidebar content
-    ───────────────────────────────────────────────────────────────── */
-    function _injectCriticalCSS() {
-        if (document.getElementById('nav-critical')) return;
-
-        var critical = document.createElement('style');
-        critical.id = 'nav-critical';
-        critical.textContent =
-            /* Sidebar is FIXED and starts completely off-screen to the left */
-            '#app-sidebar{' +
-            'position:fixed!important;' +
-            'top:0!important;left:0!important;' +
-            'width:270px!important;height:100vh!important;' +
-            'background:var(--aa-sidebar-bg,#0f2137)!important;color:#fff!important;' +
-            'z-index:9999!important;' +
-            'display:flex!important;flex-direction:column!important;' +
-            'overflow-y:auto!important;overflow-x:hidden!important;' +
-            'transform:translateX(-100%)!important;' +
-            'visibility:hidden!important;pointer-events:none!important;' +
-            'transition:transform .25s cubic-bezier(.4,0,.2,1),' +
-            'visibility 0s .25s!important;' +
-            'border-right:1px solid rgba(255,255,255,.06)!important;' +
-            '}' +
-            '#app-sidebar.is-open{' +
-            'transform:translateX(0)!important;' +
-            'visibility:visible!important;pointer-events:all!important;' +
-            'transition:transform .25s cubic-bezier(.4,0,.2,1),' +
-            'visibility 0s 0s!important;' +
-            '}' +
-            '#sidebar-backdrop{' +
-            'position:fixed!important;inset:0!important;' +
-            'background:rgba(0,0,0,.45)!important;' +
-            'backdrop-filter:blur(2px)!important;' +
-            'z-index:9998!important;' +
-            'opacity:0!important;pointer-events:none!important;' +
-            'transition:opacity .25s ease!important;' +
-            '}' +
-            '#sidebar-backdrop.is-visible{' +
-            'opacity:1!important;pointer-events:all!important;' +
-            '}' +
-            'body.nav-open{overflow:hidden!important;}';
-
-        (document.head || document.documentElement).appendChild(critical);
-    }
-
-    /* ─────────────────────────────────────────────────────────────────
-       SIDEBAR HTML INJECTION
-    ───────────────────────────────────────────────────────────────── */
-    function _injectSidebar() {
-        if (document.getElementById('app-sidebar')) return;
-
-        // Build nav link HTML (supports section dividers)
-        var linksHtml = NAV_LINKS.map(function (l) {
-            if (l.section) {
-                return '<li class="sb-section-header" aria-hidden="true">' + l.section + '</li>';
-            }
-            var roleAttr = l.roles && l.roles.length
-                ? ' data-roles="' + l.roles.join(' ') + '"'
-                : '';
-            return '<li class="sb-item"' + roleAttr + '>' +
-                '<a href="' + l.href + '" class="sb-link">' +
-                '<span class="sb-icon" aria-hidden="true">' + l.icon + '</span>' +
-                '<span class="sb-label">' + l.label + '</span>' +
-                '</a>' +
-                '</li>';
-        }).join('');
-
-        // Global School Name fallback
-        window.SCHOOL_NAME = window.SCHOOL_NAME || 'Admin Assist Secondary School';
-        var schoolName = window.SCHOOL_NAME;
-
-        // Build sidebar element
+    /* ── Build sidebar ────────────────────────────────────────────────── */
+    function _buildSidebar() {
         var nav = document.createElement('nav');
         nav.id = 'app-sidebar';
         nav.setAttribute('aria-label', 'Main navigation');
         nav.innerHTML =
-            // ── Header: AA brand mark + School Name + close button ──
-            '<div class="sb-head">' +
-            '<div class="sb-brand">' +
-            '<div class="sb-brand-mark">AA</div>' +
-            '<div class="sb-brand-info">' +
-            '<span class="sb-school-name" id="sidebar-school-name">' + _escapeHtml(schoolName) + '</span>' +
-            '<span class="sb-system-tag">SIS Workspace</span>' +
-            '</div>' +
-            '</div>' +
-            '<button class="sb-close-btn" id="sidebar-close-btn" ' +
-            'aria-label="Close navigation menu" type="button">' +
-            '&#x2715;' +
-            '</button>' +
-            '</div>' +
-
-            // ── User card: [Avatar] [Name / Role / Staff ID] ──
-            '<div class="sb-user">' +
-            '<div class="sb-avatar" id="sidebar-avatar">?</div>' +
-            '<div class="sb-user-text">' +
-            '<span class="sb-name" id="sidebar-name">Loading\u2026</span>' +
-            '<span class="sb-role" id="sidebar-role"></span>' +
-            '<span class="sb-staff-id" id="sidebar-staff-id"></span>' +
+            // Logo area
+            '<div class="sb-logo-area">' +
+            '<div class="sb-logo-shield"><span>AA</span></div>' +
+            '<div class="sb-logo-text">' +
+            '<span class="sb-logo-name">ADMIN ASSIST</span>' +
+            '<span class="sb-logo-sub">School Information System</span>' +
             '</div>' +
             '</div>' +
 
-            // ── Navigation links ──
-            '<ul class="sb-nav">' + linksHtml + '</ul>' +
+            // Nav items
+            '<ul class="sb-nav" role="list">' +
+            NAV_ITEMS.map(function (item) {
+                var roleAttr = item.roles && item.roles.length
+                    ? ' data-roles="' + item.roles.join(' ') + '"' : '';
+                return '<li class="sb-item"' + roleAttr + '>' +
+                    '<a href="' + item.href + '" class="sb-link" data-page="' + item.href + '">' +
+                    '<span class="sb-icon">' + ICONS[item.icon] + '</span>' +
+                    '<span class="sb-label">' + item.label + '</span>' +
+                    '</a>' +
+                    '</li>';
+            }).join('') +
+            '</ul>' +
 
-            // ── Footer: logout ──
+            // Logout
             '<div class="sb-footer">' +
-            '<button class="sb-logout-btn" id="sidebar-logout-btn" type="button">' +
-            '<span aria-hidden="true">&#x1F6AA;</span>' +
+            '<button class="sb-logout" id="nav-logout-btn" type="button">' +
+            '<span class="sb-icon">' + ICONS.logout + '</span>' +
             '<span>Logout</span>' +
             '</button>' +
             '</div>';
 
-        document.body.appendChild(nav);
+        document.body.insertBefore(nav, document.body.firstChild);
 
-        // Backdrop element (sits behind open sidebar)
+        // Backdrop for mobile
         var backdrop = document.createElement('div');
-        backdrop.id = 'sidebar-backdrop';
-        backdrop.setAttribute('aria-hidden', 'true');
-        document.body.appendChild(backdrop);
-
-        // Inject visual styles for sidebar content
-        _injectUIStyles();
+        backdrop.id = 'sb-backdrop';
+        document.body.insertBefore(backdrop, nav.nextSibling);
     }
 
-    /* ─────────────────────────────────────────────────────────────────
-       UI STYLES INJECTION
-       Visual polish for sidebar components, hamburger, and header fixes.
-    ───────────────────────────────────────────────────────────────── */
-    function _injectUIStyles() {
-        if (document.getElementById('nav-ui')) return;
+    /* ── Build topbar ─────────────────────────────────────────────────── */
+    function _buildTopbar() {
+        var currentPage = _currentPage();
+        var pageTitle = PAGE_TITLES[currentPage] || 'Admin Assist';
 
+        var bar = document.createElement('div');
+        bar.id = 'app-topbar';
+        bar.innerHTML =
+            '<button class="tb-hamburger" id="tb-hamburger" aria-label="Toggle navigation">' +
+            '<span></span><span></span><span></span>' +
+            '</button>' +
+
+            '<span class="tb-title" id="topbar-page-title">' + _esc(pageTitle) + '</span>' +
+
+            '<div class="tb-right">' +
+            '<button class="tb-icon-btn" title="Settings" onclick="window.location=\'settings.html\'">' +
+            ICONS.gear +
+            '</button>' +
+            '<button class="tb-icon-btn" title="Notifications" style="position:relative">' +
+            ICONS.bell +
+            '<span class="tb-badge" id="notif-badge" hidden>0</span>' +
+            '</button>' +
+            '<div class="tb-user" id="tb-user">' +
+            '<div class="tb-avatar" id="tb-avatar">?</div>' +
+            '<div class="tb-user-info">' +
+            '<span class="tb-user-name" id="tb-user-name">Loading…</span>' +
+            '<span class="tb-user-role" id="tb-user-role"></span>' +
+            '</div>' +
+            '</div>' +
+            '</div>';
+
+        // Insert topbar as first child of .page-body, or after sidebar
+        var pageBody = document.querySelector('.page-body');
+        if (pageBody) {
+            pageBody.insertBefore(bar, pageBody.firstChild);
+        } else {
+            document.body.appendChild(bar);
+        }
+    }
+
+    /* ── Mark active page ─────────────────────────────────────────────── */
+    function _markActivePage() {
+        var current = _currentPage();
+        document.querySelectorAll('.sb-link').forEach(function (a) {
+            if (a.getAttribute('data-page') === current || a.getAttribute('href') === current) {
+                a.classList.add('active');
+                a.setAttribute('aria-current', 'page');
+                a.closest('.sb-item').classList.add('active');
+            }
+        });
+    }
+
+    /* ── Load user from auth.js ──────────────────────────────────────── */
+    function _loadUser() {
+        if (typeof loadCurrentUser !== 'function') return;
+        loadCurrentUser().then(function (user) {
+            if (!user) return;
+            var name = user.name || 'User';
+            var role = user.role || '';
+            var initials = _initials(name);
+
+            var nameEl = document.getElementById('tb-user-name');
+            var roleEl = document.getElementById('tb-user-role');
+            var avatarEl = document.getElementById('tb-avatar');
+
+            if (nameEl) nameEl.textContent = name;
+            if (roleEl) roleEl.textContent = _capitalise(role);
+            if (avatarEl) avatarEl.textContent = initials;
+
+            // Also update sidebar footer user if shown
+            _filterByRole(role);
+        }).catch(function () { });
+    }
+
+    /* ── RBAC: hide items user's role can't access ───────────────────── */
+    function _filterByRole(role) {
+        document.querySelectorAll('[data-roles]').forEach(function (el) {
+            var allowed = el.getAttribute('data-roles').split(' ');
+            if (allowed.length && !allowed.includes(role)) {
+                el.style.display = 'none';
+            }
+        });
+    }
+
+    /* ── Event binding ───────────────────────────────────────────────── */
+    function _bindEvents() {
+        // Hamburger
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('#tb-hamburger')) {
+                document.getElementById('app-sidebar').classList.toggle('open');
+                document.getElementById('sb-backdrop').classList.toggle('open');
+            }
+            if (e.target.id === 'sb-backdrop') {
+                document.getElementById('app-sidebar').classList.remove('open');
+                document.getElementById('sb-backdrop').classList.remove('open');
+            }
+        });
+
+        // Logout
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('#nav-logout-btn')) _doLogout();
+        });
+    }
+
+    function _doLogout() {
+        if (typeof authFetch === 'function' && typeof API_BASE !== 'undefined') {
+            authFetch(API_BASE + '/auth/logout', { method: 'POST' })
+                .catch(function () { })
+                .finally(function () { window.location.href = 'login.html'; });
+        } else {
+            window.location.href = 'login.html';
+        }
+    }
+
+    /* ── Style injection ─────────────────────────────────────────────── */
+    function _injectStyles() {
+        if (document.getElementById('nav-shell-styles')) return;
         var s = document.createElement('style');
-        s.id = 'nav-ui';
+        s.id = 'nav-shell-styles';
         s.textContent = `
 /* ═══════════════════════════════════════════════════════
-   Admin Assist — Navigation Shell v3
-   Mockup-accurate: white header, #0f2137 sidebar, #29b6d4 active
+   Navigation Shell — matches Image 2 design precisely
 ════════════════════════════════════════════════════════ */
 
-/* ── SIDEBAR SHELL ────────────────────────────────────── */
-#app-sidebar { font-family: 'Inter', -apple-system, sans-serif; }
+/* ── Sidebar ─────────────────────────────────────────── */
+#app-sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0;
+    width: 220px; background: #1B2A4A;
+    display: flex; flex-direction: column;
+    z-index: 200; overflow: hidden;
+    transition: transform .28s cubic-bezier(.4,0,.2,1);
+    font-family: 'Inter', -apple-system, sans-serif;
+}
 
-/* Sidebar header bar */
-.sb-head {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 1rem; min-height: 64px; flex-shrink: 0;
-    border-bottom: 1px solid rgba(255,255,255,.07); gap: 8px;
+/* Logo area */
+.sb-logo-area {
+    display: flex; align-items: center; gap: 12px;
+    padding: 20px 16px; flex-shrink: 0;
+    border-bottom: 1px solid rgba(255,255,255,.08);
 }
-.sb-brand { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
-.sb-brand-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-.sb-school-name {
-    font-size: 12px; font-weight: 700; color: #fff;
-    line-height: 1.25; white-space: nowrap;
-    overflow: hidden; text-overflow: ellipsis; max-width: 155px;
-}
-.sb-system-tag {
-    font-size: 9px; color: #29b6d4; font-weight: 700;
-    letter-spacing: .07em; text-transform: uppercase; margin-top: 1px;
-}
-.sb-brand-mark {
-    width: 34px; height: 34px; border-radius: 8px;
-    background: #1565c0;
-    border: 2px solid #29b6d4;
-    color: #fff; font-size: 11px; font-weight: 800;
+.sb-logo-shield {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: #0F1C35; border: 2px solid #C9A227;
     display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; user-select: none;
+    flex-shrink: 0;
 }
-.sb-close-btn {
-    background: transparent; border: none;
-    color: rgba(255,255,255,.5); font-size: 17px;
-    cursor: pointer; width: 28px; height: 28px; border-radius: 5px;
-    display: flex; align-items: center; justify-content: center;
-    transition: background .15s, color .15s; flex-shrink: 0;
+.sb-logo-shield span {
+    font-size: 13px; font-weight: 800; color: #fff; letter-spacing: .04em;
 }
-.sb-close-btn:hover { background: rgba(255,255,255,.08); color: #fff; }
+.sb-logo-text { display: flex; flex-direction: column; }
+.sb-logo-name {
+    font-size: 11px; font-weight: 800; color: #fff;
+    letter-spacing: .06em;
+}
+.sb-logo-sub {
+    font-size: 9px; color: rgba(255,255,255,.45);
+    font-weight: 500; letter-spacing: .04em; margin-top: 1px;
+}
 
-/* Sidebar user card */
-.sb-user {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 14px; flex-shrink: 0;
-    background: rgba(255,255,255,.03);
-    border-bottom: 1px solid rgba(255,255,255,.06);
-    cursor: pointer; transition: background .15s;
+/* Nav list */
+.sb-nav {
+    list-style: none; padding: 12px 0; flex: 1; overflow-y: auto;
 }
-.sb-user:hover { background: rgba(41,182,212,.1) !important; }
-.sb-avatar {
-    width: 34px; height: 34px; border-radius: 50%;
-    background: #29b6d4; color: #0f2137;
-    font-size: 12px; font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; user-select: none;
-    border: 1.5px solid rgba(255,255,255,.15);
-}
-.sb-user-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
-.sb-name {
-    font-size: 12.5px; font-weight: 600; color: #fff;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.sb-role   { font-size: 10.5px; color: rgba(255,255,255,.5); }
-.sb-staff-id { font-size: 9.5px; color: rgba(255,255,255,.3); letter-spacing: .03em; }
+.sb-nav::-webkit-scrollbar { width: 4px; }
+.sb-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
 
-/* Nav links */
-.sb-nav { list-style: none; padding: 6px 10px; margin: 0; flex: 1; }
-.sb-item { margin-bottom: 2px; }
+.sb-item { margin: 2px 8px; }
+
 .sb-link {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 14px;
-    color: rgba(255,255,255,.88) !important; text-decoration: none;
-    font-size: 13.5px; font-weight: 500;
-    border-radius: 6px;
-    border-left: 3px solid transparent;
-    transition: background .15s, color .15s, border-color .15s;
-    white-space: nowrap;
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 10px;
+    color: rgba(255,255,255,.62); text-decoration: none;
+    font-size: 14px; font-weight: 500;
+    transition: background .15s, color .15s;
+    position: relative;
 }
-.sb-link:hover { background: rgba(255,255,255,.1) !important; color: #ffffff !important; }
-.sb-link.is-active {
-    background: #1565c0 !important;
-    color: #ffffff !important;
-    border-left-color: #29b6d4 !important;
-    font-weight: 700 !important;
-    box-shadow: 0 2px 6px rgba(0,0,0,.25);
+.sb-link:hover {
+    background: rgba(255,255,255,.08); color: rgba(255,255,255,.9);
+    text-decoration: none;
 }
-.sb-link:focus-visible { outline: 2px solid #29b6d4; outline-offset: -2px; }
-.sb-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; opacity: .95; }
-.sb-label { flex: 1; }
+.sb-link.active {
+    background: rgba(37,99,235,.28); color: #fff; font-weight: 600;
+}
+.sb-link.active::before {
+    content: ''; position: absolute; left: 0; top: 6px; bottom: 6px;
+    width: 3px; background: #C9A227; border-radius: 0 3px 3px 0; left: -8px;
+}
+.sb-icon { display: flex; align-items: center; flex-shrink: 0; }
 
-/* Section labels */
+/* Section header */
 .sb-section-header {
-    padding: 14px 14px 4px;
-    font-size: 10px; font-weight: 700; letter-spacing: .08em;
-    text-transform: uppercase; color: #29b6d4 !important;
+    padding: 12px 20px 4px;
+    font-size: 10px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: rgba(255,255,255,.3);
     pointer-events: none; user-select: none;
 }
 
-/* Footer / logout */
-.sb-footer { padding: 8px 10px; flex-shrink: 0; border-top: 1px solid rgba(255,255,255,.08); }
-.sb-logout-btn {
+/* Footer */
+.sb-footer {
+    padding: 12px 16px; border-top: 1px solid rgba(255,255,255,.08); flex-shrink: 0;
+}
+.sb-logout {
+    width: 100%; display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 10px;
+    background: none; border: none; cursor: pointer;
+    color: rgba(255,255,255,.5); font-size: 14px; font-weight: 500;
+    font-family: inherit; transition: background .15s, color .15s;
+}
+.sb-logout:hover { background: rgba(239,68,68,.18); color: #fca5a5; }
+
+/* Mobile backdrop */
+#sb-backdrop {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.45); z-index: 190;
+}
+#sb-backdrop.open { display: block; }
+
+/* Mobile: hide sidebar, show on .open */
+@media (max-width: 768px) {
+    #app-sidebar { transform: translateX(-100%); }
+    #app-sidebar.open { transform: translateX(0); }
+    #app-topbar { left: 0; }
+}
+
+/* ── Topbar ──────────────────────────────────────────── */
+#app-topbar {
+    position: fixed; top: 0; left: 220px; right: 0; height: 64px;
+    background: #fff; border-bottom: 1px solid #E5E7EB;
+    display: flex; align-items: center; padding: 0 24px;
+    z-index: 100; gap: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    font-family: 'Inter', -apple-system, sans-serif;
+}
+@media (max-width: 768px) { #app-topbar { left: 0; } }
+
+.tb-hamburger {
+    width: 38px; height: 38px; border: none; background: none; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 5px; border-radius: 8px; padding: 0; flex-shrink: 0;
+}
+.tb-hamburger span {
+    display: block; width: 20px; height: 2px; background: #374151; border-radius: 2px;
+}
+.tb-hamburger:hover { background: #F3F4F6; }
+
+.tb-title {
+    font-size: 18px; font-weight: 700; color: #1B2A4A; flex: 1;
+}
+
+.tb-right {
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+}
+
+.tb-icon-btn {
+    width: 38px; height: 38px; border: none; background: #F3F4F6;
+    border-radius: 10px; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; color: #6B7280; position: relative;
+    transition: background .15s; flex-shrink: 0;
+}
+.tb-icon-btn:hover { background: #E5E7EB; color: #374151; }
+
+.tb-badge {
+    position: absolute; top: 4px; right: 4px; width: 16px; height: 16px;
+    background: #EF4444; color: #fff; border-radius: 50%;
+    font-size: 9px; font-weight: 700; display: flex; align-items: center;
+    justify-content: center; border: 2px solid #fff;
+}
+
+.tb-user {
     display: flex; align-items: center; gap: 10px;
-    width: 100%; padding: 10px 14px;
-    background: transparent; border: none;
-    border-radius: 6px;
-    color: rgba(255,255,255,.82); font-size: 13.5px; font-weight: 500;
-    font-family: inherit; cursor: pointer; text-align: left;
-    transition: background .15s, color .15s;
-}
-.sb-logout-btn:hover { background: rgba(220,38,38,.18); color: #fca5a5; }
-
-/* ── HEADER — WHITE (Light) / DARK (Dark Mode) ────────────── */
-header {
-    background: var(--aa-header-bg, #ffffff) !important;
-    border-bottom: 1px solid var(--aa-header-border, rgba(0,0,0,.07)) !important;
-    box-shadow: 0 1px 4px rgba(0,0,0,.06) !important;
-    color: var(--aa-header-text, #1e293b) !important;
-}
-
-/* Hamburger — dark lines on white header */
-#hamburger-btn {
-    display: flex; flex-direction: column;
-    justify-content: center; align-items: center; gap: 4.5px;
-    width: 36px; height: 36px; padding: 7px;
-    background: transparent; border: none;
-    border-radius: 6px; cursor: pointer;
-    flex-shrink: 0; margin-right: 4px;
+    padding: 6px 10px; border-radius: 10px; cursor: pointer;
     transition: background .15s;
 }
-#hamburger-btn:hover { background: rgba(0,0,0,.06); }
-.hb-line {
-    display: block; width: 18px; height: 2px;
-    background: var(--aa-header-icon, #64748b);
-    border-radius: 2px;
-}
-#aa-theme-btn {
-    display: flex; align-items: center; justify-content: center;
-    width: 36px; height: 36px;
-    background: var(--aa-surface-2, #f8fafc);
-    border: 1.5px solid var(--aa-border, #e2e8f0);
-    border-radius: 50%;
-    cursor: pointer; font-size: 16px; line-height: 1;
-    flex-shrink: 0;
-    transition: background .15s, border-color .15s;
-    color: var(--aa-header-text, #1e293b);
-}
-#aa-theme-btn:hover {
-    background: var(--aa-blue-light, #e3f0fc);
-    border-color: var(--aa-blue, #1565c0);
-}
-#aa-theme-btn:focus-visible { outline: 2px solid #D4AF37; outline-offset: 2px; }
+.tb-user:hover { background: #F3F4F6; }
 
-/* ── User info wrapper on standard pages ──────────────── */
-#nav-user-text {
-    display: flex; flex-direction: column;
-    align-items: flex-start; gap: 0px;
-}
-#nav-user-text #headerUserName {
-    font-size: 13.5px; font-weight: 600; color: #D4AF37;
-    line-height: 1.35;
-}
-#nav-user-text #roleBadge {
-    font-size: 11px !important; color: rgba(255,255,255,.6) !important;
-    background: transparent !important; padding: 0 !important;
-    border-radius: 0 !important; font-weight: 400 !important;
-    text-transform: none !important; letter-spacing: 0 !important;
-    line-height: 1.3;
+.tb-avatar {
+    width: 36px; height: 36px; border-radius: 50%; background: #1B2A4A;
+    color: #fff; font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 
-/* ── User info on admin-pages (.app-header) ───────────── */
-.app-header .user-profile {
-    display: flex !important; flex-direction: row !important;
-    align-items: center !important; gap: 10px !important;
-}
-.app-header .user-avatar {
-    order: -1 !important;
-    font-size: 13px !important; font-weight: 700 !important;
-}
-.app-header .user-meta {
-    text-align: left !important;
-    display: flex !important; flex-direction: column !important; gap: 1px !important;
-}
-.app-header .user-meta strong { font-size: 13.5px !important; font-weight: 600 !important; color: var(--aa-header-text, #1e293b) !important; }
-.app-header .user-meta span   { font-size: 11px !important;   color: var(--aa-text-muted, #64748b) !important; }
+.tb-user-info { display: flex; flex-direction: column; }
+.tb-user-name { font-size: 13px; font-weight: 600; color: #111827; line-height: 1.2; }
+.tb-user-role { font-size: 11px; color: #6B7280; text-transform: capitalize; }
 
-.app-header .logo-copy .logo,
-.app-header .logo-copy > span { display: none !important; }
+/* ── Ensure page content clears sidebar + topbar ──── */
+body { overflow-x: hidden; }
 
-/* ── Logout button ────────────────────────────────────── */
-#logoutBtn {
-    background: transparent !important;
-    border: 1.5px solid rgba(255,255,255,.4) !important;
-    color: rgba(255,255,255,.9) !important;
-    padding: 6px 14px !important;
-    border-radius: 6px !important;
-    font-size: 13px !important;
-    font-weight: 500 !important;
-    cursor: pointer !important;
-    transition: background .15s, border-color .15s !important;
-    margin-left: 8px !important;
-}
-#logoutBtn:hover {
-    background: rgba(255,255,255,.1) !important;
-    border-color: rgba(255,255,255,.7) !important;
-}
-#logoutBtn:focus-visible {
-    outline: 2px solid #D4AF37 !important; outline-offset: 2px !important;
+.main-container, main, .page-content {
+    margin-left: 220px;
+    padding-top: 64px;
+    min-height: 100vh;
+    background: #F0F2F5;
 }
 
-/* ── Mobile ───────────────────────────────────────────── */
-@media (max-width: 480px) {
-    #app-sidebar { width: 88vw !important; max-width: 290px !important; }
+.main-container, main {
+    padding: 80px 28px 28px;
 }
 
-/* Desktop mockup layout: persistent sidebar with content offset. */
-@media (min-width: 900px) {
-    #app-sidebar {
-        transform: translateX(0) !important;
-        visibility: visible !important;
-        pointer-events: all !important;
+@media (max-width: 768px) {
+    .main-container, main, .page-content {
+        margin-left: 0;
     }
-    #sidebar-backdrop { display: none !important; }
-    header, .main-container, .aa-main, .students-container {
-        margin-left: 270px !important;
-    }
-    header { width: calc(100% - 270px) !important; }
-    #hamburger-btn { display: none !important; }
 }
-        `;
-        (document.head || document.documentElement).appendChild(s);
+`;
+        document.head.appendChild(s);
     }
 
-    /* ─────────────────────────────────────────────────────────────────
-       HAMBURGER BUTTON INJECTION
-       Inserted as the FIRST child of <header> so it appears top-left.
-    ───────────────────────────────────────────────────────────────── */
-    function _injectHamburger() {
-        if (document.getElementById('hamburger-btn')) return;
-
-        var header = document.querySelector('header');
-        if (!header) return;
-
-        // 1 — Hamburger button (first child of header)
-        var btn = document.createElement('button');
-        btn.id = 'hamburger-btn';
-        btn.type = 'button';
-        btn.setAttribute('aria-label', 'Open navigation menu');
-        btn.setAttribute('aria-expanded', 'false');
-        btn.setAttribute('aria-controls', 'app-sidebar');
-        btn.innerHTML =
-            '<span class="hb-line"></span>' +
-            '<span class="hb-line"></span>' +
-            '<span class="hb-line"></span>';
-        header.insertBefore(btn, header.firstChild);
-
-        // 2 — Global search bar (center of header)
-        if (!document.getElementById('header-search-wrap')) {
-            var searchWrap = document.createElement('div');
-            searchWrap.id = 'header-search-wrap';
-
-            var searchIcon = document.createElement('span');
-            searchIcon.className = 'header-search-icon';
-            searchIcon.setAttribute('aria-hidden', 'true');
-            searchIcon.textContent = '🔍';
-
-            var searchInput = document.createElement('input');
-            searchInput.type = 'search';
-            searchInput.id = 'header-search';
-            searchInput.placeholder = 'Search students, teachers, classes…';
-            searchInput.setAttribute('aria-label', 'Global search');
-            searchInput.autocomplete = 'off';
-
-            searchWrap.appendChild(searchIcon);
-            searchWrap.appendChild(searchInput);
-
-            // Insert after logo (second child)
-            var logo = header.querySelector('.logo, .brand-group, [class*="logo"]');
-            if (logo && logo.nextSibling) {
-                header.insertBefore(searchWrap, logo.nextSibling);
-            } else {
-                header.appendChild(searchWrap);
-            }
-
-            // Wire search behavior to student directory
-            searchInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    var q = this.value.trim();
-                    var isStudentsPage = window.location.pathname.indexOf('students.html') !== -1;
-                    if (isStudentsPage) {
-                        var dirSearch = document.getElementById('search') || document.getElementById('searchInput');
-                        if (dirSearch) {
-                            dirSearch.value = q;
-                            dirSearch.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-                    } else if (q) {
-                        window.location.href = 'students.html?q=' + encodeURIComponent(q);
-                    }
-                }
-            });
-
-            searchInput.addEventListener('input', function() {
-                var q = this.value.trim();
-                var isStudentsPage = window.location.pathname.indexOf('students.html') !== -1;
-                if (isStudentsPage) {
-                    var dirSearch = document.getElementById('search') || document.getElementById('searchInput');
-                    if (dirSearch) {
-                        dirSearch.value = q;
-                        dirSearch.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
-                }
-            });
-        }
-
-        // 3 — Notification bell button & dropdown
-        if (!document.getElementById('aa-bell-btn')) {
-            var bellWrap = document.createElement('div');
-            bellWrap.style.cssText = 'position:relative;display:inline-block;';
-
-            var bellBtn = document.createElement('button');
-            bellBtn.id = 'aa-bell-btn';
-            bellBtn.className = 'header-icon-btn';
-            bellBtn.type = 'button';
-            bellBtn.setAttribute('aria-label', 'Notifications');
-            bellBtn.title = 'Notifications';
-            bellBtn.textContent = '🔔';
-
-            var notifBadge = document.createElement('span');
-            notifBadge.style.cssText = 'position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:#ef4444;border-radius:50%;';
-            bellWrap.appendChild(bellBtn);
-            bellWrap.appendChild(notifBadge);
-
-            var dropdown = document.createElement('div');
-            dropdown.id = 'aa-notif-dropdown';
-            dropdown.style.cssText = 'display:none;position:absolute;right:0;top:40px;width:300px;background:var(--white,#fff);border:1px solid var(--border-gray,#e2e8f0);border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,0.15);z-index:99999;padding:12px;color:var(--text-navy,#102A56);';
-            dropdown.innerHTML = `
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e2e8f0;">
-                    <strong style="font-size:13px;">Notifications</strong>
-                    <span style="font-size:10px;color:#174A8B;font-weight:700;">2 Unread</span>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;margin-bottom:10px;">
-                    <div style="padding:6px;border-radius:6px;background:#f8fafc;">
-                        <strong>Exam Schedule Published</strong>
-                        <div style="font-size:11px;color:#64748b;">Grade 9 & 12 exam timetable is out.</div>
-                    </div>
-                    <div style="padding:6px;border-radius:6px;background:#f8fafc;">
-                        <strong>Attendance Alert</strong>
-                        <div style="font-size:11px;color:#64748b;">Morning register pending for 10B.</div>
-                    </div>
-                </div>
-                <a href="notifications.html" style="display:block;text-align:center;font-size:12px;font-weight:700;color:#174A8B;text-decoration:none;padding-top:6px;border-top:1px solid #e2e8f0;">View all notifications →</a>
-            `;
-
-            bellWrap.appendChild(dropdown);
-            header.appendChild(bellWrap);
-
-            bellBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-            });
-
-            document.addEventListener('click', function() {
-                dropdown.style.display = 'none';
-            });
-        }
-
-        // 4 — Theme toggle button
-        if (!document.getElementById('aa-theme-btn')) {
-            var themeBtn = document.createElement('button');
-            themeBtn.id = 'aa-theme-btn';
-            themeBtn.type = 'button';
-            themeBtn.setAttribute('aria-label', 'Toggle dark/light theme');
-            themeBtn.title = 'Toggle theme';
-            var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            themeBtn.textContent = isDark ? '☀️' : '🌙';
-            header.appendChild(themeBtn);
-
-            themeBtn.addEventListener('click', function () {
-                var html = document.documentElement;
-                var current = html.getAttribute('data-theme');
-                if (current === 'dark') {
-                    html.removeAttribute('data-theme');
-                    localStorage.setItem('aa-theme', 'light');
-                    themeBtn.textContent = '🌙';
-                    themeBtn.setAttribute('aria-label', 'Switch to dark mode');
-                } else {
-                    html.setAttribute('data-theme', 'dark');
-                    localStorage.setItem('aa-theme', 'dark');
-                    themeBtn.textContent = '☀️';
-                    themeBtn.setAttribute('aria-label', 'Switch to light mode');
-                }
-            });
-        }
+    /* ── Helpers ─────────────────────────────────────────────────────── */
+    function _currentPage() {
+        var path = window.location.pathname.split('/');
+        return path[path.length - 1] || 'dashboard.html';
     }
 
-
-    function _fixBranding() {
-        var schoolName = window.SCHOOL_NAME || 'Admin Assist Secondary School';
-
-        // Standard pages header — white header, so use dark text
-        var logoEl = document.querySelector('header:not(.app-header) .logo');
-        if (logoEl) {
-            logoEl.innerHTML =
-                '<div class="brand-group" style="display:flex;align-items:center;gap:8px;">' +
-                '<div class="logo-mark" style="width:32px;height:32px;border-radius:8px;background:#1565c0;border:2px solid #29b6d4;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;">AA</div>' +
-                '<div class="brand-titles" style="display:flex;flex-direction:column;line-height:1.2;">' +
-                '<span class="school-title" style="font-size:13px;font-weight:700;color:var(--aa-header-text,#1e293b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;">' + _escapeHtml(schoolName) + '</span>' +
-                '<span class="sub-title" style="font-size:9px;color:var(--aa-text-muted,#64748b);font-weight:500;letter-spacing:.04em;text-transform:uppercase;">Admin Assist SIS</span>' +
-                '</div>' +
-                '</div>';
-            logoEl.style.cssText = 'background:none;border:none;padding:0;font-size:inherit;font-weight:inherit;color:inherit;';
-        }
-
-        // Also update sidebar school name if it still shows the default
-        var sbSchoolName = document.getElementById('sidebar-school-name');
-        if (sbSchoolName && sbSchoolName.textContent === 'Admin Assist Secondary School') {
-            sbSchoolName.textContent = schoolName;
-        }
+    function _initials(name) {
+        return String(name || 'U').split(' ').filter(Boolean)
+            .map(function (n) { return n[0].toUpperCase(); })
+            .slice(0, 2).join('');
     }
 
-
-
-    function _fixUserInfoLayout() {
-        var nameEl = document.getElementById('headerUserName');
-        var badgeEl = document.getElementById('roleBadge');
-
-        if (nameEl && badgeEl && !document.getElementById('nav-user-text')) {
-            var wrap = document.createElement('div');
-            wrap.id = 'nav-user-text';
-            nameEl.parentNode.insertBefore(wrap, nameEl);
-            wrap.appendChild(nameEl);
-            wrap.appendChild(badgeEl);
-        }
+    function _capitalise(str) {
+        return str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
     }
 
-    /* ─────────────────────────────────────────────────────────────────
-       OPEN / CLOSE
-    ───────────────────────────────────────────────────────────────── */
-    function _openSidebar() {
-        var sidebar = document.getElementById('app-sidebar');
-        var backdrop = document.getElementById('sidebar-backdrop');
-        var hamburger = document.getElementById('hamburger-btn');
-
-        if (sidebar) sidebar.classList.add('is-open');
-        if (backdrop) { backdrop.classList.add('is-visible'); backdrop.setAttribute('aria-hidden', 'false'); }
-        if (hamburger) hamburger.setAttribute('aria-expanded', 'true');
-        document.body.classList.add('nav-open');
-
-        // Move focus inside the sidebar for keyboard/screen-reader users
-        var firstFocusable = document.getElementById('sidebar-close-btn');
-        if (firstFocusable) firstFocusable.focus();
-    }
-
-    function _closeSidebar() {
-        var sidebar = document.getElementById('app-sidebar');
-        var backdrop = document.getElementById('sidebar-backdrop');
-        var hamburger = document.getElementById('hamburger-btn');
-
-        if (sidebar) sidebar.classList.remove('is-open');
-        if (backdrop) { backdrop.classList.remove('is-visible'); backdrop.setAttribute('aria-hidden', 'true'); }
-        if (hamburger) { hamburger.setAttribute('aria-expanded', 'false'); hamburger.focus(); }
-        document.body.classList.remove('nav-open');
-    }
-
-    // Expose for use by other scripts
-    window.openSidebar = _openSidebar;
-    window.closeSidebar = _closeSidebar;
-
-    /* ─────────────────────────────────────────────────────────────────
-       EVENT WIRING
-    ──────────────────────────────────────────────────────────────���── */
-    function _wireEvents() {
-        var hamburger = document.getElementById('hamburger-btn');
-        var closeBtn = document.getElementById('sidebar-close-btn');
-        var backdrop = document.getElementById('sidebar-backdrop');
-
-        // Hamburger toggles sidebar
-        if (hamburger) {
-            hamburger.addEventListener('click', function () {
-                var sidebar = document.getElementById('app-sidebar');
-                if (sidebar && sidebar.classList.contains('is-open')) {
-                    _closeSidebar();
-                } else {
-                    _openSidebar();
-                }
-            });
-        }
-
-        if (closeBtn) closeBtn.addEventListener('click', _closeSidebar);
-        if (backdrop) backdrop.addEventListener('click', _closeSidebar);
-
-        // Escape key closes the sidebar ONLY when no modal is open.
-        // ModalManager registers its own capture-phase handler that fires first
-        // and calls e.stopImmediatePropagation(), so this bubbling handler
-        // will never run while a modal is active.
-        document.addEventListener('keydown', function (e) {
-            if (e.key !== 'Escape') return;
-            // Guard: if ModalManager exists and has open modals, do nothing here.
-            // (ModalManager's capture listener already handled it.)
-            var mm = window.ModalManager;
-            if (mm && typeof mm._hasOpen === 'function' && mm._hasOpen()) return;
-            _closeSidebar();
-        });
-
-        // Clicking a nav link closes the sidebar (important on mobile)
-        document.querySelectorAll('.sb-link').forEach(function (link) {
-            link.addEventListener('click', function () {
-                setTimeout(_closeSidebar, 80);
-            });
-        });
-
-        // ── User card in sidebar → navigate to profile page ──────────────────────────
-        // Runs inside _wireEvents() after all other event binding is done.
-        var userCard = document.querySelector('.sb-user');
-        if (userCard) {
-            userCard.style.cursor = 'pointer';
-            userCard.tabIndex = 0;
-            userCard.setAttribute('role', 'link');
-            userCard.setAttribute('aria-label', 'View or edit your profile');
-            userCard.setAttribute('title', 'Manage your profile');
-
-            userCard.addEventListener('click', function () {
-                window.location.href = 'update-user-details.html';
-            });
-            userCard.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    window.location.href = 'update-user-details.html';
-                }
-            });
-        }
-    }
-
-    /* ─────────────────────────────────────────────────────────────────
-       ACTIVE LINK HIGHLIGHT
-    ───────────────────────────────────────────────────────────────── */
-    function _markActiveLink() {
-        var current = window.location.pathname.split('/').pop() || 'index.html';
-        document.querySelectorAll('.sb-link').forEach(function (link) {
-            if (link.getAttribute('href') === current) {
-                link.classList.add('is-active');
-                link.setAttribute('aria-current', 'page');
-            }
-        });
-    }
-
-    /* ─────────────────────────────────────────────────────────────────
-       USER DISPLAY
-       Populates BOTH header types and the sidebar user card.
-       Layout: [Avatar circle with initials] [Full name]
-                                              [Role label]
-    ───────────────────────────────────────────────────────────────── */
-    function _displayUser(user) {
-        var fullName = user.fullName || user.name || 'User';
-        var role = user.role || 'user';
-        var initials = _getInitials(fullName);
-        var roleLabel = _formatRole(role);
-        var schoolName = window.SCHOOL_NAME || 'Admin Assist Secondary School';
-        var staffId = _generateStaffId(user);
-        var dept = user.department || _getDepartment(role);
-
-        /* 1 — Sidebar user card */
-        _setText('sidebar-avatar', initials);
-        _setText('sidebar-name', fullName);
-        _setText('sidebar-role', roleLabel);
-        _setText('sidebar-staff-id', staffId);
-        _setText('sidebar-school-name', schoolName);
-
-        /* 2 — Standard pages header */
-        _setText('headerAvatar', initials);
-        _setText('headerUserName', fullName);
-        var badge = document.getElementById('roleBadge');
-        if (badge) badge.textContent = roleLabel;
-
-        /* 3 — Dashboard welcome title & school info */
-        var welcome = document.getElementById('welcomeTitle');
-        if (welcome) {
-            welcome.textContent = 'Welcome, ' + fullName.split(' ')[0] + '!';
-        }
-        _setText('dashSchoolName', schoolName);
-        _setText('dashStaffId', staffId);
-        _setText('dashDepartment', dept);
-
-        /* 4 — Admin-pages header (.app-header) */
-        var metaName = document.querySelector('.app-header .user-meta strong');
-        var metaRole = document.querySelector('.app-header .user-meta span');
-        var appAvt = document.querySelector('.app-header .user-avatar');
-        if (metaName) metaName.textContent = fullName;
-        if (metaRole) metaRole.textContent = roleLabel;
-        if (appAvt) appAvt.textContent = initials;
-
-        /* 5 — Data attributes contract for pages */
-        document.querySelectorAll('[data-user-name]')
-            .forEach(function (el) { el.textContent = fullName; });
-        document.querySelectorAll('[data-user-role]')
-            .forEach(function (el) { el.textContent = roleLabel; });
-        document.querySelectorAll('[data-user-initials]')
-            .forEach(function (el) { el.textContent = initials; });
-        document.querySelectorAll('[data-school-name]')
-            .forEach(function (el) { el.textContent = schoolName; });
-        document.querySelectorAll('[data-staff-id]')
-            .forEach(function (el) { el.textContent = staffId; });
-        document.querySelectorAll('[data-department]')
-            .forEach(function (el) { el.textContent = dept; });
-    }
-
-    /* ─────────────────────────────────────────────────────────────────
-       ROLE-BASED ACCESS
-    ───────────────────────────────────────────────────────────────── */
-    function _applyRbac(role) {
-        // Sidebar nav items with data-roles="..." are hidden if role not listed
-        document.querySelectorAll('.sb-item[data-roles]').forEach(function (item) {
-            var allowed = (item.dataset.roles || '').split(' ');
-            item.style.display = allowed.indexOf(role) !== -1 ? '' : 'none';
-        });
-
-        // Admin-only page elements (stat cards, quick-access cards)
-        var isPrivileged = role === 'admin' || role === 'headmaster';
-        document.querySelectorAll('.admin-only').forEach(function (el) {
-            el.style.display = isPrivileged ? '' : 'none';
-        });
-    }
-
-    /* ─────────────────────────────────────────────────────────────────
-       LOGOUT
-    ───────────────────────────────────────────────────────────────── */
-    function _wireLogout() {
-        ['logoutBtn', 'sidebar-logout-btn'].forEach(function (id) {
-            var btn = document.getElementById(id);
-            if (!btn || btn.dataset.wired) return;
-            btn.dataset.wired = 'true';
-            btn.addEventListener('click', _doLogout);
-        });
-    }
-
-    async function _doLogout() {
-        try {
-            await authFetch(API_BASE + '/auth/logout', { method: 'POST' });
-        } catch (e) { /* clear session locally even if network fails */ }
-        clearSession();
-        window.location.href = 'login.html';
-    }
-
-    /* ─────────────────────────────────────────────────────────────────
-       HELPERS
-    ───────────────────────────────────────────────────────────────── */
-    function _generateStaffId(user) {
-        if (!user) return 'AA-STF-2025-0001';
-        if (user.staffId || user.staff_id) return user.staffId || user.staff_id;
-        var role = (user.role || 'user').toLowerCase();
-        var prefix = 'STF';
-        if (role === 'admin') prefix = 'ADM';
-        else if (role === 'headmaster') prefix = 'EXE';
-        else if (role === 'teacher') prefix = 'TCH';
-        else if (role === 'staff') prefix = 'STF';
-
-        var idNum = String(user.id || 1).padStart(4, '0');
-        return 'AA-' + prefix + '-2025-' + idNum;
-    }
-
-    function _getDepartment(role) {
-        var map = {
-            admin: 'Administration',
-            headmaster: 'Executive Office',
-            teacher: 'Academic Department',
-            staff: 'School Operations',
-            user: 'General Staff'
-        };
-        return map[(role || '').toLowerCase()] || 'General Operations';
-    }
-
-    function _escapeHtml(str) {
+    function _esc(str) {
         return String(str || '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
-    }
-
-    function _setText(id, text) {
-        var el = document.getElementById(id);
-        if (el) el.textContent = text;
-    }
-
-    function _getInitials(name) {
-        return String(name || '')
-            .split(' ')
-            .filter(Boolean)
-            .map(function (n) { return n.charAt(0).toUpperCase(); })
-            .slice(0, 2)
-            .join('');
-    }
-
-    function _formatRole(role) {
-        var map = {
-            admin: 'Administrator',
-            headmaster: 'Head Master',
-            staff: 'Staff',
-            user: 'User'
-        };
-        return map[role] || (role.charAt(0).toUpperCase() + role.slice(1));
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
 })();
