@@ -21,6 +21,7 @@ main:not(.landing-main) {
     padding-bottom: 28px;
 }
 
+<<<<<<< HEAD
 @media (max-width: 768px) {
 
     .main-container,
@@ -47,3 +48,31 @@ main:not(.landing-main) {
     background: #C9A227;
     border-radius: 0 3px 3px 0;
 }
+=======
+/* ─── Ensure sidebar text colors update on theme change ─────── */
+/* Reference shell: compact navy sidebar, white content header, gold brand accent. */
+#app-sidebar {
+    background: var(--aa-sidebar-bg, #062b55) !important;
+    border-right: 0 !important;
+    box-shadow: 4px 0 16px rgba(6,43,85,.10);
+}
+#app-sidebar a[aria-current="page"],
+#app-sidebar .active,
+#app-sidebar a:hover {
+    background: rgba(22,113,201,.24) !important;
+}
+#app-sidebar a[aria-current="page"]::before,
+#app-sidebar .active::before { background: var(--aa-gold, #e7a51a) !important; }
+.app-header {
+    background: #fff !important;
+    border-bottom: 1px solid var(--aa-border, #dfe7f1) !important;
+    box-shadow: 0 2px 10px rgba(16,42,76,.05) !important;
+}
+.app-header .brand-name, .app-header .logo-text { color: var(--aa-header-text, #102a4c) !important; }
+.aa-logo-mark { border-color: var(--aa-gold, #e7a51a) !important; }
+
+[data-theme="dark"] #app-sidebar {
+    background: var(--aa-sidebar-bg, #062b55) !important;
+    border-right-color: rgba(255,255,255,.06) !important;
+}
+>>>>>>> 466227a870817ebebce5c853fefa901361901cc4

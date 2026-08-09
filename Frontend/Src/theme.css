@@ -11,34 +11,101 @@
 
 /* ─── Design Tokens ───────────────────────────────────────────── */
 :root {
-    /* Brand */
-    --c-navy: #1B2A4A;
-    --c-navy-dark: #0F1C35;
-    --c-navy-mid: #253563;
-    --c-gold: #C9A227;
-    --c-gold-light: #F5E6A3;
+    /* ── Primary Brand ─────────────────────────────────────── */
+    --aa-blue:          #0b4f9c;   /* Reference primary blue */
+    --aa-blue-dark:     #083d78;   /* Reference hover blue */
+    --aa-blue-light:    #e7f0fb;   /* Light blue surface */
+    --aa-teal:          #1671c9;   /* Active indicator */
+    --aa-teal-light:    rgba(22,113,201,.10);
+    --aa-gold:          #e7a51a;   /* Academic gold */
+    --aa-gold-light:    #fff8e8;   /* Gold tint background */
 
-    /* UI Blues */
-    --c-blue: #2563EB;
-    --c-blue-light: #EFF6FF;
-    --c-blue-muted: #DBEAFE;
+    /* ── Sidebar (always dark regardless of theme) ────────── */
+    --aa-sidebar-bg:        #062b55;
+    --aa-sidebar-hover:     rgba(255,255,255,.07);
+    --aa-sidebar-active:    rgba(22,113,201,.24);
+    --aa-sidebar-border:    #e7a51a;
+    --aa-sidebar-text:      rgba(255,255,255,.72);
+    --aa-sidebar-text-dim:  rgba(255,255,255,.38);
+    --aa-sidebar-divider:   rgba(255,255,255,.06);
 
-    /* Semantic */
-    --c-success: #22C55E;
-    --c-success-bg: #F0FDF4;
-    --c-warning: #F59E0B;
-    --c-warning-bg: #FFFBEB;
-    --c-danger: #EF4444;
-    --c-danger-bg: #FEF2F2;
-    --c-info: #3B82F6;
-    --c-info-bg: #EFF6FF;
+    /* ── Header (light = white, dark = dark card) ──────────── */
+    --aa-header-bg:         #ffffff;
+    --aa-header-text:       #1e293b;
+    --aa-header-icon:       #64748b;
+    --aa-header-border:     rgba(0,0,0,.07);
+    --aa-header-height:     64px;
 
-    /* Neutrals */
-    --c-white: #FFFFFF;
-    --c-bg: #F0F2F5;
-    --c-surface: #FFFFFF;
-    --c-border: #E5E7EB;
-    --c-border-dark: #D1D5DB;
+    /* ── Page Surfaces ──────────────────────────────────────── */
+    --aa-bg:            #f4f6f9;   /* Page background (light gray from mockup)  */
+    --aa-surface:       #ffffff;   /* Card / panel                               */
+    --aa-surface-2:     #f8fafc;   /* Nested surface, table header               */
+
+    /* ── Text ───────────────────────────────────────────────── */
+    --aa-text:          #1e293b;
+    --aa-text-muted:    #64748b;
+    --aa-text-light:    #94a3b8;
+
+    /* ── Border ─────────────────────────────────────────────── */
+    --aa-border:        #e2e8f0;
+    --aa-border-dark:   #cbd5e1;
+
+    /* ── Semantic ───────────────────────────────────────────── */
+    --aa-success:       #16a34a;
+    --aa-success-bg:    #f0fdf4;
+    --aa-success-text:  #15803d;
+    --aa-warning:       #d97706;
+    --aa-warning-bg:    #fffbeb;
+    --aa-warning-text:  #92400e;
+    --aa-danger:        #dc2626;
+    --aa-danger-bg:     #fef2f2;
+    --aa-danger-text:   #991b1b;
+    --aa-info:          #1565c0;
+    --aa-info-bg:       #e3f0fc;
+    --aa-info-text:     #1e3a5f;
+
+    /* ── Shadows ────────────────────────────────────────────── */
+    --aa-shadow-xs:     0 1px 2px rgba(0,0,0,.05);
+    --aa-shadow:        0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
+    --aa-shadow-md:     0 4px 12px rgba(0,0,0,.08);
+    --aa-shadow-lg:     0 8px 24px rgba(0,0,0,.10);
+
+    /* ── Shape ──────────────────────────────────────────────── */
+    --aa-radius-sm:     4px;
+    --aa-radius:        6px;
+    --aa-radius-md:     8px;
+    --aa-radius-lg:     12px;
+    --aa-radius-xl:     16px;
+
+    /* ── Typography Scale ───────────────────────────────────── */
+    --aa-font-xs:       0.75rem;
+    --aa-font-sm:       0.8125rem;
+    --aa-font-base:     0.9375rem;
+    --aa-font-md:       1rem;
+    --aa-font-lg:       1.125rem;
+    --aa-font-xl:       1.375rem;
+    --aa-font-2xl:      1.75rem;
+    --aa-font-3xl:      2rem;
+
+    /* ── Legacy aliases ─────────────────────────────────────── */
+    --aa-navy:          var(--aa-blue);
+    --aa-accent:        var(--aa-blue);
+    --aa-copper:        var(--aa-gold);
+    --aa-sidebar-width: 260px;
+}
+
+/* ─── 4. Dark-Mode Tokens ───────────────────────────────────── */
+[data-theme="dark"] {
+    /* Header becomes dark card */
+    --aa-header-bg:     #1e2a3a;
+    --aa-header-text:   #f1f5f9;
+    --aa-header-icon:   #94a3b8;
+    --aa-header-border: rgba(255,255,255,.06);
+
+    /* Page surfaces */
+    --aa-bg:            #111827;
+    --aa-surface:       #1e2a3a;
+    --aa-surface-2:     #172033;
 
     /* Text */
     --c-text: #111827;
