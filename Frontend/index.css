@@ -1,8 +1,11 @@
-/* ═══════════════════════════════════════════════════════════════
-   Admin Assist — Landing Page Stylesheet
-═══════════════════════════════════════════════════════════════ */
+/* ================================================================
+   index.css — Admin Assist Landing Page Styles
+   Loaded only by index.html
+================================================================ */
 
-/* ── RESET ── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* ─── Reset & Base ────────────────────────────────────────────── */
 *,
 *::before,
 *::after {
@@ -32,21 +35,19 @@ img {
   display: block;
 }
 
-/* ── Tokens ──────────────────────────────────────────────── */
+/* ─── Tokens ──────────────────────────────────────────────────── */
 :root {
   --navy: #1B2A4A;
   --navy-dark: #0F1C35;
   --gold: #C9A227;
-  --gold-light: #F5E6A3;
   --blue: #2563EB;
-  --white: #FFFFFF;
-  --bg: #F8FAFC;
-  --border: #E5E7EB;
   --muted: #6B7280;
+  --border: #E5E7EB;
+  --bg: #F8FAFC;
   --radius: 12px;
 }
 
-/* ── Topbar navbar ───────────────────────────────────────── */
+/* ─── Sticky Navbar ───────────────────────────────────────────── */
 .lp-nav {
   position: sticky;
   top: 0;
@@ -153,7 +154,7 @@ img {
   color: #fff;
 }
 
-/* ── Buttons ─────────────────────────────────────────────── */
+/* ─── CTA Buttons ─────────────────────────────────────────────── */
 .btn-primary-lp {
   display: inline-flex;
   align-items: center;
@@ -172,6 +173,7 @@ img {
 
 .btn-primary-lp:hover {
   background: var(--navy-dark);
+  color: #fff;
 }
 
 .btn-outline-lp {
@@ -195,14 +197,34 @@ img {
   color: #fff;
 }
 
-/* ── Section layout ──────────────────────────────────────── */
+/* ─── Section Layout ──────────────────────────────────────────── */
 .section {
   padding: 80px 32px;
+}
+
+.section-white {
+  background: #fff;
+}
+
+.section-gray {
+  background: var(--bg);
 }
 
 .section-inner {
   max-width: 1200px;
   margin: 0 auto;
+}
+
+.section-heading {
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--navy);
+  margin-bottom: 12px;
+  line-height: 1.25;
+}
+
+.section-heading-center {
+  text-align: center;
 }
 
 .section-tag {
@@ -214,23 +236,15 @@ img {
   margin-bottom: 10px;
 }
 
-.section-heading {
-  font-size: 36px;
-  font-weight: 800;
-  color: var(--navy);
-  margin-bottom: 12px;
-  line-height: 1.25;
-}
-
 .section-subtext {
   font-size: 16px;
   color: var(--muted);
   max-width: 540px;
 }
 
-/* ── Hero ────────────────────────────────────────────────── */
+/* ─── Hero ────────────────────────────────────────────────────── */
 .hero {
-  background: #F8FAFC;
+  background: var(--bg);
   padding: 90px 32px 60px;
   overflow: hidden;
 }
@@ -265,7 +279,7 @@ img {
   margin-bottom: 20px;
 }
 
-.hero-heading .gold {
+.text-gold {
   color: var(--gold);
 }
 
@@ -337,6 +351,12 @@ img {
   color: #1B2A4A;
 }
 
+.mock-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1B2A4A;
+}
+
 .mock-user {
   display: flex;
   align-items: center;
@@ -360,12 +380,6 @@ img {
   font-size: 9px;
   color: #6B7280;
   font-weight: 500;
-}
-
-.mock-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: #1B2A4A;
 }
 
 .mock-stats {
@@ -436,7 +450,7 @@ img {
   flex-shrink: 0;
 }
 
-/* ── Stats bar ───────────────────────────────────────────── */
+/* ─── Stats Bar ───────────────────────────────────────────────── */
 .stats-bar {
   background: #fff;
   border-top: 1px solid var(--border);
@@ -452,8 +466,6 @@ img {
   gap: 24px;
   text-align: center;
 }
-
-.stats-bar-item {}
 
 .stats-bar-icon {
   font-size: 28px;
@@ -473,7 +485,7 @@ img {
   margin-top: 2px;
 }
 
-/* ── Why section ─────────────────────────────────────────── */
+/* ─── Why Grid ────────────────────────────────────────────────── */
 .why-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -505,6 +517,30 @@ img {
   margin: 0 auto 16px;
 }
 
+.why-icon-yellow {
+  background: #FEF3C7;
+}
+
+.why-icon-blue {
+  background: #EFF6FF;
+}
+
+.why-icon-green {
+  background: #F0FDF4;
+}
+
+.why-icon-purple {
+  background: #FDF4FF;
+}
+
+.why-icon-orange {
+  background: #FFF7ED;
+}
+
+.why-icon-teal {
+  background: #F0FDFA;
+}
+
 .why-card h3 {
   font-size: 15px;
   font-weight: 700;
@@ -518,11 +554,7 @@ img {
   line-height: 1.6;
 }
 
-/* ── What we offer ───────────────────────────────────────── */
-.offer-section {
-  background: #F8FAFC;
-}
-
+/* ─── Offer Grid ──────────────────────────────────────────────── */
 .offer-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -553,13 +585,23 @@ img {
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  overflow: hidden;
-  background: var(--bg);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 24px;
   flex-shrink: 0;
+}
+
+.offer-avatar-blue {
+  background: #EFF6FF;
+}
+
+.offer-avatar-green {
+  background: #F0FDF4;
+}
+
+.offer-avatar-yellow {
+  background: #FEF3C7;
 }
 
 .offer-card h3 {
@@ -603,12 +645,12 @@ img {
   color: var(--gold);
 }
 
-/* ── In Action ───────────────────────────────────────────── */
+/* ─── In Action ───────────────────────────────────────────────── */
 .action-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 16px;
-  margin-top: 48px;
+  margin-top: 40px;
 }
 
 .action-item {
@@ -624,12 +666,31 @@ img {
 }
 
 .action-thumb {
-  background: linear-gradient(135deg, #1B2A4A 0%, #2563EB 100%);
   height: 120px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 36px;
+}
+
+.action-thumb-blue {
+  background: linear-gradient(135deg, #1B2A4A 0%, #2563EB 100%);
+}
+
+.action-thumb-green {
+  background: linear-gradient(135deg, #065F46 0%, #22C55E 100%);
+}
+
+.action-thumb-purple {
+  background: linear-gradient(135deg, #7C3AED 0%, #A78BFA 100%);
+}
+
+.action-thumb-amber {
+  background: linear-gradient(135deg, #B45309 0%, #F59E0B 100%);
+}
+
+.action-thumb-pink {
+  background: linear-gradient(135deg, #9D174D 0%, #F472B6 100%);
 }
 
 .action-label {
@@ -641,7 +702,7 @@ img {
   text-align: center;
 }
 
-/* ── CTA section ─────────────────────────────────────────── */
+/* ─── CTA Section ─────────────────────────────────────────────── */
 .cta-section {
   background: var(--navy);
   padding: 80px 32px;
@@ -708,6 +769,7 @@ img {
 
 .btn-cta-gold:hover {
   background: #B8921F;
+  color: var(--navy-dark);
 }
 
 .btn-cta-outline {
@@ -751,7 +813,13 @@ img {
   font-size: 16px;
 }
 
-/* ── Footer ──────────────────────────────────────────────── */
+.cta-contact-sublabel {
+  font-size: 11px;
+  opacity: .6;
+  margin-bottom: 1px;
+}
+
+/* ─── Footer ──────────────────────────────────────────────────── */
 footer {
   background: var(--navy-dark);
   padding: 20px 32px;
@@ -763,7 +831,7 @@ footer p {
   color: rgba(255, 255, 255, .45);
 }
 
-/* ── Responsive ──────────────────────────────────────────── */
+/* ─── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 960px) {
   .hero-inner {
     grid-template-columns: 1fr;
