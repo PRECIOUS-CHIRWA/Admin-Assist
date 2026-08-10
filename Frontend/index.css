@@ -5,6 +5,21 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
+/* ─── Tokens ──────────────────────────────────────────────────── */
+:root {
+  --navy: #1B2A4A;
+  --navy-dark: #0F1C35;
+  --gold: #C9A227;
+  --blue: #2563EB;
+  --muted: #6B7280;
+  --border: #E5E7EB;
+  --bg: #F8FAFC;
+  --bg-hero: #FEF3C7;
+  --text-white: #fff;
+  --radius: 12px;
+  --shadow: rgba(27, 42, 74, .1);
+}
+
 /* ─── Reset & Base ────────────────────────────────────────────── */
 *,
 *::before,
@@ -20,7 +35,7 @@ html {
 
 body {
   font-family: 'Inter', -apple-system, sans-serif;
-  color: #1B2A4A;
+  color: var(--navy);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
@@ -35,17 +50,6 @@ img {
   display: block;
 }
 
-/* ─── Tokens ──────────────────────────────────────────────────── */
-:root {
-  --navy: #1B2A4A;
-  --navy-dark: #0F1C35;
-  --gold: #C9A227;
-  --blue: #2563EB;
-  --muted: #6B7280;
-  --border: #E5E7EB;
-  --bg: #F8FAFC;
-  --radius: 12px;
-}
 
 /* ─── Sticky Navbar ───────────────────────────────────────────── */
 .lp-nav {
@@ -85,7 +89,7 @@ img {
   justify-content: center;
   font-size: 14px;
   font-weight: 900;
-  color: #fff;
+  color: var(--text-white);
   letter-spacing: .03em;
 }
 
@@ -151,7 +155,7 @@ img {
 
 .btn-login:hover {
   background: var(--navy);
-  color: #fff;
+  color: var(--text-white);
 }
 
 /* ─── CTA Buttons ─────────────────────────────────────────────── */
@@ -161,7 +165,7 @@ img {
   gap: 8px;
   padding: 13px 28px;
   background: var(--navy);
-  color: #fff;
+  color: var(--text-white);
   border: none;
   border-radius: 12px;
   font-size: 15px;
@@ -173,7 +177,7 @@ img {
 
 .btn-primary-lp:hover {
   background: var(--navy-dark);
-  color: #fff;
+  color: var(--text-white);
 }
 
 .btn-outline-lp {
@@ -194,7 +198,7 @@ img {
 
 .btn-outline-lp:hover {
   background: var(--navy);
-  color: #fff;
+  color: var(--text-white);
 }
 
 /* ─── Section Layout ──────────────────────────────────────────── */
@@ -203,7 +207,7 @@ img {
 }
 
 .section-white {
-  background: #fff;
+  background: var(--white);
 }
 
 .section-gray {
@@ -267,7 +271,7 @@ img {
   color: var(--gold);
   margin-bottom: 16px;
   padding: 5px 12px;
-  background: #FEF3C7;
+  background: var(--bg-hero);
   border-radius: 999px;
 }
 
@@ -315,7 +319,7 @@ img {
 }
 
 .mock-topbar {
-  background: #fff;
+  background: var(--text-white);
   border-radius: 8px;
   padding: 10px 14px;
   display: flex;
@@ -334,12 +338,12 @@ img {
 .mock-shield {
   width: 24px;
   height: 24px;
-  background: #1B2A4A;
-  border: 1.5px solid #C9A227;
+  background: var(--navy);
+  border: 1.5px solid var(--gold);
   border-radius: 6px;
   font-size: 8px;
   font-weight: 900;
-  color: #fff;
+  color: var(--text-white);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -348,13 +352,13 @@ img {
 .mock-logo-text {
   font-size: 10px;
   font-weight: 800;
-  color: #1B2A4A;
+  color: var(--navy);
 }
 
 .mock-title {
   font-size: 12px;
   font-weight: 700;
-  color: #1B2A4A;
+  color: var(--navy);
 }
 
 .mock-user {
@@ -367,8 +371,8 @@ img {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #1B2A4A;
-  color: #fff;
+  background: var(--navy);
+  color: var(--text-white);
   font-size: 8px;
   font-weight: 700;
   display: flex;
@@ -378,7 +382,7 @@ img {
 
 .mock-user-text {
   font-size: 9px;
-  color: #6B7280;
+  color: var(--muted);
   font-weight: 500;
 }
 
@@ -390,7 +394,7 @@ img {
 }
 
 .mock-stat {
-  background: #fff;
+  background: var(--text-white);
   border-radius: 8px;
   padding: 10px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
@@ -399,17 +403,17 @@ img {
 .mock-stat-val {
   font-size: 14px;
   font-weight: 800;
-  color: #1B2A4A;
+  color: var(--navy);
 }
 
 .mock-stat-lbl {
   font-size: 8px;
-  color: #6B7280;
+  color: var(--muted);
   margin-top: 2px;
 }
 
 .mock-activity {
-  background: #fff;
+  background: var(--text-white);
   border-radius: 8px;
   padding: 10px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
@@ -418,7 +422,7 @@ img {
 .mock-act-title {
   font-size: 9px;
   font-weight: 700;
-  color: #1B2A4A;
+  color: var(--navy);
   margin-bottom: 6px;
 }
 
@@ -429,7 +433,7 @@ img {
   padding: 4px 0;
   border-bottom: 1px solid #F3F4F6;
   font-size: 8px;
-  color: #6B7280;
+  color: var(--muted);
 }
 
 .mock-act-item:last-child {
@@ -452,7 +456,7 @@ img {
 
 /* ─── Stats Bar ───────────────────────────────────────────────── */
 .stats-bar {
-  background: #fff;
+  background: var(--text-white);
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   padding: 32px;
@@ -494,7 +498,7 @@ img {
 }
 
 .why-card {
-  background: #fff;
+  background: var(--text-white);
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 28px 24px;
@@ -503,7 +507,7 @@ img {
 }
 
 .why-card:hover {
-  box-shadow: 0 8px 24px rgba(27, 42, 74, .1);
+  box-shadow: 0 8px 24px var(--shadow);
 }
 
 .why-icon {
@@ -518,11 +522,11 @@ img {
 }
 
 .why-icon-yellow {
-  background: #FEF3C7;
+  background: var(--bg-hero);
 }
 
 .why-icon-blue {
-  background: #EFF6FF;
+  background: var(--bg);
 }
 
 .why-icon-green {
@@ -563,7 +567,7 @@ img {
 }
 
 .offer-card {
-  background: #fff;
+  background: var(--text-white);
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 28px 24px;
@@ -571,7 +575,7 @@ img {
 }
 
 .offer-card:hover {
-  box-shadow: 0 8px 24px rgba(27, 42, 74, .1);
+  box-shadow: 0 8px 24px var(--shadow);
 }
 
 .offer-card-header {
@@ -601,7 +605,7 @@ img {
 }
 
 .offer-avatar-yellow {
-  background: #FEF3C7;
+  background: var(--bg-hero);
 }
 
 .offer-card h3 {
@@ -694,7 +698,7 @@ img {
 }
 
 .action-label {
-  background: #fff;
+  background: var(--text-white);
   padding: 10px 12px;
   font-size: 12px;
   font-weight: 600;
@@ -730,7 +734,7 @@ img {
 .cta-text h2 {
   font-size: 30px;
   font-weight: 800;
-  color: #fff;
+  color: var(--text-white);
   margin-bottom: 8px;
 }
 
@@ -778,7 +782,7 @@ img {
   gap: 8px;
   padding: 13px 28px;
   background: transparent;
-  color: #fff;
+  color: var(--text-white);
   border: 2px solid rgba(255, 255, 255, .45);
   border-radius: 12px;
   font-size: 15px;
