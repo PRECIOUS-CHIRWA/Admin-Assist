@@ -31,7 +31,7 @@
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: var(--blue);
+    background: var(--navy);
     background-image:
         radial-gradient(circle at 20% 20%, rgba(212, 175, 55, .12) 0%, transparent 50%),
         radial-gradient(circle at 80% 80%, rgba(255, 255, 255, .05) 0%, transparent 50%);
@@ -67,7 +67,7 @@ body {
     width: 52px;
     height: 52px;
     border-radius: 12px;
-    background: var(--blue);
+    background: var(--navy);
     border: 2px solid var(--gold);
     color: var(--gold);
     font-size: 1rem;
