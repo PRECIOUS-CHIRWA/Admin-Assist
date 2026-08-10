@@ -2,158 +2,199 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Teacher Directory - Admin Assist</title>
-  <meta name="description" content="Browse and manage school teaching staff in Admin Assist.">
-  <link rel="stylesheet" href="theme.css">
-  <link rel="stylesheet" href="aa-shared.css">
-  <link rel="stylesheet" href="students.css">
-  <link rel="stylesheet" href="navigation.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teachers — Admin Assist</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="theme.css" />
+  <link rel="stylesheet" href="navigation.css" />
+  <link rel="stylesheet" href="students.css" />
+  <link rel="stylesheet" href="teachers.css" />
 </head>
 
 <body data-page="teachers">
-  <header>
-    <div class="logo">Admin Assist</div>
-    <div class="user-profile">
-      <div class="user-avatar" id="headerAvatar">?</div>
-      <span id="headerUserName">…</span>
-      <span id="roleBadge" class="role-badge"></span>
-      <button id="logoutBtn">Logout</button>
-    </div>
-  </header>
 
-  <div class="main-container">
-    <div class="breadcrumb">
-      <a href="dashboard.html">Dashboard</a> &gt; <span>Teacher Directory</span>
-    </div>
+  <main class="main-container" id="main-content">
 
-    <div class="page-header">
+    <div class="pg-header">
       <div>
-        <h1 class="page-title">Teachers Directory</h1>
-        <p class="page-subtitle">Manage teaching staff, assigned subjects, and contact information.</p>
+        <h1>Teachers</h1>
+        <p>Manage teaching staff, subject assignments and class allocations.</p>
       </div>
-      <button id="addTeacherBtn" class="btn-add" onclick="alert('Add Teacher feature: Enter teacher name and assigned subject.');">+ Add New Teacher</button>
+      <div class="pg-header-actions">
+        <button class="pg-btn-primary" id="addTeacherBtn" type="button">+ Add Teacher</button>
+      </div>
     </div>
 
-    <!-- CONTROLS -->
-    <div class="table-controls">
-      <div class="search-box">
-        <input type="text" id="searchTeachers" placeholder="Search by teacher name, email, or subject...">
+    <!-- Stats strip -->
+    <div class="teacher-stats-row">
+      <div class="teacher-stat-card">
+        <div class="teacher-stat-icon teacher-stat-icon-gold">
+          <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+            <path d="M6 12v5c3 3 9 3 12 0v-5" />
+          </svg>
+        </div>
+        <div>
+          <div class="teacher-stat-value" id="statTotal">—</div>
+          <div class="teacher-stat-label">Total Teachers</div>
+        </div>
       </div>
-      <div class="filters">
-        <select id="filterTeacherStatus">
-          <option value="">All Statuses</option>
-          <option value="Active">Active</option>
-          <option value="Inactive">Inactive</option>
+      <div class="teacher-stat-card">
+        <div class="teacher-stat-icon teacher-stat-icon-green">
+          <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <polyline points="17 11 19 13 23 9" />
+          </svg>
+        </div>
+        <div>
+          <div class="teacher-stat-value" id="statActive">—</div>
+          <div class="teacher-stat-label">Active Teachers</div>
+        </div>
+      </div>
+      <div class="teacher-stat-card">
+        <div class="teacher-stat-icon teacher-stat-icon-blue">
+          <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+          </svg>
+        </div>
+        <div>
+          <div class="teacher-stat-value" id="statSubjects">—</div>
+          <div class="teacher-stat-label">Subject Assignments</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pg-table-card">
+
+      <div class="pg-toolbar">
+        <div class="pg-search-wrap">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input class="pg-search" type="search" id="teacherSearch" placeholder="Search teachers…" autocomplete="off" />
+        </div>
+        <select class="pg-filter" id="statusFilter">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
         </select>
+        <div class="pg-toolbar-right">
+          <span class="pg-count" id="teacherCount"></span>
+        </div>
       </div>
+
+      <div class="pg-table-wrap">
+        <table class="pg-table" id="teachersTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Teacher</th>
+              <th>Subject(s)</th>
+              <th>Email</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="teachersBody">
+            <tr>
+              <td colspan="6" class="pg-loading">Loading teachers…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pg-pagination" id="paginationBar">
+        <span id="paginationInfo"></span>
+        <div class="pg-page-btns" id="paginationBtns"></div>
+      </div>
+
     </div>
 
-    <!-- TABLE -->
-    <div class="table-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Teacher</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="teachersTbody">
-          <tr>
-            <td>1</td>
-            <td>
-              <div style="display:flex;align-items:center;gap:10px;">
-                <div style="width:32px;height:32px;border-radius:50%;background:#174A8B;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">JM</div>
-                <span style="font-weight:600;color:var(--text-navy);">John Mulenga</span>
-              </div>
-            </td>
-            <td>john.mulenga@school.zm</td>
-            <td>Senior Teacher (Mathematics)</td>
-            <td><span class="badge badge-active">Active</span></td>
-            <td>
-              <div class="actions">
-                <button class="action-btn view" title="View Profile">👁</button>
-                <button class="action-btn edit" title="Edit Teacher">✏️</button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td>2</td>
-            <td>
-              <div style="display:flex;align-items:center;gap:10px;">
-                <div style="width:32px;height:32px;border-radius:50%;background:#059669;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">LM</div>
-                <span style="font-weight:600;color:var(--text-navy);">Lucy Mwansa</span>
-              </div>
-            </td>
-            <td>lucy.mwansa@school.zm</td>
-            <td>Teacher (English Language)</td>
-            <td><span class="badge badge-active">Active</span></td>
-            <td>
-              <div class="actions">
-                <button class="action-btn view" title="View Profile">👁</button>
-                <button class="action-btn edit" title="Edit Teacher">✏️</button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+  </main>
+
+  <!-- ── Add / Edit Teacher Modal ─────────────────────────────────── -->
+  <div class="pg-modal-backdrop" id="teacherModal" hidden>
+    <div class="pg-modal">
+      <div class="pg-modal-header">
+        <h2 class="pg-modal-title" id="teacherModalTitle">Add Teacher</h2>
+        <button class="pg-modal-close" id="closeTeacherModalBtn" type="button" aria-label="Close">×</button>
+      </div>
+      <div class="pg-modal-body">
+        <input type="hidden" id="editTeacherId" />
+        <div class="pg-form-grid">
+          <div class="pg-form-group">
+            <label class="pg-form-label" for="fTName">Full Name *</label>
+            <input class="pg-form-control" type="text" id="fTName" placeholder="e.g. Mr. B. Mwansa" />
+          </div>
+          <div class="pg-form-group">
+            <label class="pg-form-label" for="fTEmail">Email Address *</label>
+            <input class="pg-form-control" type="email" id="fTEmail" placeholder="teacher@school.zm" />
+          </div>
+          <div class="pg-form-group" id="passwordGroup">
+            <label class="pg-form-label" for="fTPassword">Password *</label>
+            <input class="pg-form-control" type="password" id="fTPassword" placeholder="Minimum 8 characters" />
+          </div>
+          <div class="pg-form-group">
+            <label class="pg-form-label" for="fTPhone">Phone (optional)</label>
+            <input class="pg-form-control" type="tel" id="fTPhone" placeholder="+260 9X XXXXXXX" />
+          </div>
+          <div class="pg-form-group pg-form-full">
+            <label class="pg-form-label" for="fTSubject">Primary Subject</label>
+            <select class="pg-form-control" id="fTSubject">
+              <option value="">Select Subject…</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="pg-modal-footer">
+        <button class="pg-btn-ghost" id="cancelTeacherModalBtn" type="button">Cancel</button>
+        <button class="pg-btn-primary" id="saveTeacherBtn" type="button">Save Teacher</button>
+      </div>
     </div>
   </div>
 
-  <script src="auth.js" defer></script>
-  <script src="auth-guard.js" defer></script>
+  <!-- ── View Teacher Detail Modal ────────────────────────────────── -->
+  <div class="pg-modal-backdrop" id="viewTeacherModal" hidden>
+    <div class="pg-modal">
+      <div class="pg-modal-header">
+        <h2 class="pg-modal-title">Teacher Profile</h2>
+        <button class="pg-modal-close" id="closeViewTeacherBtn" type="button" aria-label="Close">×</button>
+      </div>
+      <div class="pg-modal-body" id="viewTeacherContent"></div>
+      <div class="pg-modal-footer">
+        <button class="pg-btn-ghost" id="closeViewTeacherFooterBtn" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Deactivate Confirm ────────────────────────────────────────── -->
+  <div class="pg-modal-backdrop" id="deactivateModal" hidden>
+    <div class="pg-modal pg-modal-sm">
+      <div class="pg-modal-header">
+        <h2 class="pg-modal-title" id="deactivateModalTitle">Deactivate Teacher</h2>
+        <button class="pg-modal-close" id="closeDeactivateBtn" type="button" aria-label="Close">×</button>
+      </div>
+      <div class="pg-modal-body">
+        <p class="pg-confirm-text" id="deactivateConfirmText">Are you sure you want to deactivate this teacher?</p>
+      </div>
+      <div class="pg-modal-footer">
+        <button class="pg-btn-ghost" id="cancelDeactivateBtn" type="button">Cancel</button>
+        <button class="pg-btn-danger" id="confirmDeactivateBtn" type="button">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+  <script src="auth.js"></script>
+  <script src="auth-guard.js"></script>
   <script src="navigation.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      try {
-        const res = await authFetch(`${API_BASE}/users/teachers`);
-        if (res && res.ok) {
-          const teachers = await res.json();
-          if (Array.isArray(teachers) && teachers.length > 0) {
-            renderTeachersTable(teachers);
-          }
-        }
-      } catch (err) {
-        console.warn("Could not load teachers API:", err.message);
-      }
-    });
-
-    function renderTeachersTable(teachers) {
-      const tbody = document.getElementById('teachersTbody');
-      if (!tbody) return;
-
-      tbody.innerHTML = teachers.map((t, idx) => {
-        const initials = String(t.name || 'T').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
-        return `
-          <tr>
-            <td>${idx + 1}</td>
-            <td>
-              <div style="display:flex;align-items:center;gap:10px;">
-                <div style="width:32px;height:32px;border-radius:50%;background:#174A8B;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${initials}</div>
-                <span style="font-weight:600;color:var(--text-navy);">${_esc(t.name)}</span>
-              </div>
-            </td>
-            <td>${_esc(t.email)}</td>
-            <td>${_esc(t.role === 'staff' ? 'Teacher' : t.role)}</td>
-            <td><span class="badge badge-${t.is_active ? 'active' : 'inactive'}">${t.is_active ? 'Active' : 'Inactive'}</span></td>
-            <td>
-              <div class="actions">
-                <button class="action-btn view" title="View Profile">👁</button>
-                <button class="action-btn edit" title="Edit Teacher">✏️</button>
-              </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    function _esc(str) { return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-  </script>
+  <script src="teachers.js"></script>
 </body>
 
 </html>
