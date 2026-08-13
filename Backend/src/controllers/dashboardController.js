@@ -12,7 +12,7 @@ const getDashboardStats = async (req, res) => {
         );
 
         const [[{ totalTeachers }]] = await pool.execute(
-            "SELECT COUNT(*) AS totalTeachers FROM users WHERE role = 'teacher'"
+            "SELECT COUNT(*) AS totalTeachers FROM users WHERE role IN ('staff', 'headmaster') AND is_active = 1"
         );
 
         const [[{ totalClasses }]] = await pool.execute(

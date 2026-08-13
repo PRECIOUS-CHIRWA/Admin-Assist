@@ -26,7 +26,7 @@ const globalSearch = async (req, res) => {
         const [teachers] = await pool.execute(
             `SELECT id, name, email, role, is_active
              FROM users
-             WHERE (name LIKE ? OR email LIKE ?) AND role IN ('staff', 'teacher', 'admin', 'headmaster')
+             WHERE (name LIKE ? OR email LIKE ?) AND role IN ('staff', 'admin', 'headmaster')
              LIMIT 10`,
             [term, term]
         );
@@ -55,7 +55,7 @@ const globalSearch = async (req, res) => {
                 name: t.name,
                 email: t.email,
                 role: t.role,
-                type: 'teacher'
+                type: 'staff'
             })),
             classes: classes.map(c => ({
                 id: c.id,

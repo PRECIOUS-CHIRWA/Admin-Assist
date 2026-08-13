@@ -16,6 +16,8 @@ const reportRoutes = require("./routes/reportRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const searchRoutes = require("./routes/searchRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const teacherRoutes      = require("./routes/teacherRoutes");
+const settingsRoutes     = require("./routes/settingsRoutes");
 
 const app = express();
 
@@ -39,7 +41,11 @@ app.use(cors({
     origin: (origin, callback) => {
         if (!origin) return callback(null, true);
         if (allowedOrigins.includes(origin)) return callback(null, true);
-        callback(null, true); // Permissive in dev to avoid CORS blocking frontend preview
+        if (process.env.NODE_ENV !== "production") {
+            callback(null, true); // Permissive in dev/preview to avoid CORS blocking frontend preview
+        } else {
+            callback(new Error("CORS: origin not allowed"));
+        }
     },
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -84,6 +90,8 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/teachers", teacherRoutes);
+app.use("/api/settings", settingsRoutes);
 app.use("/api", panelRoutes);
 
 // Health check

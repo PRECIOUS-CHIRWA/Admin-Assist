@@ -9,13 +9,16 @@
 
     const PAGE_SIZE = 10;
 
-    let allTeachers = [];
+    let allTeachers = [];    // current page only (for modal lookups)
     let allAssignments = [];
     let allSubjects = [];
     let filtered = [];
     let currentPage = 1;
+    let totalTeachers = 0;  // server-reported total
     let deactivateTargetId = null;
     let deactivateTargetName = '';
+    let searchQuery = '';
+    let statusFilter = '';
 
     document.addEventListener('DOMContentLoaded', async function () {
         await Promise.all([loadSubjects(), loadTeachers()]);
@@ -42,20 +45,30 @@
 
     async function loadTeachers() {
         try {
+            const qs = new URLSearchParams({
+                page: currentPage,
+                limit: PAGE_SIZE,
+            });
+            if (searchQuery) qs.set('search', searchQuery);
+            if (statusFilter) qs.set('status', statusFilter);
+
             const [tRes, aRes] = await Promise.all([
-                apiFetch('/api/search/users?role=teacher'),
+                apiFetch('/api/teachers?' + qs.toString()),
                 apiFetch('/api/subjects/assignments/list'),
             ]);
 
-            allTeachers = tRes && tRes.ok ? await tRes.json() : [];
+            const tData = tRes && tRes.ok ? await tRes.json() : { teachers: [], total: 0 };
+            allTeachers    = tData.teachers || [];
+            totalTeachers  = tData.total    || 0;
             allAssignments = aRes && aRes.ok ? await aRes.json() : [];
 
-            // Update stat cards
-            _setText('statTotal', allTeachers.length);
-            _setText('statActive', allTeachers.filter(function (t) { return t.is_active !== 0; }).length);
+            // Update stat cards (totals from server)
+            _setText('statTotal',    totalTeachers);
+            _setText('statActive',   allTeachers.filter(function (t) { return t.is_active !== 0; }).length);
             _setText('statSubjects', allAssignments.length);
 
-            applyFilters();
+            renderTable();
+            renderPagination();
         } catch (err) {
             console.error('loadTeachers:', err);
             document.getElementById('teachersBody').innerHTML =
@@ -66,36 +79,26 @@
     /* ── Filter & render ──────────────────────────────────────────── */
 
     function applyFilters() {
-        const q = (document.getElementById('teacherSearch').value || '').toLowerCase().trim();
-        const status = document.getElementById('statusFilter').value;
-
-        filtered = allTeachers.filter(function (t) {
-            const matchQ = !q || (t.name || '').toLowerCase().includes(q) || (t.email || '').toLowerCase().includes(q);
-            const active = t.is_active !== 0;
-            const matchS = !status
-                ? true
-                : status === 'active' ? active
-                    : status === 'inactive' ? !active
-                        : true;
-            return matchQ && matchS;
-        });
-
-        currentPage = 1;
-        renderTable();
-        renderPagination();
+        searchQuery  = (document.getElementById('teacherSearch').value || '').trim();
+        statusFilter = document.getElementById('statusFilter').value;
+        currentPage  = 1;
+        loadTeachers();
     }
+
+    // renderTable and renderPagination now use server-page data directly
 
     function renderTable() {
         const tbody = document.getElementById('teachersBody');
-        const start = (currentPage - 1) * PAGE_SIZE;
-        const page = filtered.slice(start, start + PAGE_SIZE);
+        const page  = allTeachers; // server already returns the correct page
         const count = document.getElementById('teacherCount');
-        if (count) count.textContent = filtered.length + ' teacher' + (filtered.length !== 1 ? 's' : '');
+        if (count) count.textContent = totalTeachers + ' teacher' + (totalTeachers !== 1 ? 's' : '');
 
         if (!page.length) {
             tbody.innerHTML = '<tr><td colspan="6" class="pg-empty-cell">No teachers match your search.</td></tr>';
             return;
         }
+
+        const start = (currentPage - 1) * PAGE_SIZE;
 
         tbody.innerHTML = page.map(function (t, i) {
             const rowNum = start + i + 1;
@@ -170,14 +173,14 @@
     }
 
     function renderPagination() {
-        const total = Math.ceil(filtered.length / PAGE_SIZE);
-        const info = document.getElementById('paginationInfo');
-        const btns = document.getElementById('paginationBtns');
+        const total = Math.ceil(totalTeachers / PAGE_SIZE);
+        const info  = document.getElementById('paginationInfo');
+        const btns  = document.getElementById('paginationBtns');
         if (!info || !btns) return;
 
-        const s = filtered.length ? (currentPage - 1) * PAGE_SIZE + 1 : 0;
-        const e = Math.min(currentPage * PAGE_SIZE, filtered.length);
-        info.textContent = 'Showing ' + s + ' to ' + e + ' of ' + filtered.length + ' teachers';
+        const s = totalTeachers ? (currentPage - 1) * PAGE_SIZE + 1 : 0;
+        const e = Math.min(currentPage * PAGE_SIZE, totalTeachers);
+        info.textContent = 'Showing ' + s + ' to ' + e + ' of ' + totalTeachers + ' teachers';
 
         let html = '<button class="pg-page-btn" id="prevPg"' + (currentPage <= 1 ? ' disabled' : '') + '>‹</button>';
         for (let p = 1; p <= total; p++) {
@@ -191,12 +194,12 @@
         btns.innerHTML = html;
 
         btns.querySelectorAll('[data-pg]').forEach(function (b) {
-            b.addEventListener('click', function () { currentPage = parseInt(b.dataset.pg); renderTable(); renderPagination(); });
+            b.addEventListener('click', function () { currentPage = parseInt(b.dataset.pg); loadTeachers(); });
         });
         const prev = document.getElementById('prevPg');
         const next = document.getElementById('nextPg');
-        if (prev) prev.addEventListener('click', function () { if (currentPage > 1) { currentPage--; renderTable(); renderPagination(); } });
-        if (next) next.addEventListener('click', function () { if (currentPage < total) { currentPage++; renderTable(); renderPagination(); } });
+        if (prev) prev.addEventListener('click', function () { if (currentPage > 1) { currentPage--; loadTeachers(); } });
+        if (next) next.addEventListener('click', function () { if (currentPage < total) { currentPage++; loadTeachers(); } });
     }
 
     /* ── View modal ──────────────────────────────────────────────── */
@@ -280,13 +283,11 @@
         try {
             let res;
             if (isEdit) {
-                // Update user details
-                res = await apiFetch('/api/users/' + id, { method: 'PUT', body: JSON.stringify({ name, email }) });
+                res = await apiFetch('/api/teachers/' + id, { method: 'PUT', body: JSON.stringify({ name, email }) });
             } else {
-                // Create new teacher account
-                res = await apiFetch('/api/auth/signup', {
+                res = await apiFetch('/api/teachers', {
                     method: 'POST',
-                    body: JSON.stringify({ name, email, password, role: 'teacher' }),
+                    body: JSON.stringify({ name, email, role: 'staff' }),
                 });
             }
 
@@ -295,10 +296,10 @@
                 throw new Error(d.error || 'Save failed');
             }
 
-            // If a primary subject was selected and this is a new teacher, create assignment
+            // If a primary subject was selected for a new teacher, create assignment
             if (!isEdit && subjectId) {
                 const userData = await res.json();
-                const newId = userData.user?.id || userData.id;
+                const newId = userData.teacher?.id || userData.id;
                 if (newId) {
                     const currentTerm = await _getCurrentTerm();
                     if (currentTerm) {
@@ -339,15 +340,12 @@
         btn.disabled = true;
 
         try {
-            const t = allTeachers.find(function (x) { return String(x.id) === String(deactivateTargetId); });
-            const active = t ? t.is_active !== 0 : true;
-            const res = await apiFetch('/api/users/' + deactivateTargetId, {
-                method: 'PUT',
-                body: JSON.stringify({ is_active: active ? 0 : 1 }),
+            const res = await apiFetch('/api/teachers/' + deactivateTargetId + '/status', {
+                method: 'PATCH',
             });
 
             if (res && res.status === 404) {
-                _toast('User management endpoint not yet enabled. Contact your administrator.', 'error');
+                _toast('Teacher not found.', 'error');
             } else if (!res || !res.ok) {
                 const d = await res.json().catch(function () { return {}; });
                 throw new Error(d.error || 'Update failed');

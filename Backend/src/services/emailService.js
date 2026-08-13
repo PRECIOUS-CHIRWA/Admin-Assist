@@ -110,4 +110,75 @@ const sendVerificationEmail = ({ to, verificationUrl }) => {
     });
 };
 
-module.exports = { sendVerificationEmail };
+const sendNewAccountEmail = ({ to, tempPassword, loginUrl }) => {
+    const subject = "Your Admin Assist account has been created";
+    const plainName = to.name || "there";
+    const safeName = escapeHtml(plainName);
+    const safeLoginUrl = escapeHtml(loginUrl);
+    const safePw = escapeHtml(tempPassword);
+
+    return sendTransactionalEmail({
+        to,
+        subject,
+        htmlContent: `
+            <html>
+              <body style="font-family: Arial, sans-serif; line-height: 1.5; color: #172033;">
+                <p>Hello ${safeName},</p>
+                <p>An Admin Assist account has been created for you. Your temporary password is:</p>
+                <p style="font-size:20px;font-weight:bold;letter-spacing:2px;background:#f0f4f8;padding:12px 18px;border-radius:6px;display:inline-block;">${safePw}</p>
+                <p>
+                  <a href="${safeLoginUrl}" style="display:inline-block;padding:12px 18px;background:#0f4c81;color:#ffffff;text-decoration:none;border-radius:6px;">
+                    Log in now
+                  </a>
+                </p>
+                <p>Please change your password immediately after logging in via Settings → Security.</p>
+                <p>This is an automated message from Admin Assist. Do not reply.</p>
+              </body>
+            </html>
+        `,
+        textContent: [
+            `Hello ${plainName},`,
+            "An Admin Assist account has been created for you.",
+            `Your temporary password is: ${tempPassword}`,
+            `Log in at: ${loginUrl}`,
+            "Please change your password immediately after logging in via Settings → Security.",
+        ].join("\n\n"),
+    });
+};
+
+const sendPasswordResetEmail = ({ to, resetUrl }) => {
+    const subject = "Reset your Admin Assist password";
+    const plainName = to.name || "there";
+    const safeName = escapeHtml(plainName);
+    const safeResetUrl = escapeHtml(resetUrl);
+
+    return sendTransactionalEmail({
+        to,
+        subject,
+        htmlContent: `
+            <html>
+              <body style="font-family: Arial, sans-serif; line-height: 1.5; color: #172033;">
+                <p>Hello ${safeName},</p>
+                <p>We received a request to reset your Admin Assist password.</p>
+                <p>
+                  <a href="${safeResetUrl}" style="display:inline-block;padding:12px 18px;background:#0f4c81;color:#ffffff;text-decoration:none;border-radius:6px;">
+                    Reset password
+                  </a>
+                </p>
+                <p>If the button does not work, copy and paste this link into your browser:</p>
+                <p><a href="${safeResetUrl}">${safeResetUrl}</a></p>
+                <p>This link expires in 1 hour. If you did not request a password reset, ignore this email — your password will not change.</p>
+              </body>
+            </html>
+        `,
+        textContent: [
+            `Hello ${plainName},`,
+            "We received a request to reset your Admin Assist password.",
+            "Reset your password here:",
+            resetUrl,
+            "This link expires in 1 hour. If you did not request this, ignore this email.",
+        ].join("\n\n"),
+    });
+};
+
+module.exports = { sendVerificationEmail, sendNewAccountEmail, sendPasswordResetEmail };

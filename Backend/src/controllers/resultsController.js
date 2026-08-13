@@ -108,7 +108,8 @@ const createResult = async (req, res) => {
     const fieldErr = requireFields(req.body, ["student_id", "subject_id", "class_id", "term_id", "academic_year_id"]);
     if (fieldErr) return res.status(400).json({ error: fieldErr });
 
-    const teacher_id = req.user.id;
+    // JWT payload uses `sub` (not `id`) — req.user.sub is the authenticated user's DB id
+    const teacher_id = req.user.sub;
     const total_marks = Number(test_mark) + Number(assignment_mark) + Number(exam_mark);
 
     // Default full marks: test=30, assignment=20, exam=50 (total 100)

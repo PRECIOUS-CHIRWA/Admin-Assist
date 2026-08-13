@@ -59,7 +59,11 @@ const signup = async (req, res) => {
         const name = String(req.body.name || "").trim();
         const email = normalizeEmail(req.body.email);
         const password = req.body.password;
-        const role = String(req.body.role || DEFAULT_ROLE).trim().toLowerCase();
+        // Role is ALWAYS forced to DEFAULT_ROLE ('user') on self-registration.
+        // Client-supplied role is intentionally ignored — privilege escalation via signup is not allowed.
+        // Users who need staff/headmaster/admin access should request it via:
+        //   POST /api/users/profile/role-request → admin review via GET/PUT /api/users/role-requests
+        const role = DEFAULT_ROLE;
 
         if (!name || !email || !password)
             return res.status(400).json({ error: "Name, email, and password are required" });
@@ -67,8 +71,6 @@ const signup = async (req, res) => {
             return res.status(400).json({ error: "Please provide a valid email address" });
         if (!isValidPassword(password))
             return res.status(400).json({ error: "Password must be at least 8 characters long" });
-        if (!ALLOWED_ROLES.has(role))
-            return res.status(400).json({ error: "Invalid user role" });
 
         const [existing] = await pool.execute(
             "SELECT id FROM users WHERE email = ? LIMIT 1", [email]
