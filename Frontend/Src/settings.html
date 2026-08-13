@@ -222,7 +222,7 @@
             </div>
           </div>
           <div class="settings-actions">
-            <button class="btn-secondary" type="button">Discard Changes</button>
+            <button class="btn-secondary" type="button" data-discard="general">Discard Changes</button>
             <button class="btn-primary" type="button" id="saveGeneralBtn">Save Changes</button>
           </div>
         </section>
@@ -252,8 +252,8 @@
             </div>
           </div>
           <div class="settings-actions">
-            <button class="btn-secondary" type="button">Discard Changes</button>
-            <button class="btn-primary" type="button">Save Profile</button>
+            <button class="btn-secondary" type="button" data-discard="profile">Discard Changes</button>
+            <button class="btn-primary" type="button" id="saveProfileBtn">Save Profile</button>
           </div>
         </section>
 
@@ -278,7 +278,7 @@
             </div>
           </div>
           <div class="settings-actions">
-            <button class="btn-primary" type="button">Change Password</button>
+            <button class="btn-primary" type="button" id="changePasswordBtn">Change Password</button>
           </div>
         </section>
 
@@ -304,7 +304,7 @@
           </div>
           <div class="settings-actions">
             <button class="btn-secondary" type="button">Discard</button>
-            <button class="btn-primary" type="button">Save</button>
+            <button class="btn-primary" type="button" id="saveSystemBtn">Save</button>
           </div>
         </section>
 
@@ -312,18 +312,21 @@
         <section class="settings-section" id="notifications">
           <h2>Notification Settings</h2>
           <p class="settings-desc">Choose what notifications you want to receive.</p>
-          <div style="display:flex;flex-direction:column;gap:14px;">
-            <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;">
-              <input type="checkbox" checked style="width:16px;height:16px;"> Attendance alerts
+          <p style="color:var(--aa-text-muted);font-size:13px;margin-bottom:20px;">
+            Notification preferences are saved with school settings. Real-time push notifications are coming in a future sprint.
+          </p>
+          <div style="display:flex;flex-direction:column;gap:14px;opacity:.55;">
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;">
+              <input type="checkbox" disabled style="width:16px;height:16px;"> Attendance alerts
             </label>
-            <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;">
-              <input type="checkbox" checked style="width:16px;height:16px;"> New student enrollments
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;">
+              <input type="checkbox" disabled style="width:16px;height:16px;"> New student enrollments
             </label>
-            <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;">
-              <input type="checkbox" style="width:16px;height:16px;"> Report generation complete
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;">
+              <input type="checkbox" disabled style="width:16px;height:16px;"> Report generation complete
             </label>
-            <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;">
-              <input type="checkbox" checked style="width:16px;height:16px;"> System announcements
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;">
+              <input type="checkbox" disabled style="width:16px;height:16px;"> System announcements
             </label>
           </div>
           <div class="settings-actions">
@@ -338,19 +341,7 @@
   <script src="auth.js"></script>
   <script src="auth-guard.js"></script>
   <script src="navigation.js"></script>
-  <script>
-    // Tab switching
-    document.querySelectorAll('.settings-nav-item').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var target = this.dataset.target;
-        document.querySelectorAll('.settings-nav-item').forEach(function(b) { b.classList.remove('is-active'); });
-        document.querySelectorAll('.settings-section').forEach(function(s) { s.classList.remove('is-active'); });
-        this.classList.add('is-active');
-        var section = document.getElementById(target);
-        if (section) section.classList.add('is-active');
-      });
-    });
-  </script>
+  <script src="settings.js"></script>
 </body>
 
 </html>

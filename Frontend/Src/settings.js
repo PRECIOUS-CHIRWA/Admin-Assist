@@ -1,0 +1,214 @@
+/**
+ * settings.js — Admin Assist Settings Page
+ * Wires all 5 setting tabs to real API endpoints.
+ *
+ * Load order: auth.js → auth-guard.js → navigation.js → settings.js
+ */
+(function () {
+    "use strict";
+
+    /* ── Tab switching ────────────────────────────────────── */
+    document.querySelectorAll(".settings-nav-item").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            var target = this.dataset.target;
+            document.querySelectorAll(".settings-nav-item").forEach(function (b) { b.classList.remove("is-active"); });
+            document.querySelectorAll(".settings-section").forEach(function (s) { s.classList.remove("is-active"); });
+            this.classList.add("is-active");
+            var section = document.getElementById(target);
+            if (section) section.classList.add("is-active");
+        });
+    });
+
+    /* ── Helpers ──────────────────────────────────────────── */
+    function _toast(msg, type) {
+        var c = document.getElementById("toast-container");
+        if (!c) {
+            c = document.createElement("div");
+            c.id = "toast-container";
+            Object.assign(c.style, { position: "fixed", bottom: "24px", right: "24px", zIndex: 9999, display: "flex", flexDirection: "column", gap: "8px" });
+            document.body.appendChild(c);
+        }
+        var el = document.createElement("div");
+        el.style.cssText = "padding:12px 18px;border-radius:8px;font-size:13px;font-weight:500;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.2);max-width:320px;";
+        el.style.background = type === "error" ? "#ef4444" : type === "success" ? "#10b981" : "#1B2A4A";
+        el.textContent = msg;
+        c.appendChild(el);
+        setTimeout(function () { el.remove(); }, 4000);
+    }
+
+    function _val(id) {
+        var el = document.getElementById(id);
+        return el ? el.value : "";
+    }
+    function _set(id, v) {
+        var el = document.getElementById(id);
+        if (el && v != null) el.value = v;
+    }
+
+    /* ── PROFILE TAB ──────────────────────────────────────── */
+    async function loadProfile() {
+        try {
+            var res = await apiFetch("/api/users/profile");
+            if (!res || !res.ok) return;
+            var data = await res.json();
+            var u = data.user || {};
+            _set("profileName",  u.name  || u.fullName || "");
+            _set("profileEmail", u.email || "");
+            _set("profileRole",  u.role  || "");
+        } catch (err) {
+            console.warn("loadProfile:", err.message);
+        }
+    }
+
+    async function saveProfile() {
+        var btn = document.getElementById("saveProfileBtn");
+        if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
+        try {
+            var name  = _val("profileName").trim();
+            var email = _val("profileEmail").trim();
+            if (!name || !email) { _toast("Name and email are required.", "error"); return; }
+            var res = await apiFetch("/api/users/profile", {
+                method: "PUT",
+                body: JSON.stringify({ name: name, email: email }),
+            });
+            if (!res || !res.ok) {
+                var d = await res.json().catch(function () { return {}; });
+                throw new Error(d.error || "Save failed");
+            }
+            _toast("Profile saved.", "success");
+        } catch (err) {
+            _toast(err.message || "Could not save profile.", "error");
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = "Save Profile"; }
+        }
+    }
+
+    /* ── SECURITY TAB ─────────────────────────────────────── */
+    async function savePassword() {
+        var btn = document.getElementById("changePasswordBtn");
+        if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
+        try {
+            var current  = _val("currentPassword");
+            var newPw    = _val("newPassword");
+            var confirm  = _val("confirmPassword");
+            if (!current || !newPw || !confirm) { _toast("All password fields are required.", "error"); return; }
+            if (newPw !== confirm) { _toast("New passwords do not match.", "error"); return; }
+            if (newPw.length < 8) { _toast("Password must be at least 8 characters.", "error"); return; }
+
+            var res = await apiFetch("/api/users/profile/password", {
+                method: "PUT",
+                body: JSON.stringify({ currentPassword: current, newPassword: newPw }),
+            });
+            if (!res || !res.ok) {
+                var d = await res.json().catch(function () { return {}; });
+                throw new Error(d.error || "Password change failed");
+            }
+            _toast("Password changed successfully.", "success");
+            _set("currentPassword", ""); _set("newPassword", ""); _set("confirmPassword", "");
+        } catch (err) {
+            _toast(err.message || "Could not change password.", "error");
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = "Change Password"; }
+        }
+    }
+
+    /* ── GENERAL TAB ──────────────────────────────────────── */
+    var _cachedSettings = null;
+
+    async function loadSettings() {
+        try {
+            var res = await apiFetch("/api/settings");
+            if (!res || !res.ok) return;
+            var data = await res.json();
+            var s = data.settings || {};
+            _cachedSettings = s;
+            _set("schoolName",    s.school_name         || "");
+            _set("academicYear",  s.academic_year_label || "");
+            _set("phoneNumber",   s.phone               || "");
+            _set("schoolAddress", s.address             || "");
+            _set("timezone",      s.timezone            || "Africa/Lusaka");
+            _set("dateFormat",    s.date_format         || "DD/MM/YYYY");
+        } catch (err) {
+            console.warn("loadSettings:", err.message);
+        }
+    }
+
+    async function saveGeneral() {
+        var btn = document.getElementById("saveGeneralBtn");
+        if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
+        try {
+            var payload = {
+                school_name:         _val("schoolName").trim() || undefined,
+                academic_year_label: _val("academicYear").trim() || undefined,
+                phone:               _val("phoneNumber").trim() || undefined,
+                address:             _val("schoolAddress").trim() || undefined,
+                timezone:            _val("timezone") || undefined,
+            };
+            // Remove undefined keys
+            Object.keys(payload).forEach(function (k) { if (!payload[k]) delete payload[k]; });
+            var res = await apiFetch("/api/settings", { method: "PUT", body: JSON.stringify(payload) });
+            if (!res || !res.ok) {
+                var d = await res.json().catch(function () { return {}; });
+                throw new Error(d.error || "Save failed");
+            }
+            _toast("General settings saved.", "success");
+        } catch (err) {
+            _toast(err.message || "Could not save settings.", "error");
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = "Save Changes"; }
+        }
+    }
+
+    /* ── SYSTEM TAB ───────────────────────────────────────── */
+    async function saveSystem() {
+        var btn = document.getElementById("saveSystemBtn");
+        if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
+        try {
+            var payload = {
+                date_format: _val("dateFormat") || undefined,
+            };
+            var res = await apiFetch("/api/settings", { method: "PUT", body: JSON.stringify(payload) });
+            if (!res || !res.ok) {
+                var d = await res.json().catch(function () { return {}; });
+                throw new Error(d.error || "Save failed");
+            }
+            _toast("System settings saved.", "success");
+        } catch (err) {
+            _toast(err.message || "Could not save system settings.", "error");
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = "Save"; }
+        }
+    }
+
+    /* ── Event binding ────────────────────────────────────── */
+    document.addEventListener("DOMContentLoaded", function () {
+        loadProfile();
+        loadSettings();
+
+        // Profile
+        var saveProfileBtn = document.getElementById("saveProfileBtn");
+        if (saveProfileBtn) saveProfileBtn.addEventListener("click", saveProfile);
+
+        // Security
+        var changePasswordBtn = document.getElementById("changePasswordBtn");
+        if (changePasswordBtn) changePasswordBtn.addEventListener("click", savePassword);
+
+        // General
+        var saveGeneralBtn = document.getElementById("saveGeneralBtn");
+        if (saveGeneralBtn) saveGeneralBtn.addEventListener("click", saveGeneral);
+
+        // System
+        var saveSystemBtn = document.getElementById("saveSystemBtn");
+        if (saveSystemBtn) saveSystemBtn.addEventListener("click", saveSystem);
+
+        // Discard buttons — reload from cache
+        document.querySelectorAll(".btn-secondary[data-discard]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                var panel = btn.dataset.discard;
+                if (panel === "general") loadSettings();
+                if (panel === "profile") loadProfile();
+            });
+        });
+    });
+
+})();
