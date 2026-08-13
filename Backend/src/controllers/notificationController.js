@@ -1,81 +1,81 @@
+/**
+ * notificationController.js
+ * Manages persistent user notifications from the `notifications` database table.
+ */
+"use strict";
+
 const pool = require("../config/db");
 
 /**
+ * Helper to push a notification into the DB for a specific user.
+ * Can be called by other controllers (e.g. results, attendance, enrollment).
+ */
+const sendNotification = async ({ userId, type = "system", title, description = null, entityType = null, entityId = null }) => {
+    try {
+        await pool.execute(
+            `INSERT INTO notifications (user_id, type, title, description, entity_type, entity_id)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [userId, type, title, description, entityType, entityId]
+        );
+    } catch (err) {
+        console.warn("sendNotification warning:", err.message);
+    }
+};
+
+/**
  * GET /api/notifications
- * Returns live system notifications & audit events for the logged-in user.
+ * Returns notifications for the logged-in user (req.user.sub).
  */
 const getNotifications = async (req, res) => {
+    const userId = req.user.sub;
     try {
-        // Attempt to fetch recent audit logs or system announcements
-        let activities = [];
-        try {
-            const [rows] = await pool.execute(
-                `SELECT al.id, al.action, al.entity_type, al.entity_id, al.details, al.created_at,
-                        u.name AS actorName, u.role AS actorRole
-                 FROM audit_log al
-                 LEFT JOIN users u ON u.id = al.actor_id
-                 ORDER BY al.created_at DESC
-                 LIMIT 20`
-            );
-            activities = rows;
-        } catch (dbErr) {
-            // audit_log table might not exist yet
-            activities = [];
+        let [rows] = await pool.execute(
+            `SELECT id, type, title, description, entity_type AS category, is_read, created_at AS timestamp
+             FROM notifications
+             WHERE user_id = ?
+             ORDER BY created_at DESC
+             LIMIT 30`,
+            [userId]
+        );
+
+        // If user has no explicit notifications yet, fetch recent audit log entries as notifications
+        if (rows.length === 0) {
+            try {
+                const [auditRows] = await pool.execute(
+                    `SELECT al.id, al.action AS title, al.entity_type AS category,
+                            CONCAT('Action: ', al.action, IF(u.name IS NOT NULL, CONCAT(' by ', u.name), '')) AS description,
+                            al.created_at AS timestamp
+                     FROM audit_log al
+                     LEFT JOIN users u ON u.id = al.actor_id
+                     ORDER BY al.created_at DESC
+                     LIMIT 10`
+                );
+                rows = auditRows.map(a => ({
+                    id: `audit-${a.id}`,
+                    type: "system",
+                    title: a.title,
+                    description: a.description,
+                    category: a.category || "System",
+                    is_read: 0,
+                    timestamp: a.timestamp,
+                }));
+            } catch (auditErr) {
+                rows = [];
+            }
         }
 
-        const notifications = [
-            {
-                id: "notif-1",
-                type: "announcement",
-                title: "End of Term Examinations Schedule Published",
-                description: "The official timetable for Grade 9 and Grade 12 exams is now available.",
-                timestamp: new Date(Date.now() - 3600000).toISOString(),
-                read: false,
-                category: "System"
-            },
-            {
-                id: "notif-2",
-                type: "attendance",
-                title: "Daily Attendance Reminder",
-                description: "Class teachers are reminded to mark morning attendance before 09:00 AM.",
-                timestamp: new Date(Date.now() - 7200000).toISOString(),
-                read: false,
-                category: "Attendance"
-            },
-            {
-                id: "notif-3",
-                type: "enrollment",
-                title: "New Student Registration",
-                description: "Precious Chirwa registered a new student in Grade 10A.",
-                timestamp: new Date(Date.now() - 14400000).toISOString(),
-                read: true,
-                category: "Students"
-            },
-            {
-                id: "notif-4",
-                type: "results",
-                title: "Term 2 Results Verification",
-                description: "Grade 12 Mathematics results are pending administrative approval.",
-                timestamp: new Date(Date.now() - 86400000).toISOString(),
-                read: true,
-                category: "Results"
-            }
-        ];
+        const formatted = rows.map(n => ({
+            id: n.id,
+            type: n.type || "system",
+            title: n.title,
+            description: n.description || "",
+            timestamp: n.timestamp,
+            read: Boolean(n.is_read),
+            category: n.category || "General",
+        }));
 
-        // Map live audit logs into notifications if present
-        activities.forEach((act, idx) => {
-            notifications.unshift({
-                id: `audit-${act.id || idx}`,
-                type: "system",
-                title: `${act.action} ${act.entity_type || 'Record'}`,
-                description: act.details ? (typeof act.details === 'string' ? act.details : JSON.stringify(act.details)) : `Action performed by ${act.actorName || 'User'}`,
-                timestamp: act.created_at || new Date().toISOString(),
-                read: false,
-                category: "Audit"
-            });
-        });
-
-        res.json({ notifications: notifications.slice(0, 20), unreadCount: notifications.filter(n => !n.read).length });
+        const unreadCount = formatted.filter(n => !n.read).length;
+        res.json({ notifications: formatted, unreadCount });
     } catch (err) {
         console.error("getNotifications error:", err.message);
         res.status(500).json({ error: "Could not load notifications" });
@@ -83,10 +83,45 @@ const getNotifications = async (req, res) => {
 };
 
 /**
- * POST /api/notifications/read-all
+ * PATCH /api/notifications/:id/read
+ * Mark a single notification as read.
  */
-const markAllAsRead = async (req, res) => {
-    res.json({ message: "All notifications marked as read" });
+const markOneAsRead = async (req, res) => {
+    const userId = req.user.sub;
+    const notifId = req.params.id;
+
+    if (String(notifId).startsWith("audit-")) {
+        return res.json({ message: "Notification marked as read" });
+    }
+
+    try {
+        await pool.execute(
+            "UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?",
+            [notifId, userId]
+        );
+        res.json({ message: "Notification marked as read" });
+    } catch (err) {
+        console.error("markOneAsRead error:", err.message);
+        res.status(500).json({ error: "Could not update notification" });
+    }
 };
 
-module.exports = { getNotifications, markAllAsRead };
+/**
+ * POST /api/notifications/read-all
+ * Mark all notifications for logged-in user as read.
+ */
+const markAllAsRead = async (req, res) => {
+    const userId = req.user.sub;
+    try {
+        await pool.execute(
+            "UPDATE notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0",
+            [userId]
+        );
+        res.json({ message: "All notifications marked as read" });
+    } catch (err) {
+        console.error("markAllAsRead error:", err.message);
+        res.status(500).json({ error: "Could not update notifications" });
+    }
+};
+
+module.exports = { sendNotification, getNotifications, markOneAsRead, markAllAsRead };

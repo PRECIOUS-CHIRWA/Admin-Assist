@@ -109,6 +109,21 @@ body {
     display: block;
 }
 
+.error-banner.success-banner {
+    background: #F0FDF4;
+    border-color: #BBF7D0;
+    border-left-color: #16A34A;
+    color: #15803D;
+}
+
+.signup-note {
+    font-size: 0.8rem;
+    color: #6B7280;
+    text-align: center;
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
 /* ─── Form ───────────────────────────────────────────────────── */
 .form-group {
     margin-bottom: 1.125rem;

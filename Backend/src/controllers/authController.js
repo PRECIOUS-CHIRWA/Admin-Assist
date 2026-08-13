@@ -2,6 +2,7 @@ const crypto = require("crypto");
 const { promisify } = require("util");
 const jwt = require("jsonwebtoken");
 const pool = require("../config/db");
+const { sendPasswordResetEmail } = require("../services/emailService");
 
 const scrypt = promisify(crypto.scrypt);
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -203,11 +204,11 @@ const logout = async (req, res) => {
     try {
         const raw = req.cookies?.refreshToken;
 
-        //  Delete the stored token hash so it can never be reused
         if (raw) {
+            const tokenHash = crypto.createHash("sha256").update(raw).digest("hex");
             await pool.execute(
                 "DELETE FROM refresh_tokens WHERE token_hash = ?",
-                [hashToken(raw)]
+                [tokenHash]
             );
         }
 
@@ -224,4 +225,82 @@ const logout = async (req, res) => {
     }
 };
 
-module.exports = { signup, login, getMe, logout };
+// ─── Forgot Password ──────────────
+// POST /api/auth/forgot-password  { email }
+// Always responds 200 to prevent email enumeration.
+const forgotPassword = async (req, res) => {
+    try {
+        const email = normalizeEmail(req.body.email);
+        if (!email) return res.status(400).json({ error: "Email is required" });
+
+        const [[user]] = await pool.execute(
+            "SELECT id, name, email FROM users WHERE email = ? AND is_active = 1 LIMIT 1",
+            [email]
+        );
+
+        // Respond identically whether or not the email exists
+        const safeReply = { message: "If that email is registered you will receive a reset link shortly" };
+
+        if (!user) return res.json(safeReply);
+
+        // Generate a secure token
+        const rawToken  = crypto.randomBytes(32).toString("hex");
+        const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+        // Invalidate any existing reset tokens for this user
+        await pool.execute("DELETE FROM password_reset_tokens WHERE user_id = ?", [user.id]);
+
+        await pool.execute(
+            "INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)",
+            [user.id, tokenHash, expiresAt]
+        );
+
+        const appUrl  = process.env.PUBLIC_APP_URL || "https://precious-chirwa.github.io/Admin-Assist/Frontend/Src";
+        const resetUrl = `${appUrl}/reset-password.html?token=${rawToken}`;
+
+        await sendPasswordResetEmail({ to: { name: user.name, email: user.email }, resetUrl }).catch(
+            (err) => console.warn("sendPasswordResetEmail failed (non-fatal):", err.message)
+        );
+
+        res.json(safeReply);
+    } catch (err) {
+        console.error("forgotPassword error:", err.message);
+        res.status(500).json({ error: "Something went wrong" });
+    }
+};
+
+// ─── Reset Password ───────────────
+// POST /api/auth/reset-password  { token, newPassword }
+const resetPassword = async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+        if (!token || !newPassword) return res.status(400).json({ error: "Token and new password are required" });
+        if (!isValidPassword(newPassword)) return res.status(400).json({ error: "Password must be at least 8 characters" });
+
+        const tokenHash = crypto.createHash("sha256").update(String(token)).digest("hex");
+        const [[row]] = await pool.execute(
+            "SELECT * FROM password_reset_tokens WHERE token_hash = ? LIMIT 1",
+            [tokenHash]
+        );
+
+        if (!row) return res.status(400).json({ error: "Invalid or expired reset link" });
+        if (new Date(row.expires_at) < new Date()) {
+            await pool.execute("DELETE FROM password_reset_tokens WHERE id = ?", [row.id]);
+            return res.status(400).json({ error: "Reset link has expired — please request a new one" });
+        }
+
+        const passwordHash = await hashPassword(newPassword);
+        await pool.execute("UPDATE users SET password_hash = ? WHERE id = ?", [passwordHash, row.user_id]);
+        await pool.execute("DELETE FROM password_reset_tokens WHERE user_id = ?", [row.user_id]);
+        // Also revoke all refresh tokens so hijacked sessions are invalidated
+        await pool.execute("DELETE FROM refresh_tokens WHERE user_id = ?", [row.user_id]);
+
+        res.json({ message: "Password reset successfully — you can now log in with your new password" });
+    } catch (err) {
+        console.error("resetPassword error:", err.message);
+        res.status(500).json({ error: "Something went wrong" });
+    }
+};
+
+module.exports = { signup, login, getMe, logout, forgotPassword, resetPassword };
