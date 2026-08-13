@@ -29,7 +29,7 @@ router.get("/teachers", authenticate, authorize("admin", "headmaster"), async (r
         const [rows] = await pool.execute(
             `SELECT id, name, email, role, is_active, created_at
              FROM users
-             WHERE role IN ('staff', 'teacher', 'admin', 'headmaster')
+             WHERE role IN ('staff', 'admin', 'headmaster')
              ORDER BY name ASC`
         );
         res.json(rows);

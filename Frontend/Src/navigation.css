@@ -1,20 +1,54 @@
 /*
- * navigation.css — Admin Assist Navigation Supplements
- * Provides static fallback styles for the navigation shell.
- * navigation.js injects the main sidebar styles dynamically;
- * this file supplements with page-layout helpers.
+ * navigation.css — Admin Assist Navigation Supplement
+ * Static CSS that loads before navigation.js injects its dynamic styles.
+ * Prevents content flash (FOUC) during page load.
  */
 
-/* ─── Sidebar font inheritance ──────────────────────────────── */
-#app-sidebar {
+/* Reserve sidebar space on page load */
+body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-/* ─── Scroll padding to account for sticky header ───────────── */
-html {
-    scroll-padding-top: 80px;
+/* Ensure all inner-app pages have space for the fixed sidebar + topbar */
+.main-container,
+main:not(.landing-main) {
+    margin-left: 220px;
+    padding-top: 64px;
+    min-height: 100vh;
+    background: #F0F2F5;
+    padding-left: 28px;
+    padding-right: 28px;
+    padding-bottom: 28px;
 }
 
+<<<<<<< HEAD
+@media (max-width: 768px) {
+
+    .main-container,
+    main:not(.landing-main) {
+        margin-left: 0;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+}
+
+/* Smooth sidebar transition */
+#app-sidebar {
+    transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+}
+
+/* Active link gold accent */
+.sb-link.active::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 6px;
+    bottom: 6px;
+    width: 3px;
+    background: #C9A227;
+    border-radius: 0 3px 3px 0;
+}
+=======
 /* ─── Ensure sidebar text colors update on theme change ─────── */
 /* Reference shell: compact navy sidebar, white content header, gold brand accent. */
 #app-sidebar {
@@ -41,3 +75,4 @@ html {
     background: var(--aa-sidebar-bg, #062b55) !important;
     border-right-color: rgba(255,255,255,.06) !important;
 }
+>>>>>>> 466227a870817ebebce5c853fefa901361901cc4
