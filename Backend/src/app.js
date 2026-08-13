@@ -17,10 +17,20 @@ const reportRoutes = require("./routes/reportRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const searchRoutes = require("./routes/searchRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
-const teacherRoutes      = require("./routes/teacherRoutes");
-const settingsRoutes     = require("./routes/settingsRoutes");
+const teacherRoutes = require("./routes/teacherRoutes");
+const settingsRoutes = require("./routes/settingsRoutes");
 
 const app = express();
+
+// ─── Trust Proxy ─────────────────────────────────────────────────────────────
+// Render (and most PaaS hosts) put the app behind exactly one reverse proxy,
+// which sets X-Forwarded-For. Without this, req.ip resolves to the proxy's
+// IP for every request, so express-rate-limit would bucket ALL users under
+// one shared limit, and Express refuses to trust the header by default.
+// "1" means "trust exactly one hop upstream" — do NOT use `true` here, that
+// trusts every hop and lets a client spoof X-Forwarded-For to dodge rate
+// limiting entirely.
+app.set("trust proxy", 1);
 
 // ─── Security Headers ────────────────────────────────────────────────────────
 app.use(helmet());
