@@ -27,7 +27,7 @@
     var NAV_ITEMS = [
         { href: 'dashboard.html', label: 'Dashboard', icon: 'dashboard', roles: [] },
         { href: 'students.html', label: 'Enrollment', icon: 'students', roles: [] },
-        { href: 'teachers.html', label: 'Teachers', icon: 'teachers', roles: ['admin', 'headmaster', 'staff'] },
+        { href: 'teachers.html', label: 'Staff', icon: 'teachers', roles: ['admin', 'headmaster', 'staff'] },
         { href: 'attendance-management.html', label: 'Attendance', icon: 'attendance', roles: [] },
         { href: 'academic-records.html', label: 'Results', icon: 'results', roles: [] },
         { href: 'reports-dashboard.html', label: 'Reports', icon: 'reports', roles: ['admin', 'headmaster', 'staff'] },

@@ -29,7 +29,7 @@
 
     async function loadSubjects() {
         try {
-            const res = await apiFetch('/api/subjects?is_active=1');
+            const res = await apiFetch('/subjects?is_active=1');
             if (!res || !res.ok) return;
             allSubjects = await res.json();
             const sel = document.getElementById('fTSubject');
@@ -53,8 +53,8 @@
             if (statusFilter) qs.set('status', statusFilter);
 
             const [tRes, aRes] = await Promise.all([
-                apiFetch('/api/teachers?' + qs.toString()),
-                apiFetch('/api/subjects/assignments/list'),
+                apiFetch('/teachers?' + qs.toString()),
+                apiFetch('/subjects/assignments/list'),
             ]);
 
             const tData = tRes && tRes.ok ? await tRes.json() : { teachers: [], total: 0 };
@@ -241,7 +241,6 @@
         document.getElementById('teacherModalTitle').textContent = 'Add Teacher';
         document.getElementById('fTName').value = '';
         document.getElementById('fTEmail').value = '';
-        document.getElementById('fTPassword').value = '';
         document.getElementById('fTPhone').value = '';
         document.getElementById('fTSubject').value = '';
         document.getElementById('passwordGroup').style.display = '';
@@ -255,9 +254,8 @@
         document.getElementById('teacherModalTitle').textContent = 'Edit Teacher';
         document.getElementById('fTName').value = t.name || '';
         document.getElementById('fTEmail').value = t.email || '';
-        document.getElementById('fTPassword').value = '';
         document.getElementById('fTPhone').value = t.phone || '';
-        document.getElementById('passwordGroup').style.display = 'none'; // hide pwd on edit
+        document.getElementById('passwordGroup').style.display = 'none'; // hide on edit
         // Set primary subject from assignments
         const assigns = allAssignments.filter(function (a) { return a.teacher_id === t.id; });
         if (assigns.length) document.getElementById('fTSubject').value = assigns[0].subject_id || '';
@@ -271,21 +269,18 @@
 
         const name = document.getElementById('fTName').value.trim();
         const email = document.getElementById('fTEmail').value.trim();
-        const password = document.getElementById('fTPassword').value;
         const subjectId = document.getElementById('fTSubject').value;
 
         if (!name || !email) { _toast('Name and email are required.', 'error'); return; }
-        if (!isEdit && !password) { _toast('Password is required for new teachers.', 'error'); return; }
-        if (!isEdit && password.length < 8) { _toast('Password must be at least 8 characters.', 'error'); return; }
 
         btn.disabled = true; btn.textContent = 'Saving…';
 
         try {
             let res;
             if (isEdit) {
-                res = await apiFetch('/api/teachers/' + id, { method: 'PUT', body: JSON.stringify({ name, email }) });
+                res = await apiFetch('/teachers/' + id, { method: 'PUT', body: JSON.stringify({ name, email }) });
             } else {
-                res = await apiFetch('/api/teachers', {
+                res = await apiFetch('/teachers', {
                     method: 'POST',
                     body: JSON.stringify({ name, email, role: 'staff' }),
                 });
@@ -298,12 +293,12 @@
 
             // If a primary subject was selected for a new teacher, create assignment
             if (!isEdit && subjectId) {
-                const userData = await res.json();
-                const newId = userData.teacher?.id || userData.id;
+                const userData = await res.clone().json().catch(function () { return {}; });
+                const newId = (userData.teacher && userData.teacher.id) || userData.id;
                 if (newId) {
                     const currentTerm = await _getCurrentTerm();
                     if (currentTerm) {
-                        await apiFetch('/api/subjects/assign', {
+                        await apiFetch('/subjects/assign', {
                             method: 'POST',
                             body: JSON.stringify({
                                 teacher_id: newId, subject_id: subjectId,
@@ -326,7 +321,7 @@
 
     async function _getCurrentTerm() {
         try {
-            const res = await apiFetch('/api/attendance/terms');
+            const res = await apiFetch('/attendance/terms');
             const terms = await res.json();
             return terms.find(function (t) { return t.is_current; }) || terms[0] || null;
         } catch { return null; }
@@ -340,7 +335,7 @@
         btn.disabled = true;
 
         try {
-            const res = await apiFetch('/api/teachers/' + deactivateTargetId + '/status', {
+            const res = await apiFetch('/teachers/' + deactivateTargetId + '/status', {
                 method: 'PATCH',
             });
 
