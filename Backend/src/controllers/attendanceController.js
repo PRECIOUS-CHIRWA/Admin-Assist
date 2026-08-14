@@ -15,17 +15,6 @@ const requireFields = (body, fields) => {
 };
 
 /**
- * Helper: extracts user's school_id from JWT payload or defaults to 1.
- * Enforces School-Level Data Isolation.
- */
-const getSchoolId = (req) => {
-    if (req.user && (req.user.school_id || req.user.schoolId)) {
-        return parseInt(req.user.school_id || req.user.schoolId, 10);
-    }
-    return 1;
-};
-
-/**
  * Helper: validates YYYY-MM-DD date strings
  */
 const isValidDateStr = (dateStr) => {
@@ -40,17 +29,14 @@ const isValidDateStr = (dateStr) => {
 
 /**
  * GET /api/attendance/academic-years (or /api/attendance/years)
- * Returns all academic years for the user's school, ordered newest first.
+ * Returns all academic years ordered newest first.
  */
 const getAcademicYears = async (req, res) => {
-    const school_id = getSchoolId(req);
     try {
         const [rows] = await pool.execute(
             `SELECT id, year_label, start_date, end_date, is_current
              FROM   academic_years
-             WHERE  school_id = ?
-             ORDER BY year_label DESC`,
-            [school_id]
+             ORDER BY year_label DESC`
         );
         res.json(rows);
     } catch (err) {
@@ -68,21 +54,20 @@ const getAcademicYears = async (req, res) => {
 /**
  * GET /api/attendance/terms
  * Query params: academicYearId or academic_year_id (optional)
- * Returns all terms belonging to the user's school, filtered by academic year if supplied.
+ * Returns all terms, filtered by academic year if supplied.
  */
 const getTerms = async (req, res) => {
-    const school_id = getSchoolId(req);
     const academic_year_id = req.query.academicYearId || req.query.academic_year_id;
 
-    const filters = ["t.school_id = ?"];
-    const values = [school_id];
+    const filters = [];
+    const values = [];
 
     if (academic_year_id) {
         filters.push("t.academic_year_id = ?");
         values.push(academic_year_id);
     }
 
-    const where = `WHERE ${filters.join(" AND ")}`;
+    const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
 
     try {
         const [rows] = await pool.execute(
@@ -111,10 +96,9 @@ const getTerms = async (req, res) => {
 /**
  * GET /api/attendance/classes
  * Query params: academicYearId or academic_year_id (optional)
- * Lists all class sections for the school with student count.
+ * Lists all class sections with student count.
  */
 const getClasses = async (req, res) => {
-    const school_id = getSchoolId(req);
     try {
         const [rows] = await pool.execute(
             `SELECT c.id, c.grade_level, c.stream,
@@ -125,10 +109,8 @@ const getClasses = async (req, res) => {
              FROM   classes c
              LEFT JOIN users u ON u.id = c.class_teacher_id
              LEFT JOIN students s ON (s.class_id = c.id OR CONCAT(s.grade, IF(s.section != '' AND s.section IS NOT NULL, CONCAT(' ', s.section), '')) = CONCAT(c.grade_level, IF(c.stream != '' AND c.stream IS NOT NULL, CONCAT(' ', c.stream), ''))) AND s.status = 'Active'
-             WHERE  c.school_id = ?
              GROUP BY c.id
-             ORDER BY c.grade_level, c.stream`,
-            [school_id]
+             ORDER BY c.grade_level, c.stream`
         );
         res.json(rows);
     } catch (err) {
@@ -143,22 +125,21 @@ const getClasses = async (req, res) => {
 /**
  * GET /api/attendance/subjects
  * Query params: classId or class_id (optional), is_active (optional)
- * Returns active subjects for the school.
+ * Returns active subjects.
  */
 const getSubjects = async (req, res) => {
-    const school_id = getSchoolId(req);
     const { is_active = 1, classId, class_id } = req.query;
     const targetClassId = classId || class_id;
 
-    const filters = ["s.school_id = ?"];
-    const values = [school_id];
+    const filters = [];
+    const values = [];
 
     if (is_active !== undefined) {
         filters.push("s.is_active = ?");
         values.push(is_active);
     }
 
-    const where = `WHERE ${filters.join(" AND ")}`;
+    const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
 
     try {
         let sql = `SELECT s.id, s.subject_code, s.subject_name, s.description, s.is_active
@@ -195,7 +176,6 @@ const getSubjects = async (req, res) => {
  * Returns active enrolled students in the class, class metadata, and existing session details if present.
  */
 const getRegister = async (req, res) => {
-    const school_id = getSchoolId(req);
     const class_id = req.query.class_id || req.query.classId;
     const term_id = req.query.term_id || req.query.termId;
     const academic_year_id = req.query.academic_year_id || req.query.academicYearId || req.query.yearId;
@@ -215,12 +195,12 @@ const getRegister = async (req, res) => {
                     u.name AS class_teacher_name
              FROM   classes c
              LEFT JOIN users u ON u.id = c.class_teacher_id
-             WHERE  c.id = ? AND c.school_id = ?`,
-            [class_id, school_id]
+             WHERE  c.id = ?`,
+            [class_id]
         );
 
         if (!classInfo) {
-            return res.status(404).json({ error: "Class not found or does not belong to your school" });
+            return res.status(404).json({ error: "Class not found" });
         }
 
         // 2. Fetch Active students enrolled in this class
@@ -229,9 +209,8 @@ const getRegister = async (req, res) => {
              FROM   students s
              WHERE  (s.class_id = ? OR CONCAT(s.grade, IF(s.section != '' AND s.section IS NOT NULL, CONCAT(' ', s.section), '')) = ?)
                AND  s.status = 'Active'
-               AND  s.school_id = ?
              ORDER BY s.last_name, s.first_name`,
-            [class_id, classInfo.class_name, school_id]
+            [class_id, classInfo.class_name]
         );
 
         // 3. Check for an existing session matching this class, date, period, and optional subject
@@ -240,14 +219,14 @@ const getRegister = async (req, res) => {
 
         if (attendance_date) {
             const subjectCondition = subject_id ? "AND s.subject_id = ?" : "AND (s.subject_id IS NULL OR s.subject_id = 0)";
-            const sessionParams = [class_id, attendance_date, period, school_id];
+            const sessionParams = [class_id, attendance_date, period];
             if (subject_id) sessionParams.push(subject_id);
 
             const [[sess]] = await pool.execute(
                 `SELECT s.id, s.attendance_date, s.period, s.notes, s.teacher_id, u.name AS teacher_name, s.created_at
                  FROM   attendance_sessions s
                  LEFT JOIN users u ON u.id = s.teacher_id
-                 WHERE  s.class_id = ? AND s.attendance_date = ? AND s.period = ? AND s.school_id = ?
+                 WHERE  s.class_id = ? AND s.attendance_date = ? AND s.period = ?
                         ${subjectCondition}
                  LIMIT 1`,
                 sessionParams
@@ -303,7 +282,6 @@ const getRegister = async (req, res) => {
  * Creates or retrieves a session for a class/date/period.
  */
 const createSession = async (req, res) => {
-    const school_id = getSchoolId(req);
     const teacher_id = req.user.sub || req.user.id;
 
     const {
@@ -324,23 +302,23 @@ const createSession = async (req, res) => {
     }
 
     try {
-        // Verify class belongs to user's school
+        // Verify class exists
         const [[cls]] = await pool.execute(
-            "SELECT id FROM classes WHERE id = ? AND school_id = ?",
-            [class_id, school_id]
+            "SELECT id FROM classes WHERE id = ?",
+            [class_id]
         );
         if (!cls) {
-            return res.status(404).json({ error: "Class not found or does not belong to your school" });
+            return res.status(404).json({ error: "Class not found" });
         }
 
         // Check if session already exists
         const subjectCondition = subject_id ? "AND subject_id = ?" : "AND (subject_id IS NULL OR subject_id = 0)";
-        const checkParams = [class_id, attendance_date, period, school_id];
+        const checkParams = [class_id, attendance_date, period];
         if (subject_id) checkParams.push(subject_id);
 
         const [[existing]] = await pool.execute(
             `SELECT id FROM attendance_sessions
-             WHERE  class_id = ? AND attendance_date = ? AND period = ? AND school_id = ? ${subjectCondition}
+             WHERE  class_id = ? AND attendance_date = ? AND period = ? ${subjectCondition}
              LIMIT 1`,
             checkParams
         );
@@ -372,9 +350,9 @@ const createSession = async (req, res) => {
         // Insert new session
         const [result] = await pool.execute(
             `INSERT INTO attendance_sessions
-             (school_id, class_id, subject_id, teacher_id, term_id, academic_year_id, attendance_date, period, notes)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [school_id, class_id, subject_id || null, teacher_id, term_id, academic_year_id, attendance_date, period, notes]
+             (class_id, subject_id, teacher_id, term_id, academic_year_id, attendance_date, period, notes)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [class_id, subject_id || null, teacher_id, term_id, academic_year_id, attendance_date, period, notes]
         );
 
         const [[session]] = await pool.execute(
@@ -407,7 +385,6 @@ const createSession = async (req, res) => {
  * Returns list of sessions with per-session status counts and attendance rate.
  */
 const getSessions = async (req, res) => {
-    const school_id = getSchoolId(req);
     const {
         class_id, classId,
         teacher_id, teacherId,
@@ -424,8 +401,8 @@ const getSessions = async (req, res) => {
     const targetFrom = from_date || fromDate;
     const targetTo = to_date || toDate;
 
-    const filters = ["s.school_id = ?"];
-    const values = [school_id];
+    const filters = [];
+    const values = [];
 
     if (targetClass) { filters.push("s.class_id = ?"); values.push(targetClass); }
     if (targetTeacher) { filters.push("s.teacher_id = ?"); values.push(targetTeacher); }
@@ -434,7 +411,7 @@ const getSessions = async (req, res) => {
     if (targetFrom) { filters.push("s.attendance_date >= ?"); values.push(targetFrom); }
     if (targetTo) { filters.push("s.attendance_date <= ?"); values.push(targetTo); }
 
-    const where = `WHERE ${filters.join(" AND ")}`;
+    const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
 
     try {
         const [rows] = await pool.execute(
@@ -475,7 +452,6 @@ const getSessions = async (req, res) => {
  * Returns session details + list of all student records.
  */
 const getSessionById = async (req, res) => {
-    const school_id = getSchoolId(req);
     const { id } = req.params;
 
     try {
@@ -489,8 +465,8 @@ const getSessionById = async (req, res) => {
              JOIN   terms         t   ON t.id   = s.term_id
              JOIN   academic_years ay ON ay.id  = s.academic_year_id
              LEFT JOIN subjects   sub ON sub.id = s.subject_id
-             WHERE  s.id = ? AND s.school_id = ?`,
-            [id, school_id]
+             WHERE  s.id = ?`,
+            [id]
         );
 
         if (!session) return res.status(404).json({ error: "Session not found" });
@@ -517,14 +493,13 @@ const getSessionById = async (req, res) => {
  * Updates session metadata.
  */
 const updateSession = async (req, res) => {
-    const school_id = getSchoolId(req);
     const { id } = req.params;
     const { attendance_date, period, notes, subject_id } = req.body;
 
     try {
         const [[existing]] = await pool.execute(
-            "SELECT id FROM attendance_sessions WHERE id = ? AND school_id = ?",
-            [id, school_id]
+            "SELECT id FROM attendance_sessions WHERE id = ?",
+            [id]
         );
         if (!existing) return res.status(404).json({ error: "Session not found" });
 
@@ -562,13 +537,12 @@ const updateSession = async (req, res) => {
  * Deletes attendance session and cascades to attendance_records.
  */
 const deleteSession = async (req, res) => {
-    const school_id = getSchoolId(req);
     const { id } = req.params;
 
     try {
         const [result] = await pool.execute(
-            "DELETE FROM attendance_sessions WHERE id = ? AND school_id = ?",
-            [id, school_id]
+            "DELETE FROM attendance_sessions WHERE id = ?",
+            [id]
         );
         if (result.affectedRows === 0) return res.status(404).json({ error: "Session not found" });
         res.json({ message: "Session and all associated records deleted successfully" });
@@ -586,7 +560,6 @@ const deleteSession = async (req, res) => {
  * Body: { records: [{ student_id, status, remarks? }] }
  */
 const submitSessionAttendance = async (req, res) => {
-    const school_id = getSchoolId(req);
     const { id } = req.params;
     const { records } = req.body;
     const recorded_by = req.user.sub || req.user.id;
@@ -602,12 +575,12 @@ const submitSessionAttendance = async (req, res) => {
         if (err) return res.status(400).json({ error: `Student ID ${r.student_id}: ${err}` });
     }
 
-    // Confirm session exists for this school
+    // Confirm session exists
     const [[session]] = await pool.execute(
-        "SELECT id FROM attendance_sessions WHERE id = ? AND school_id = ?",
-        [id, school_id]
+        "SELECT id FROM attendance_sessions WHERE id = ?",
+        [id]
     );
-    if (!session) return res.status(404).json({ error: "Session not found or forbidden" });
+    if (!session) return res.status(404).json({ error: "Session not found" });
 
     const conn = await pool.getConnection();
     try {
@@ -714,12 +687,11 @@ const deleteAttendanceRecord = async (req, res) => {
  * GET /api/attendance/student/:studentId
  */
 const getStudentAttendance = async (req, res) => {
-    const school_id = getSchoolId(req);
     const { studentId } = req.params;
     const { term_id, academic_year_id, from_date, to_date } = req.query;
 
-    const filters = ["ar.student_id = ?", "sess.school_id = ?"];
-    const values = [studentId, school_id];
+    const filters = ["ar.student_id = ?"];
+    const values = [studentId];
 
     if (term_id) { filters.push("sess.term_id = ?"); values.push(term_id); }
     if (academic_year_id) { filters.push("sess.academic_year_id = ?"); values.push(academic_year_id); }
@@ -728,8 +700,8 @@ const getStudentAttendance = async (req, res) => {
 
     try {
         const [[student]] = await pool.execute(
-            "SELECT id, first_name, last_name, admission_number FROM students WHERE id = ? AND school_id = ?",
-            [studentId, school_id]
+            "SELECT id, first_name, last_name, admission_number FROM students WHERE id = ?",
+            [studentId]
         );
         if (!student) return res.status(404).json({ error: "Student not found" });
 
@@ -773,17 +745,16 @@ const getStudentAttendance = async (req, res) => {
  * GET /api/attendance/summary
  */
 const getAttendanceSummary = async (req, res) => {
-    const school_id = getSchoolId(req);
     const { class_id, term_id, academic_year_id } = req.query;
 
-    const filters = ["s.school_id = ?"];
-    const values = [school_id];
+    const filters = [];
+    const values = [];
 
     if (class_id) { filters.push("s.class_id = ?"); values.push(class_id); }
     if (term_id) { filters.push("s.term_id = ?"); values.push(term_id); }
     if (academic_year_id) { filters.push("s.academic_year_id = ?"); values.push(academic_year_id); }
 
-    const where = `WHERE ${filters.join(" AND ")}`;
+    const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
 
     try {
         const [rows] = await pool.execute(
@@ -815,16 +786,15 @@ const getAttendanceSummary = async (req, res) => {
  * GET /api/attendance/analytics
  */
 const getAttendanceAnalytics = async (req, res) => {
-    const school_id = getSchoolId(req);
     const { academic_year_id, term_id } = req.query;
 
-    const filters = ["s.school_id = ?"];
-    const values = [school_id];
+    const filters = [];
+    const values = [];
 
     if (academic_year_id) { filters.push("s.academic_year_id = ?"); values.push(academic_year_id); }
     if (term_id) { filters.push("s.term_id = ?"); values.push(term_id); }
 
-    const where = `WHERE ${filters.join(" AND ")}`;
+    const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
 
     try {
         const [[overall]] = await pool.execute(
@@ -861,10 +831,9 @@ const getAttendanceAnalytics = async (req, res) => {
                     ROUND(SUM(ar.status = 'present') / COUNT(ar.id) * 100, 1) AS rate
              FROM   attendance_records ar
              JOIN   attendance_sessions s ON s.id = ar.session_id
-             WHERE  s.school_id = ? AND s.attendance_date >= DATE_SUB(CURDATE(), INTERVAL 8 WEEK)
+             WHERE  s.attendance_date >= DATE_SUB(CURDATE(), INTERVAL 8 WEEK)
              GROUP BY s.attendance_date
-             ORDER BY s.attendance_date`,
-            [school_id]
+             ORDER BY s.attendance_date`
         );
 
         res.json({ overall, byClass, trend });

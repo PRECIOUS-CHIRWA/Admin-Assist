@@ -281,7 +281,7 @@ async function _submitEnrollment() {
 /* ── Enrollment stats ─────────────────────────────────────────────────────── */
 async function _loadEnrollmentStats() {
   try {
-    const res = await authFetch(`${API_BASE}/dashboard/enrollment-stats`);
+    const res = await apiFetch("/api/dashboard/enrollment-stats");
     if (!res || !res.ok) throw new Error("Stats unavailable");
 
     const stats = await res.json();

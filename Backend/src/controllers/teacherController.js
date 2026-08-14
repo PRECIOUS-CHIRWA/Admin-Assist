@@ -1,6 +1,6 @@
 /**
  * teacherController.js
- * Full CRUD for teaching staff (role = ''staff'' or ''headmaster'').
+ * Full CRUD for teaching staff (role = 'staff' or 'headmaster').
  * Replaces the ad-hoc /api/search/users?role=teacher and inline GET /teachers.
  *
  * Routes (mounted at /api/teachers):
@@ -50,7 +50,7 @@ const listTeachers = async (req, res) => {
         const search = req.query.search ? `%${req.query.search}%` : null;
         const status = req.query.status; // "active" | "inactive" | ""
 
-        const conditions = ["u.role IN (''staff'', ''headmaster'')"];
+        const conditions = ["u.role IN ('staff', 'headmaster')"];
         const params     = [];
 
         if (search) {
@@ -69,15 +69,15 @@ const listTeachers = async (req, res) => {
 
         const [teachers] = await pool.execute(
             `SELECT u.id, u.name, u.email, u.role, u.is_active, u.last_login_at, u.created_at,
-                    GROUP_CONCAT(DISTINCT sub.subject_name ORDER BY sub.subject_name SEPARATOR '', '') AS subjects
+                    GROUP_CONCAT(DISTINCT sub.subject_name ORDER BY sub.subject_name SEPARATOR ', ') AS subjects
              FROM users u
              LEFT JOIN teacher_subjects ts ON ts.teacher_id = u.id
              LEFT JOIN subjects sub ON sub.id = ts.subject_id
              ${where}
              GROUP BY u.id
              ORDER BY u.name ASC
-             LIMIT ? OFFSET ?`,
-            [...params, limit, offset]
+             LIMIT ${limit} OFFSET ${offset}`,
+            params
         );
 
         res.json({ teachers, total, page, limit });
@@ -92,7 +92,7 @@ const getTeacherById = async (req, res) => {
     try {
         const [[teacher]] = await pool.execute(
             `SELECT id, name, email, role, is_active, last_login_at, created_at
-             FROM users WHERE id = ? AND role IN (''staff'', ''headmaster'') LIMIT 1`,
+             FROM users WHERE id = ? AND role IN ('staff', 'headmaster') LIMIT 1`,
             [req.params.id]
         );
         if (!teacher) return res.status(404).json({ error: "Teacher not found" });
@@ -100,7 +100,7 @@ const getTeacherById = async (req, res) => {
         // Get subject assignments with class names
         const [assignments] = await pool.execute(
             `SELECT ts.id, ts.subject_id, sub.subject_code, sub.subject_name,
-                    ts.class_id, CONCAT(c.grade_level, IF(c.stream != '''', CONCAT('' '', c.stream), '''')) AS class_name,
+                    ts.class_id, CONCAT(c.grade_level, IF(c.stream != '', CONCAT(' ', c.stream), '')) AS class_name,
                     ts.academic_year_id, ay.year_label
              FROM teacher_subjects ts
              JOIN subjects sub ON sub.id = ts.subject_id
@@ -124,7 +124,7 @@ const createTeacher = async (req, res) => {
 
     if (!name || !email) return res.status(400).json({ error: "Name and email are required" });
     if (!["staff", "headmaster"].includes(role))
-        return res.status(400).json({ error: "Role must be ''staff'' or ''headmaster''" });
+        return res.status(400).json({ error: "Role must be 'staff' or 'headmaster'" });
 
     try {
         // Check duplicate email
@@ -143,7 +143,7 @@ const createTeacher = async (req, res) => {
         );
         const newId = result.insertId;
 
-        // Send welcome email (non-fatal — log but don''t fail the request)
+        // Send welcome email (non-fatal — log but don't fail the request)
         const loginUrl = process.env.PUBLIC_APP_URL
             ? `${process.env.PUBLIC_APP_URL}/login.html`
             : "https://precious-chirwa.github.io/Admin-Assist/Frontend/Src/login.html";
@@ -174,7 +174,7 @@ const updateTeacher = async (req, res) => {
 
     try {
         const [[teacher]] = await pool.execute(
-            "SELECT id FROM users WHERE id = ? AND role IN (''staff'', ''headmaster'') LIMIT 1",
+            "SELECT id FROM users WHERE id = ? AND role IN ('staff', 'headmaster') LIMIT 1",
             [id]
         );
         if (!teacher) return res.status(404).json({ error: "Teacher not found" });
@@ -209,7 +209,7 @@ const toggleTeacherStatus = async (req, res) => {
 
     try {
         const [[teacher]] = await pool.execute(
-            "SELECT id, name, is_active FROM users WHERE id = ? AND role IN (''staff'', ''headmaster'') LIMIT 1",
+            "SELECT id, name, is_active FROM users WHERE id = ? AND role IN ('staff', 'headmaster') LIMIT 1",
             [id]
         );
         if (!teacher) return res.status(404).json({ error: "Teacher not found" });
@@ -236,7 +236,7 @@ const deleteTeacher = async (req, res) => {
 
     try {
         const [[teacher]] = await pool.execute(
-            "SELECT id, name FROM users WHERE id = ? AND role IN (''staff'', ''headmaster'') LIMIT 1",
+            "SELECT id, name FROM users WHERE id = ? AND role IN ('staff', 'headmaster') LIMIT 1",
             [id]
         );
         if (!teacher) return res.status(404).json({ error: "Teacher not found" });
@@ -253,3 +253,4 @@ const deleteTeacher = async (req, res) => {
 };
 
 module.exports = { listTeachers, getTeacherById, createTeacher, updateTeacher, toggleTeacherStatus, deleteTeacher };
+

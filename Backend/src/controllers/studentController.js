@@ -193,6 +193,13 @@ const createStudent = async (req, res) => {
             return res.status(400).json({ error: "Student must be at least 10 years old" });
         }
 
+        // Normalize ENUM fields
+        const normalizedGender = gender.charAt(0).toUpperCase() + gender.slice(1).toLowerCase();
+        let normalizedRelationship = relationship.charAt(0).toUpperCase() + relationship.slice(1).toLowerCase();
+        if (!["Father", "Mother", "Guardian"].includes(normalizedRelationship)) {
+            normalizedRelationship = "Guardian";
+        }
+
         const [result] = await pool.execute(
             `INSERT INTO students (
                 admission_number, first_name, last_name, date_of_birth, gender,
@@ -202,12 +209,12 @@ const createStudent = async (req, res) => {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 admissionNumber, firstName, lastName,
-                dateOfBirth, gender,
+                dateOfBirth, normalizedGender,
                 nrcNumber, homeAddress,
                 district, province,
                 grade, section, enrollmentDate,
                 previousSchool, parentGuardianName,
-                relationship, phoneNumber, email,
+                normalizedRelationship, phoneNumber, email,
                 status,
             ]
         );

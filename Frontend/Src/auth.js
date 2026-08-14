@@ -58,7 +58,10 @@ async function authFetch(url, options = {}) {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
 
-    const res = await fetch(url, { ...options, headers, credentials: "include" });
+    // Deduplicate any accidental double /api/api/ in URLs
+    const cleanUrl = String(url || "").replace(/\/api\/api\//g, "/api/");
+
+    const res = await fetch(cleanUrl, { ...options, headers, credentials: "include" });
 
     // Session expired or invalid — clear local state and bounce to login
     if (res.status === 401) {
@@ -70,9 +73,22 @@ async function authFetch(url, options = {}) {
     return res;
 }
 
-// authFetch(`${API_BASE}/students`). This bridges the gap.
+/**
+ * apiFetch(path, options)
+ * Helper to call backend API endpoints.
+ * Accepts paths with or without leading '/api' (e.g. '/api/students' or '/students').
+ */
 async function apiFetch(path, options = {}) {
-    return authFetch(`${API_BASE}${path}`, options);
+    let cleanPath = String(path || "");
+    if (cleanPath.startsWith("/api/")) {
+        cleanPath = cleanPath.slice(4);
+    } else if (cleanPath === "/api") {
+        cleanPath = "";
+    } else if (!cleanPath.startsWith("/")) {
+        cleanPath = "/" + cleanPath;
+    }
+    const base = API_BASE.replace(/\/+$/, "");
+    return authFetch(`${base}${cleanPath}`, options);
 }
 /**
  * requireAuth()
@@ -171,7 +187,7 @@ async function loadCurrentUser() {
         // Normalise: ensure both `fullName` and `name` are present so that
         // any consumer (navigation.js, other pages) can read either key.
         user.fullName = user.fullName || user.name || "";
-        user.name     = user.fullName;
+        user.name = user.fullName;
 
         // Hydrate all data-user-* elements and legacy id-based elements.
         applyUserToDOM(user);
@@ -201,7 +217,7 @@ function bindLogout(buttonId = "logoutBtn") {
     if (!btn) return;
     btn.addEventListener("click", async () => {
         try {
-            await authFetch(`${API_BASE}/auth/logout`, { method: "POST" });
+            await apiFetch("/api/auth/logout", { method: "POST" });
         } catch {
             // Clear locally even if network call fails
         } finally {

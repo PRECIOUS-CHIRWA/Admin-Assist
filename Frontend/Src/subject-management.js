@@ -18,13 +18,13 @@
             const [cr, tr, teacherRes] = await Promise.all([
                 apiFetch('/api/attendance/classes'),
                 apiFetch('/api/attendance/terms'),
-                // FIX: /api/users is commented out in app.js — use /api/search/users instead
-                apiFetch('/api/search/users?role=teacher'),
+                apiFetch('/api/teachers?limit=100&status=active'),
             ]);
 
             allClasses = await cr.json();
             allTerms = await tr.json();
-            allTeachers = (await teacherRes.json()) || [];
+            const teacherData = teacherRes && teacherRes.ok ? await teacherRes.json() : {};
+            allTeachers = teacherData.teachers || (Array.isArray(teacherData) ? teacherData : []);
 
             const years = [...new Map(allTerms.map(t =>
                 [t.academic_year_id, { id: t.academic_year_id, label: t.year_label }]

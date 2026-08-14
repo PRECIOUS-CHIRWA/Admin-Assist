@@ -1,32 +1,3 @@
-/**
- * modal-manager.js — Admin Assist Reusable Modal Framework
- * =========================================================
- * A singleton ModalManager that every page script uses to open and
- * close modals consistently.
- *
- * Features:
- *  • Correct z-index (10000) — always above the sidebar (9999)
- *  • Body scroll lock when any modal is open
- *  • Focus trap inside the open modal
- *  • Escape key closes the topmost modal (does NOT close the sidebar)
- *  • Backdrop click closes the modal
- *  • Open/close CSS animations
- *  • Toast notifications (replaces alert())
- *  • Stack tracking — supports multiple layered modals
- *  • Automatic cleanup: no duplicate listeners ever registered
- *
- * Load order on every protected page:
- *   auth.js → auth-guard.js → navigation.js → modal-manager.js → page script
- *
- * Usage:
- *   ModalManager.open('myModalId');
- *   ModalManager.close('myModalId');
- *   ModalManager.closeAll();
- *   ModalManager.toast('Saved!', 'success');        // 'success' | 'error' | 'warning' | 'info'
- *   ModalManager.setLoading('saveBtn', true);        // disable + spinner text
- *   ModalManager.setLoading('saveBtn', false, 'Save Result');
- */
-
 (function () {
     'use strict';
 
@@ -251,7 +222,7 @@ body.aa-modal-open { overflow: hidden !important; }
         // Return focus to opener
         if (backdrop._opener && typeof backdrop._opener.focus === 'function') {
             setTimeout(function () {
-                try { backdrop._opener.focus(); } catch (e) {}
+                try { backdrop._opener.focus(); } catch (e) { }
             }, 50);
         }
     }
@@ -273,7 +244,7 @@ body.aa-modal-open { overflow: hidden !important; }
 
     /* ─── Toast notification system ─────────────────────────────────────── */
     function toast(message, type, duration) {
-        type     = type     || 'info';
+        type = type || 'info';
         duration = duration !== undefined ? duration : 4000;
 
         var container = document.getElementById('aa-toast-container');
@@ -345,13 +316,13 @@ body.aa-modal-open { overflow: hidden !important; }
 
     /* ─── Public API ────────────────────────────────────────────────────── */
     window.ModalManager = {
-        open:       open,
-        close:      close,
-        closeAll:   closeAll,
-        toast:      toast,
+        open: open,
+        close: close,
+        closeAll: closeAll,
+        toast: toast,
         setLoading: setLoading,
         /** Returns true if at least one modal is currently open. */
-        _hasOpen:   function () { return _stack.length > 0; },
+        _hasOpen: function () { return _stack.length > 0; },
     };
 
 })();

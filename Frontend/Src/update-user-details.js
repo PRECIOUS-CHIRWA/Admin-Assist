@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function _loadProfile() {
     try {
-        const res = await authFetch(`${API_BASE}/users/profile`);
+        const res = await apiFetch("/api/users/profile");
         if (!res || !res.ok) throw new Error("Could not load profile");
 
         const { user } = await res.json();
@@ -94,7 +94,7 @@ async function _loadProfile() {
 
 async function _loadRoleRequest() {
     try {
-        const res = await authFetch(`${API_BASE}/users/profile/role-request`);
+        const res = await apiFetch("/api/users/profile/role-request");
         if (!res || !res.ok) return;
 
         const request = await res.json();
@@ -161,7 +161,7 @@ function _wireProfileForm() {
         _setLoading(btn, "Saving…");
 
         try {
-            const res = await authFetch(`${API_BASE}/users/profile`, {
+            const res = await apiFetch("/api/users/profile", {
                 method: "PUT",
                 body: JSON.stringify({ name, email }),
             });
@@ -228,7 +228,7 @@ function _wirePasswordForm() {
         _setLoading(btn, "Updating…");
 
         try {
-            const res = await authFetch(`${API_BASE}/users/profile/password`, {
+            const res = await apiFetch("/api/users/profile/password", {
                 method: "PUT",
                 body: JSON.stringify({ currentPassword, newPassword }),
             });
@@ -244,7 +244,7 @@ function _wirePasswordForm() {
 
             // Sign out after 3 s so the user logs back in with the new password
             setTimeout(async () => {
-                try { await authFetch(`${API_BASE}/auth/logout`, { method: "POST" }); } catch { }
+                try { await apiFetch("/api/auth/logout", { method: "POST" }); } catch { }
                 clearSession();
                 window.location.href = "login.html";
             }, 3000);
@@ -281,7 +281,7 @@ function _wireRoleRequestForm() {
         _setLoading(btn, "Submitting…");
 
         try {
-            const res = await authFetch(`${API_BASE}/users/profile/role-request`, {
+            const res = await apiFetch("/api/users/profile/role-request", {
                 method: "POST",
                 body: JSON.stringify({ requestedRole, reason }),
             });
@@ -329,7 +329,7 @@ function _wireSignOut() {
     if (!btn) return;
 
     btn.addEventListener("click", async () => {
-        try { await authFetch(`${API_BASE}/auth/logout`, { method: "POST" }); } catch { }
+        try { await apiFetch("/api/auth/logout", { method: "POST" }); } catch { }
         clearSession();
         window.location.href = "login.html";
     });
