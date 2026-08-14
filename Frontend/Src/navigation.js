@@ -185,7 +185,8 @@
         if (typeof loadCurrentUser !== 'function') return;
         loadCurrentUser().then(function (user) {
             if (!user) return;
-            var name = user.name || 'User';
+            // FIXED: API returns fullName; fall back to name for safety.
+            var name = user.fullName || user.name || 'User';
             var role = user.role || '';
             var initials = _initials(name);
 
@@ -194,12 +195,24 @@
             var avatarEl = document.getElementById('tb-avatar');
 
             if (nameEl) nameEl.textContent = name;
-            if (roleEl) roleEl.textContent = _capitalise(role);
+            // Use a proper label map so raw DB values become readable strings.
+            if (roleEl) roleEl.textContent = _roleLabel(role);
             if (avatarEl) avatarEl.textContent = initials;
 
-            // Also update sidebar footer user if shown
+            // Propagate role to sidebar RBAC filter
             _filterByRole(role);
         }).catch(function () { });
+    }
+
+    /* ── Role label map (mirrors auth.js formatRole) ─────────────────── */
+    function _roleLabel(role) {
+        var labels = {
+            admin: 'Administrator',
+            headmaster: 'Headmaster',
+            staff: 'Staff',
+            user: 'User',
+        };
+        return labels[role] || _capitalise(role);
     }
 
     /* ── RBAC: hide items user's role can't access ───────────────────── */

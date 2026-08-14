@@ -8,24 +8,11 @@
   <link rel="stylesheet" href="theme.css">
   <link rel="stylesheet" href="aa-shared.css">
   <link rel="stylesheet" href="students.css">
-  <link rel="stylesheet" href="navigation.css">
+  <link rel="stylesheet" href="enroll.css">
 </head>
 
 <body data-page="enroll-student">
-  <!-- ─── HEADER ─────────────────────────────────────────────────────────────
-       Avatar comes FIRST so navigation.js wraps name+role into a column
-       that sits to the right of the avatar.
-       Layout result: [hamburger] [AA] [Avatar] [Name / Role] [Logout]
-  ────────────────────────────────────────────────────────────────────────── -->
-  <header>
-    <div class="logo">Admin Assist</div>
-    <div class="user-profile">
-      <div class="user-avatar" id="headerAvatar">?</div>
-      <span id="headerUserName">…</span>
-      <span id="roleBadge" class="role-badge"></span>
-      <button id="logoutBtn">Logout</button>
-    </div>
-  </header>
+  <!-- Navigation shell (sidebar + topbar) is injected by navigation.js -->
 
   <div class="main-container">
     <div class="breadcrumb">
@@ -290,7 +277,7 @@
   </div><!-- /main-container -->
 
   <!-- ─── SUCCESS OVERLAY ───────────────────────────────────────────────────── -->
-  <div class="success-overlay" id="successOverlay" role="dialog" aria-modal="true" aria-labelledby="successTitle">
+  <div class="success-overlay is-hidden" id="successOverlay" role="dialog" aria-modal="true" aria-labelledby="successTitle">
     <div class="success-card">
       <div class="success-icon" aria-hidden="true">✅</div>
       <h2 class="success-title" id="successTitle">Student Enrolled Successfully!</h2>

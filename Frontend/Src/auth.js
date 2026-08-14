@@ -164,42 +164,30 @@ async function loadCurrentUser() {
 
     try {
         const res = await apiFetch("/api/auth/me");
-        if (!res || !res.ok) return;
+        if (!res || !res.ok) return cached || null;
         const data = await res.json();
         const user = data.user;
 
-        const initials = user.fullName
-            ? user.fullName.split(" ")
-                .map(w => w[0])
-                .join("")
-                .slice(0, 2)
-                .toUpperCase()
-            : "?";
+        // Normalise: ensure both `fullName` and `name` are present so that
+        // any consumer (navigation.js, other pages) can read either key.
+        user.fullName = user.fullName || user.name || "";
+        user.name     = user.fullName;
 
-        const roleLabels = {
-            admin: "Administrator",
-            headmaster: "Headmaster",
-            staff: "Teacher",
-            user: "User",
-        };
+        // Hydrate all data-user-* elements and legacy id-based elements.
+        applyUserToDOM(user);
 
-        document.querySelectorAll("[data-user-name]").forEach(
-            el => (el.textContent = user.fullName || "")
-        );
-        document.querySelectorAll("[data-user-role]").forEach(
-            el => (el.textContent = roleLabels[user.role] || user.role)
-        );
-        document.querySelectorAll("[data-user-initials]").forEach(
-            el => (el.textContent = initials)
-        );
-
-        // Also refresh localStorage so role-based UI (admin-only cards etc.)
-        // keeps working on pages that still read from getUser()
+        // Persist back to localStorage so role-based UI keeps working
+        // on pages that still call getUser() synchronously.
         const current = getUser() || {};
         localStorage.setItem("user", JSON.stringify({ ...current, ...user }));
 
+        // ── CRITICAL FIX: return the user so callers (.then(user => …))
+        // receive the resolved object instead of undefined.
+        return user;
+
     } catch (err) {
         console.warn("loadCurrentUser failed:", err.message);
+        return cached || null;
     }
 }
 

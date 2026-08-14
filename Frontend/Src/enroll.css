@@ -1,355 +1,504 @@
-* {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+/* enroll.css — Admin Assist Student Enrollment Page
+   Linked AFTER theme.css + aa-shared.css — relies on their CSS tokens.
+   Does NOT reset * { margin: 0 } — that is handled by theme.css.        */
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f0f4f8;
-      color: #1a1a1a;
-    }
+/* ── Stat Cards Grid ──────────────────────────────────────────────────── */
+.enroll-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+}
 
-    header {
-      background: linear-gradient(135deg, #1a3a52 0%, #0f2d42 100%);
-      border-bottom: 3px solid #d4af37;
-      padding: 20px 40px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
+@media (max-width: 1024px) { .enroll-stats-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 640px)  { .enroll-stats-grid { grid-template-columns: repeat(2, 1fr); } }
 
-    .logo {
-      font-size: 20px;
-      font-weight: 700;
-      color: #d4af37;
-    }
+.enroll-stat-card {
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    transition: box-shadow .2s, transform .2s;
+    position: relative;
+    overflow: hidden;
+}
 
-    .main-container {
-      padding: 40px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
+.enroll-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: #2563EB;
+    border-radius: 14px 14px 0 0;
+}
 
-    .breadcrumb {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 24px;
-    }
+.enroll-stat-card:hover {
+    box-shadow: 0 4px 14px rgba(0,0,0,.09);
+    transform: translateY(-2px);
+}
 
-    .breadcrumb a {
-      color: #2b84d9;
-      text-decoration: none;
-      cursor: pointer;
-    }
+.enroll-stat-card--male::before  { background: #3B82F6; }
+.enroll-stat-card--female::before { background: #EC4899; }
+.enroll-stat-card--new::before    { background: #10B981; }
 
-    .breadcrumb a:hover {
-      text-decoration: underline;
-    }
+.enroll-stat-value {
+    font-size: 30px;
+    font-weight: 800;
+    color: #1B2A4A;
+    line-height: 1.1;
+    margin-bottom: 4px;
+}
 
-    .page-title {
-      font-size: 32px;
-      font-weight: 600;
-      color: #1a3a52;
-      margin-bottom: 8px;
-    }
+.enroll-stat-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
 
-    .page-subtitle {
-      font-size: 16px;
-      color: #666;
-      margin-bottom: 40px;
-    }
+/* ── Progress Container ───────────────────────────────────────────────── */
+.progress-container {
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
 
-    .content-wrapper {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 40px;
-    }
+.progress-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
 
-    .form-section {
-      background: white;
-      padding: 32px;
-      border-radius: 12px;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-      border-top: 4px solid #d4af37;
-    }
+.progress-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
 
-    .form-group label {
-      font-size: 14px;
-      font-weight: 600;
-      color: #1a3a52;
-      margin-bottom: 8px;
-    }
+.progress-bar-wrapper {
+    height: 6px;
+    background: #E5E7EB;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
 
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-      padding: 12px 14px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 14px;
-      font-family: inherit;
-      transition: border-color 0.3s;
-    }
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #2563EB, #3B82F6);
+    border-radius: 999px;
+    transition: width .4s cubic-bezier(.4,0,.2,1);
+}
 
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus {
-      outline: none;
-      border-color: #d4af37;
-      box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
-    }
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
 
-    .page-subtitle {
-      font-size: 16px;
-      color: #666;
-      margin-bottom: 40px;
-    }
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    opacity: .45;
+    transition: opacity .25s;
+}
 
-    .content-wrapper {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 40px;
-    }
+.progress-step.active,
+.progress-step.completed {
+    opacity: 1;
+}
 
-    .form-section {
-      background: white;
-      padding: 32px;
-      border-radius: 12px;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-    }
+.step-indicator {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #D1D5DB;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #9CA3AF;
+    background: #fff;
+    transition: all .25s;
+}
 
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      margin-bottom: 24px;
-    }
+.progress-step.active .step-indicator {
+    border-color: #2563EB;
+    background: #2563EB;
+    color: #fff;
+}
 
-    .form-row.full {
-      grid-template-columns: 1fr;
-    }
+.progress-step.completed .step-indicator {
+    border-color: #10B981;
+    background: #10B981;
+    color: #fff;
+}
 
-    .form-group {
-      display: flex;
-      flex-direction: column;
-    }
+.step-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #6B7280;
+    text-align: center;
+    white-space: nowrap;
+}
 
-    .form-group label {
-      font-size: 14px;
-      font-weight: 600;
-      color: #0f3a5c;
-      margin-bottom: 8px;
-    }
+.progress-step.active .step-label   { color: #2563EB; font-weight: 600; }
+.progress-step.completed .step-label { color: #10B981; font-weight: 600; }
 
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-      padding: 12px 14px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 14px;
-      font-family: inherit;
-      transition: border-color 0.3s;
-    }
+/* ── Form Content Card ────────────────────────────────────────────────── */
+.form-content {
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    overflow: hidden;
+}
 
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus {
-      outline: none;
-      border-color: #2b84d9;
-      box-shadow: 0 0 0 3px rgba(43, 132, 217, 0.1);
-    }
+/* ── Form Steps (multi-step panels) ──────────────────────────────────── */
+.form-section {
+    display: none;
+    padding: 32px;
+    animation: stepFadeIn .25s ease;
+}
 
-    .form-group textarea {
-      resize: vertical;
-      min-height: 100px;
-    }
+.form-section.active {
+    display: block;
+}
 
-    .radio-group {
-      display: flex;
-      gap: 24px;
-      margin-top: 8px;
-    }
+@keyframes stepFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
 
-    .radio-option {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-    }
+.form-section-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1B2A4A;
+    margin-bottom: 24px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #F3F4F6;
+}
 
-    .radio-option input[type="radio"] {
-      cursor: pointer;
-      width: 18px;
-      height: 18px;
-    }
+/* ── Form Rows & Groups ───────────────────────────────────────────────── */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
 
-    .radio-option label {
-      margin: 0;
-      cursor: pointer;
-      font-weight: 500;
-    }
+.form-row.full {
+    grid-template-columns: 1fr;
+}
 
-    .submit-btn {
-      width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, #1a5580 0%, #2b84d9 100%);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-      margin-top: 32px;
-    }
+@media (max-width: 640px) {
+    .form-row { grid-template-columns: 1fr; }
+}
 
-    .submit-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(26, 85, 128, 0.3);
-    }
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
 
-    .steps-card {
-      background: linear-gradient(135deg, #1a3a52 0%, #2b5a7f 100%);
-      color: white;
-      border-top: 4px solid #d4af37;
-    }
+.form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+}
 
-    .submit-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(43, 132, 217, 0.3);
-    }
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 10px 14px;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #111827;
+    background: #fff;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+    width: 100%;
+}
 
-    .sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #2563EB;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+}
 
-    .sidebar-card {
-      background: white;
-      padding: 24px;
-      border-radius: 12px;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-    }
+.form-group textarea {
+    resize: vertical;
+    min-height: 90px;
+}
 
-    .steps-card {
-      background: linear-gradient(135deg, #0f5f4f 0%, #2b84d9 100%);
-      color: white;
-    }
+/* ── Radio Group ─────────────────────────────────────────────────────── */
+.radio-group {
+    display: flex;
+    gap: 20px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+}
 
-    .steps-title {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
 
-    .step-item {
-      padding: 12px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+.radio-option input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #2563EB;
+    cursor: pointer;
+    flex-shrink: 0;
+}
 
-    .step-item:last-child {
-      border-bottom: none;
-    }
+.radio-option label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+    margin: 0;
+}
 
-    .step-number {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 50%;
-      font-weight: 600;
-      font-size: 14px;
-    }
+/* ── Validation ───────────────────────────────────────────────────────── */
+.required-mark {
+    color: #EF4444;
+    margin-left: 2px;
+}
 
-    .step-item.active .step-number {
-      background: white;
-      color: #0f5f4f;
-    }
+.field-hint {
+    font-size: 11px;
+    color: #9CA3AF;
+    font-weight: 400;
+    margin-left: 4px;
+}
 
-    .step-item.active {
-      font-weight: 600;
-    }
+.field-error {
+    font-size: 12px;
+    color: #EF4444;
+    font-weight: 500;
+    min-height: 16px;
+    display: block;
+}
 
-    .activity-card {
-      background: #f9fafb;
-    }
+.form-group input.is-invalid,
+.form-group select.is-invalid,
+.form-group textarea.is-invalid {
+    border-color: #EF4444;
+    box-shadow: 0 0 0 3px rgba(239,68,68,.12);
+}
 
-    .activity-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #0f3a5c;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+/* ── Form Navigation Bar ─────────────────────────────────────────────── */
+.form-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    border-top: 1px solid #F3F4F6;
+    background: #FAFAFA;
+    border-radius: 0 0 14px 14px;
+}
 
-    .activity-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+.form-nav-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 
-    .activity-item {
-      padding: 12px;
-      background: white;
-      border-radius: 6px;
-      border-left: 3px solid #2b84d9;
-      font-size: 13px;
-      color: #666;
-    }
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+/* theme.css defines .btn + .btn-primary — add .btn-secondary here */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: all .18s;
+    text-decoration: none;
+    white-space: nowrap;
+    font-family: inherit;
+    line-height: 1;
+}
 
-    .activity-item strong {
-      color: #0f3a5c;
-      display: block;
-      margin-bottom: 4px;
-    }
+.btn:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
 
-    .illustration {
-      width: 100%;
-      height: 180px;
-      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 48px;
-      margin-top: 16px;
-    }
+.btn-primary {
+    background: #1B2A4A;
+    color: #fff;
+    border-color: #1B2A4A;
+}
 
-    @media (max-width: 1024px) {
-      .content-wrapper {
-        grid-template-columns: 1fr;
-      }
+.btn-primary:hover:not(:disabled) {
+    background: #243660;
+    border-color: #243660;
+}
 
-      .form-row {
-        grid-template-columns: 1fr;
-      }
-    }
+.btn-secondary {
+    background: #fff;
+    color: #374151;
+    border-color: #D1D5DB;
+}
 
-    @media (max-width: 768px) {
-      .main-container {
-        padding: 20px;
-      }
+.btn-secondary:hover:not(:disabled) {
+    border-color: #9CA3AF;
+    background: #F9FAFB;
+}
 
-      .form-section {
-        padding: 20px;
-      }
+/* ── Visibility utility ───────────────────────────────────────────────── */
+.is-hidden {
+    display: none !important;
+}
 
-      .page-title {
-        font-size: 24px;
-      }
-    }
+/* ── Review Summary (Step 3) ─────────────────────────────────────────── */
+.section-divider {
+    height: 1px;
+    background: #F3F4F6;
+    margin: 24px 0 20px;
+}
+
+.review-heading {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1B2A4A;
+    margin-bottom: 16px;
+}
+
+#reviewSummary {
+    background: #F8FAFC;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.review-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.review-table th,
+.review-table td {
+    padding: 10px 16px;
+    text-align: left;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.review-table tr:last-child th,
+.review-table tr:last-child td {
+    border-bottom: none;
+}
+
+.review-table th {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    width: 38%;
+    background: #F1F5F9;
+}
+
+.review-table td {
+    color: #1B2A4A;
+    font-weight: 500;
+}
+
+/* ── Success Overlay ─────────────────────────────────────────────────── */
+.success-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,28,53,.6);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    /* Hidden by default — shown by JS adding class or removing [hidden] */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s;
+}
+
+/* JS shows it by removing the `is-hidden` class */
+.success-overlay:not(.is-hidden) {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.success-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 48px 40px;
+    max-width: 460px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 24px 64px rgba(0,0,0,.18);
+    animation: cardPop .35s cubic-bezier(.34,1.56,.64,1);
+}
+
+@keyframes cardPop {
+    from { transform: scale(.85); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+}
+
+.success-icon {
+    font-size: 56px;
+    line-height: 1;
+    margin-bottom: 20px;
+}
+
+.success-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1B2A4A;
+    margin-bottom: 12px;
+}
+
+.success-message {
+    font-size: 15px;
+    color: #6B7280;
+    margin-bottom: 28px;
+    line-height: 1.6;
+}
+
+.admission-number {
+    font-size: 18px;
+    font-weight: 800;
+    color: #2563EB;
+    display: block;
+    margin-top: 6px;
+    letter-spacing: .04em;
+}
+
+.success-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
