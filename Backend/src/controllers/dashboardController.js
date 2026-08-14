@@ -145,11 +145,20 @@ const getEnrollmentStats = async (req, res) => {
         const [[{ totalClasses }]] = await pool.execute("SELECT COUNT(*) AS totalClasses FROM classes");
         const [[{ activeStudents }]] = await pool.execute("SELECT COUNT(*) AS activeStudents FROM students WHERE status = 'Active'");
 
+        const [[{ maleStudents }]] = await pool.execute(
+            "SELECT COUNT(*) AS maleStudents FROM students WHERE status != 'Inactive' AND (gender = 'Male' OR gender = 'M')"
+        );
+        const [[{ femaleStudents }]] = await pool.execute(
+            "SELECT COUNT(*) AS femaleStudents FROM students WHERE status != 'Inactive' AND (gender = 'Female' OR gender = 'F')"
+        );
+
         res.json({
             totalStudents: Number(totalStudents) || 0,
+            activeStudents: Number(activeStudents) || 0,
+            maleStudents: Number(maleStudents) || 0,
+            femaleStudents: Number(femaleStudents) || 0,
             newThisMonth: Number(newThisMonth) || 0,
             totalClasses: Number(totalClasses) || 0,
-            activeStudents: Number(activeStudents) || 0,
             total: Number(totalStudents) || 0,
             new_this_month: Number(newThisMonth) || 0,
             thisMonth: Number(newThisMonth) || 0,

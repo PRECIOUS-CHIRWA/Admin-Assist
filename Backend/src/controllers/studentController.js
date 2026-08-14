@@ -27,24 +27,41 @@ const formatDate = (value) => {
 const toApiShape = (row) => ({
     id: row.id,
     admissionNumber: row.admission_number,
+    admission_number: row.admission_number,
     firstName: row.first_name,
+    first_name: row.first_name,
     lastName: row.last_name,
+    last_name: row.last_name,
     dateOfBirth: formatDate(row.date_of_birth),
+    date_of_birth: formatDate(row.date_of_birth),
     gender: row.gender,
     nrcNumber: row.nrc_number,
+    nrc_number: row.nrc_number,
     homeAddress: row.home_address,
+    home_address: row.home_address,
     district: row.district,
     province: row.province,
     grade: row.grade,
     section: row.section,
+    class_id: row.class_id || null,
+    class_name: row.class_name || (row.grade ? `${row.grade} ${row.section || ''}`.trim() : '—'),
     enrollmentDate: formatDate(row.enrollment_date),
+    enrollment_date: formatDate(row.enrollment_date),
     previousSchool: row.previous_school,
+    previous_school: row.previous_school,
     parentGuardianName: row.parent_guardian_name,
+    parent_guardian_name: row.parent_guardian_name,
+    guardian_name: row.parent_guardian_name,
     relationship: row.relationship,
+    guardian_relationship: row.relationship,
     phoneNumber: row.phone_number,
+    phone_number: row.phone_number,
+    guardian_phone: row.phone_number,
     email: row.email,
-    status: row.status,
+    guardian_email: row.email,
+    status: row.status || 'Active',
     createdAt: row.created_at,
+    created_at: row.created_at,
 });
 
 const REQUIRED_FIELDS = [
@@ -84,7 +101,12 @@ const listStudents = async (req, res) => {
         const total = countRows[0].total;
 
         const [rows] = await pool.execute(
-            `SELECT * FROM students ${where} ORDER BY id DESC LIMIT ${limit} OFFSET ${offset}`,
+            `SELECT s.*,
+                    CONCAT(c.grade_level, IF(c.stream != '', CONCAT(' ', c.stream), '')) AS class_name
+             FROM students s
+             LEFT JOIN classes c ON c.id = s.class_id
+             ${where}
+             ORDER BY s.id DESC LIMIT ${limit} OFFSET ${offset}`,
             params
         );
 

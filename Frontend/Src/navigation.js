@@ -26,7 +26,7 @@
     /* ── Navigation config ────────────────────────────────────────────── */
     var NAV_ITEMS = [
         { href: 'dashboard.html', label: 'Dashboard', icon: 'dashboard', roles: [] },
-        { href: 'students.html', label: 'Students', icon: 'students', roles: [] },
+        { href: 'students.html', label: 'Enrollment', icon: 'students', roles: [] },
         { href: 'teachers.html', label: 'Teachers', icon: 'teachers', roles: ['admin', 'headmaster', 'staff'] },
         { href: 'attendance-management.html', label: 'Attendance', icon: 'attendance', roles: [] },
         { href: 'academic-records.html', label: 'Results', icon: 'results', roles: [] },
@@ -37,7 +37,7 @@
     /* ── Page title map ───────────────────────────────────────────────── */
     var PAGE_TITLES = {
         'dashboard.html': 'Dashboard',
-        'students.html': 'Students',
+        'students.html': 'Enrollment & Students',
         'teachers.html': 'Teachers',
         'attendance-management.html': 'Attendance',
         'attendance-history.html': 'Attendance History',

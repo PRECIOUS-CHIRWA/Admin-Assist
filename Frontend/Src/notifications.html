@@ -123,40 +123,8 @@
     </div>
 
     <div class="notif-list" id="notificationsContainer">
-      <div class="notif-card unread">
-        <div class="notif-icon-box">📢</div>
-        <div class="notif-content">
-          <div class="notif-title">End of Term Examinations Schedule Published</div>
-          <div class="notif-desc">The official timetable for Grade 9 and Grade 12 exams is now available for download.</div>
-          <div class="notif-meta">1 hour ago &bull; <span class="notif-badge">Announcements</span></div>
-        </div>
-      </div>
-
-      <div class="notif-card unread">
-        <div class="notif-icon-box">📋</div>
-        <div class="notif-content">
-          <div class="notif-title">Daily Attendance Reminder</div>
-          <div class="notif-desc">Class teachers are reminded to record morning attendance registers before 09:00 AM.</div>
-          <div class="notif-meta">2 hours ago &bull; <span class="notif-badge">Attendance</span></div>
-        </div>
-      </div>
-
-      <div class="notif-card">
-        <div class="notif-icon-box">👤</div>
-        <div class="notif-content">
-          <div class="notif-title">New Student Registration</div>
-          <div class="notif-desc">Student Precious Chirwa has been successfully enrolled into Grade 10A.</div>
-          <div class="notif-meta">4 hours ago &bull; <span class="notif-badge">Students</span></div>
-        </div>
-      </div>
-
-      <div class="notif-card">
-        <div class="notif-icon-box">🎓</div>
-        <div class="notif-content">
-          <div class="notif-title">Term 2 Results Pending Approval</div>
-          <div class="notif-desc">Grade 12 Mathematics exam results have been uploaded and require headteacher sign-off.</div>
-          <div class="notif-meta">1 day ago &bull; <span class="notif-badge">Results</span></div>
-        </div>
+      <div style="padding: 24px; text-align: center; color: var(--aa-text-muted, #64748b); font-size: 13px;">
+        Loading system notifications…
       </div>
     </div>
   </main>
@@ -170,12 +138,13 @@
         const res = await authFetch(`${API_BASE}/notifications`);
         if (res && res.ok) {
           const data = await res.json();
-          if (data.notifications && data.notifications.length > 0) {
-            renderNotifications(data.notifications);
-          }
+          renderNotifications(data.notifications || []);
+        } else {
+          renderNotifications([]);
         }
       } catch (err) {
         console.warn("Could not load notifications API:", err.message);
+        renderNotifications([]);
       }
 
       document.querySelectorAll('.notif-tab-btn').forEach(btn => {
@@ -187,9 +156,9 @@
 
       const markBtn = document.getElementById('markAllReadBtn');
       if (markBtn) {
-        markBtn.addEventListener('click', () => {
+        markBtn.addEventListener('click', async () => {
+          await authFetch(`${API_BASE}/notifications/read-all`, { method: 'POST' }).catch(() => {});
           document.querySelectorAll('.notif-card.unread').forEach(c => c.classList.remove('unread'));
-          alert('All notifications marked as read.');
         });
       }
     });
@@ -197,6 +166,14 @@
     function renderNotifications(items) {
       const container = document.getElementById('notificationsContainer');
       if (!container) return;
+
+      if (!items || items.length === 0) {
+        container.innerHTML = `
+          <div style="padding: 40px 20px; text-align: center; color: var(--aa-text-muted, #64748b); font-size: 13.5px;">
+            🔔 No system notifications or activity logs recorded yet.
+          </div>`;
+        return;
+      }
 
       container.innerHTML = items.map(n => `
         <div class="notif-card ${n.read ? '' : 'unread'}">
