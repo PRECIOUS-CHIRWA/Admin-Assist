@@ -128,4 +128,36 @@ function _buildDescription(row) {
     }
 }
 
-module.exports = { getDashboardStats, getRecentActivity };
+/**
+ * GET /api/dashboard/enrollment-stats
+ * Returns live enrollment stats for enroll-student.html stat cards.
+ */
+const getEnrollmentStats = async (req, res) => {
+    try {
+        const [[{ totalStudents }]] = await pool.execute(
+            "SELECT COUNT(*) AS totalStudents FROM students WHERE status != 'Inactive'"
+        );
+        const [[{ newThisMonth }]] = await pool.execute(
+            `SELECT COUNT(*) AS newThisMonth FROM students
+             WHERE MONTH(enrollment_date) = MONTH(CURDATE())
+               AND YEAR(enrollment_date)  = YEAR(CURDATE())`
+        );
+        const [[{ totalClasses }]] = await pool.execute("SELECT COUNT(*) AS totalClasses FROM classes");
+        const [[{ activeStudents }]] = await pool.execute("SELECT COUNT(*) AS activeStudents FROM students WHERE status = 'Active'");
+
+        res.json({
+            totalStudents: Number(totalStudents) || 0,
+            newThisMonth: Number(newThisMonth) || 0,
+            totalClasses: Number(totalClasses) || 0,
+            activeStudents: Number(activeStudents) || 0,
+            total: Number(totalStudents) || 0,
+            new_this_month: Number(newThisMonth) || 0,
+            thisMonth: Number(newThisMonth) || 0,
+        });
+    } catch (err) {
+        console.error("getEnrollmentStats error:", err.message);
+        res.status(500).json({ error: "Failed to load enrollment stats" });
+    }
+};
+
+module.exports = { getDashboardStats, getRecentActivity, getEnrollmentStats };

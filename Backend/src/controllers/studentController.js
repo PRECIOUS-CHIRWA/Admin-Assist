@@ -109,22 +109,60 @@ const getStudentById = async (req, res) => {
     }
 };
 
-// ─── Create student ───────────────────────────────────────────────────────────
+// ─── Create student / Enroll ──────────────────────────────────────────────────
 const createStudent = async (req, res) => {
     try {
-        const body = req.body;
+        const body = req.body || {};
 
-        const missing = REQUIRED_FIELDS.filter(f => !body[f]);
+        // Normalize input from both camelCase and snake_case (enroll-student.js payload)
+        const admissionNumber = String(body.admissionNumber || body.admission_number || "").trim();
+        const firstName = String(body.firstName || body.first_name || "").trim();
+        const lastName = String(body.lastName || body.last_name || "").trim();
+        const dateOfBirth = formatDate(body.dateOfBirth || body.date_of_birth);
+        const gender = String(body.gender || "").trim();
+        const nrcNumber = String(body.nrcNumber || body.nrc_number || "").trim() || null;
+        const homeAddress = String(body.homeAddress || body.home_address || "").trim() || null;
+        const district = String(body.district || "").trim() || null;
+        const province = String(body.province || "").trim();
+        const grade = String(body.grade || "").trim();
+        const section = String(body.section || "").trim();
+        const enrollmentDate = formatDate(body.enrollmentDate || body.enrollment_date) || formatDate(new Date());
+        const previousSchool = String(body.previousSchool || body.previous_school || "").trim() || null;
+        const parentGuardianName = String(body.parentGuardianName || body.guardian_name || body.parent_guardian_name || "").trim();
+        const relationship = String(body.relationship || body.guardian_relationship || "").trim();
+        let phoneNumber = String(body.phoneNumber || body.guardian_phone || body.phone_number || "").trim();
+        const email = String(body.email || body.guardian_email || "").trim() || null;
+        const status = String(body.status || "Active").trim();
+
+        // Check required fields
+        const missing = [];
+        if (!admissionNumber) missing.push("admissionNumber");
+        if (!firstName) missing.push("firstName");
+        if (!lastName) missing.push("lastName");
+        if (!dateOfBirth) missing.push("dateOfBirth");
+        if (!gender) missing.push("gender");
+        if (!province) missing.push("province");
+        if (!grade) missing.push("grade");
+        if (!section) missing.push("section");
+        if (!parentGuardianName) missing.push("parentGuardianName");
+        if (!relationship) missing.push("relationship");
+        if (!phoneNumber) missing.push("phoneNumber");
+
         if (missing.length) {
             return res.status(400).json({ error: `Missing required fields: ${missing.join(", ")}` });
         }
 
-        if (!PHONE_PATTERN.test(body.phoneNumber)) {
-            return res.status(400).json({ error: "Phone number must be in format +260XXXXXXXXX" });
+        // Auto-format local Zambian numbers (e.g. 0971234567 -> +260971234567)
+        if (/^0\d{9}$/.test(phoneNumber)) {
+            phoneNumber = "+260" + phoneNumber.slice(1);
         }
 
-        // Age validation using full birthday (not just year) for accuracy
-        const dob = new Date(body.dateOfBirth);
+        if (!PHONE_PATTERN.test(phoneNumber)) {
+            return res.status(400).json({ error: "Phone number must be in format +260XXXXXXXXX (e.g. +260971234567)" });
+        }
+
+        // Age validation
+        const dob = new Date(dateOfBirth);
         const today = new Date();
         let age = today.getFullYear() - dob.getFullYear();
         const m = today.getMonth() - dob.getMonth();
@@ -141,30 +179,32 @@ const createStudent = async (req, res) => {
                 phone_number, email, status
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                body.admissionNumber, body.firstName, body.lastName,
-                body.dateOfBirth, body.gender,
-                body.nrcNumber || null, body.homeAddress || null,
-                body.district || null, body.province,
-                body.grade, body.section, body.enrollmentDate,
-                body.previousSchool || null, body.parentGuardianName,
-                body.relationship, body.phoneNumber, body.email || null,
-                body.status || "Active",
+                admissionNumber, firstName, lastName,
+                dateOfBirth, gender,
+                nrcNumber, homeAddress,
+                district, province,
+                grade, section, enrollmentDate,
+                previousSchool, parentGuardianName,
+                relationship, phoneNumber, email,
+                status,
             ]
         );
 
-        // Write to audit log (non-blocking — won't crash enrollment if table is missing)
+        // Audit log
         await _auditLog(
             req.user.sub,
-            `Enrolled student ${body.firstName} ${body.lastName} (${body.admissionNumber})`,
+            `Enrolled student ${firstName} ${lastName} (${admissionNumber})`,
             "student", result.insertId,
-            { admissionNumber: body.admissionNumber }
+            { admissionNumber }
         );
 
         res.status(201).json({
+            message: "Student enrolled successfully",
             id: result.insertId,
-            admissionNumber: body.admissionNumber,
-            firstName: body.firstName,
-            lastName: body.lastName,
+            admissionNumber,
+            admission_number: admissionNumber,
+            firstName,
+            lastName,
             createdAt: new Date().toISOString(),
         });
     } catch (err) {
