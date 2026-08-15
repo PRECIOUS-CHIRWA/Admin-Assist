@@ -138,14 +138,14 @@ const createTeacher = async (req, res) => {
         const passwordHash   = await _hashPassword(tempPassword);
 
         const [result] = await pool.execute(
-            "INSERT INTO users (name, email, password_hash, role, is_active, email_verified) VALUES (?, ?, ?, ?, 1, 1)",
+            "INSERT INTO users (name, email, password_hash, role, is_active) VALUES (?, ?, ?, ?, 1)",
             [name.trim(), email.trim().toLowerCase(), passwordHash, role]
         );
         const newId = result.insertId;
 
         // Send welcome email (non-fatal — log but don't fail the request)
-        const loginUrl = process.env.PUBLIC_APP_URL
-            ? `${process.env.PUBLIC_APP_URL}/login.html`
+        const loginUrl = (process.env.PUBLIC_APP_URL && process.env.PUBLIC_APP_URL.includes("Admin-Assist"))
+            ? `${process.env.PUBLIC_APP_URL.replace(/\/$/, "")}/login.html`
             : "https://precious-chirwa.github.io/Admin-Assist/Frontend/Src/login.html";
 
         try {

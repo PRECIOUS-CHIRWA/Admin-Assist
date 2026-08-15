@@ -44,7 +44,7 @@ async function main() {
     if (existing.length > 0) { console.error(`Email '${email}' already exists (id: ${existing[0].id}).`); process.exit(1); }
     const passwordHash = await hashPassword(password);
     const [result] = await pool.execute(
-        "INSERT INTO users (name, email, password_hash, role, is_active, email_verified) VALUES (?, ?, ?, ?, 1, 1)",
+        "INSERT INTO users (name, email, password_hash, role, is_active) VALUES (?, ?, ?, ?, 1)",
         [name.trim(), email.trim().toLowerCase(), passwordHash, role]
     );
     console.log(`\n✅ ${role} account created!\n   ID:    ${result.insertId}\n   Name:  ${name}\n   Email: ${email}\n   Role:  ${role}\n`);
