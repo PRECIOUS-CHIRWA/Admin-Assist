@@ -29,7 +29,7 @@
 
     async function loadSubjects() {
         try {
-            const res = await apiFetch('/subjects?is_active=1');
+            const res = await apiFetch('/api/subjects?is_active=1');
             if (!res || !res.ok) return;
             allSubjects = await res.json();
             const sel = document.getElementById('fTSubject');
@@ -53,18 +53,18 @@
             if (statusFilter) qs.set('status', statusFilter);
 
             const [tRes, aRes] = await Promise.all([
-                apiFetch('/teachers?' + qs.toString()),
-                apiFetch('/subjects/assignments/list'),
+                apiFetch('/api/teachers?' + qs.toString()),
+                apiFetch('/api/subjects/assignments/list'),
             ]);
 
             const tData = tRes && tRes.ok ? await tRes.json() : { teachers: [], total: 0 };
-            allTeachers    = tData.teachers || [];
-            totalTeachers  = tData.total    || 0;
+            allTeachers = tData.teachers || [];
+            totalTeachers = tData.total || 0;
             allAssignments = aRes && aRes.ok ? await aRes.json() : [];
 
             // Update stat cards (totals from server)
-            _setText('statTotal',    totalTeachers);
-            _setText('statActive',   allTeachers.filter(function (t) { return t.is_active !== 0; }).length);
+            _setText('statTotal', totalTeachers);
+            _setText('statActive', allTeachers.filter(function (t) { return t.is_active !== 0; }).length);
             _setText('statSubjects', allAssignments.length);
 
             renderTable();
@@ -79,9 +79,9 @@
     /* ── Filter & render ──────────────────────────────────────────── */
 
     function applyFilters() {
-        searchQuery  = (document.getElementById('teacherSearch').value || '').trim();
+        searchQuery = (document.getElementById('teacherSearch').value || '').trim();
         statusFilter = document.getElementById('statusFilter').value;
-        currentPage  = 1;
+        currentPage = 1;
         loadTeachers();
     }
 
@@ -89,7 +89,7 @@
 
     function renderTable() {
         const tbody = document.getElementById('teachersBody');
-        const page  = allTeachers; // server already returns the correct page
+        const page = allTeachers; // server already returns the correct page
         const count = document.getElementById('teacherCount');
         if (count) count.textContent = totalTeachers + ' teacher' + (totalTeachers !== 1 ? 's' : '');
 
@@ -174,8 +174,8 @@
 
     function renderPagination() {
         const total = Math.ceil(totalTeachers / PAGE_SIZE);
-        const info  = document.getElementById('paginationInfo');
-        const btns  = document.getElementById('paginationBtns');
+        const info = document.getElementById('paginationInfo');
+        const btns = document.getElementById('paginationBtns');
         if (!info || !btns) return;
 
         const s = totalTeachers ? (currentPage - 1) * PAGE_SIZE + 1 : 0;
@@ -278,9 +278,9 @@
         try {
             let res;
             if (isEdit) {
-                res = await apiFetch('/teachers/' + id, { method: 'PUT', body: JSON.stringify({ name, email }) });
+                res = await apiFetch('/api/teachers/' + id, { method: 'PUT', body: JSON.stringify({ name, email }) });
             } else {
-                res = await apiFetch('/teachers', {
+                res = await apiFetch('/api/teachers', {
                     method: 'POST',
                     body: JSON.stringify({ name, email, role: 'staff' }),
                 });
@@ -291,26 +291,27 @@
                 throw new Error(d.error || 'Save failed');
             }
 
-            // If a primary subject was selected for a new teacher, create assignment
-            if (!isEdit && subjectId) {
-                const userData = await res.clone().json().catch(function () { return {}; });
-                const newId = (userData.teacher && userData.teacher.id) || userData.id;
-                if (newId) {
-                    const currentTerm = await _getCurrentTerm();
-                    if (currentTerm) {
-                        await apiFetch('/subjects/assign', {
-                            method: 'POST',
-                            body: JSON.stringify({
-                                teacher_id: newId, subject_id: subjectId,
-                                class_id: 1, academic_year_id: currentTerm.academic_year_id,
-                            }),
-                        }).catch(function () { });
-                    }
+            const data = await res.json().catch(function () { return {}; });
+
+            document.getElementById('teacherModal').hidden = true;
+
+            if (isEdit) {
+                _toast('Teacher updated.', 'success');
+            } else {
+                // Account was created. An email with the temporary password was
+                // sent automatically, but Brevo may not be configured, or delivery
+                // can fail — so always show it here too as a reliable fallback.
+                // Subject/class assignment is intentionally NOT done from this
+                // form (it previously hardcoded class_id: 1 for every new teacher,
+                // silently assigning them to the wrong class). Use "Assign Subject"
+                // on the Subject Management page instead, where class + year are
+                // explicit dropdowns.
+                openTempPasswordModal(name, email, data.tempPassword);
+                if (subjectId) {
+                    _toast('Teacher created. Now assign their class on the Subject Management page.', 'info');
                 }
             }
 
-            _toast(isEdit ? 'Teacher updated.' : 'Teacher account created successfully.', 'success');
-            document.getElementById('teacherModal').hidden = true;
             await loadTeachers();
         } catch (err) {
             _toast(err.message || 'Failed to save teacher.', 'error');
@@ -321,10 +322,19 @@
 
     async function _getCurrentTerm() {
         try {
-            const res = await apiFetch('/attendance/terms');
+            const res = await apiFetch('/api/attendance/terms');
             const terms = await res.json();
             return terms.find(function (t) { return t.is_current; }) || terms[0] || null;
         } catch { return null; }
+    }
+
+    /* ── Temp password (shown once, right after Add Teacher) ────────── */
+
+    function openTempPasswordModal(name, email, tempPassword) {
+        document.getElementById('tpName').value = name || '';
+        document.getElementById('tpEmail').textContent = email || '';
+        document.getElementById('tpPassword').value = tempPassword || '(email delivery only — not returned by the server)';
+        document.getElementById('tempPasswordModal').hidden = false;
     }
 
     /* ── Deactivate ───────────────────────────────────────────────── */
@@ -335,7 +345,7 @@
         btn.disabled = true;
 
         try {
-            const res = await apiFetch('/teachers/' + deactivateTargetId + '/status', {
+            const res = await apiFetch('/api/teachers/' + deactivateTargetId + '/status', {
                 method: 'PATCH',
             });
 
@@ -345,7 +355,9 @@
                 const d = await res.json().catch(function () { return {}; });
                 throw new Error(d.error || 'Update failed');
             } else {
-                _toast(deactivateTargetName + ' has been ' + (active ? 'deactivated' : 'activated') + '.', 'success');
+                const d = await res.json().catch(function () { return {}; });
+                const nowActive = d.is_active !== 0;
+                _toast(deactivateTargetName + ' has been ' + (nowActive ? 'activated' : 'deactivated') + '.', 'success');
             }
 
             document.getElementById('deactivateModal').hidden = true;
@@ -385,6 +397,17 @@
         document.getElementById('closeDeactivateBtn').addEventListener('click', function () { document.getElementById('deactivateModal').hidden = true; });
         document.getElementById('cancelDeactivateBtn').addEventListener('click', function () { document.getElementById('deactivateModal').hidden = true; });
         document.getElementById('confirmDeactivateBtn').addEventListener('click', confirmDeactivate);
+
+        // Temp password modal
+        document.getElementById('closeTempPasswordBtn').addEventListener('click', function () { document.getElementById('tempPasswordModal').hidden = true; });
+        document.getElementById('closeTempPasswordFooterBtn').addEventListener('click', function () { document.getElementById('tempPasswordModal').hidden = true; });
+        document.getElementById('copyTempPasswordBtn').addEventListener('click', function () {
+            const field = document.getElementById('tpPassword');
+            field.select();
+            navigator.clipboard && navigator.clipboard.writeText(field.value).then(function () {
+                _toast('Password copied.', 'success');
+            }).catch(function () { });
+        });
 
         // Close all dropdowns on outside click
         document.addEventListener('click', function (e) {

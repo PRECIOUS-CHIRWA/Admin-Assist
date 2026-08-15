@@ -204,7 +204,7 @@ function _renderPanelContent(panelId, body, data) {
                 saveBtn.textContent = "Saving…";
 
                 try {
-                    const res = await apiFetch("/notes", {
+                    const res = await apiFetch("/api/notes", {
                         method: "POST",
                         body: JSON.stringify({ content }),
                     });
