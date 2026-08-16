@@ -146,8 +146,7 @@ const createStudent = async (req, res) => {
         const homeAddress = String(body.homeAddress || body.home_address || "").trim() || null;
         const district = String(body.district || "").trim() || null;
         const province = String(body.province || "").trim();
-        const grade = String(body.grade || "").trim();
-        const section = String(body.section || "").trim();
+        const classId = body.classId || body.class_id || null;
         const enrollmentDate = formatDate(body.enrollmentDate || body.enrollment_date) || formatDate(new Date());
         const previousSchool = String(body.previousSchool || body.previous_school || "").trim() || null;
         const parentGuardianName = String(body.parentGuardianName || body.guardian_name || body.parent_guardian_name || "").trim();
@@ -164,8 +163,7 @@ const createStudent = async (req, res) => {
         if (!dateOfBirth) missing.push("dateOfBirth");
         if (!gender) missing.push("gender");
         if (!province) missing.push("province");
-        if (!grade) missing.push("grade");
-        if (!section) missing.push("section");
+        if (!classId) missing.push("classId");
         if (!parentGuardianName) missing.push("parentGuardianName");
         if (!relationship) missing.push("relationship");
         if (!phoneNumber) missing.push("phoneNumber");
@@ -173,6 +171,22 @@ const createStudent = async (req, res) => {
         if (missing.length) {
             return res.status(400).json({ error: `Missing required fields: ${missing.join(", ")}` });
         }
+
+        // Look the class up rather than trusting free-typed grade/section text.
+        // grade/section are still stored (existing search/filter/display code
+        // reads them), but they're now always derived from a real class row,
+        // so they can never drift out of sync with it the way they used to —
+        // that drift is exactly what made attendance registers come up empty
+        // for classes that genuinely had enrolled students.
+        const [[classRow]] = await pool.execute(
+            "SELECT id, grade_level, stream FROM classes WHERE id = ?",
+            [classId]
+        );
+        if (!classRow) {
+            return res.status(400).json({ error: "Selected class was not found. Refresh and pick a class again." });
+        }
+        const grade = classRow.grade_level;
+        const section = classRow.stream || "";
 
         // Auto-format local Zambian numbers (e.g. 0971234567 -> +260971234567)
         if (/^0\d{9}$/.test(phoneNumber)) {
@@ -203,16 +217,16 @@ const createStudent = async (req, res) => {
         const [result] = await pool.execute(
             `INSERT INTO students (
                 admission_number, first_name, last_name, date_of_birth, gender,
-                nrc_number, home_address, district, province, grade, section,
+                nrc_number, home_address, district, province, grade, section, class_id,
                 enrollment_date, previous_school, parent_guardian_name, relationship,
                 phone_number, email, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 admissionNumber, firstName, lastName,
                 dateOfBirth, normalizedGender,
                 nrcNumber, homeAddress,
                 district, province,
-                grade, section, enrollmentDate,
+                grade, section, classId, enrollmentDate,
                 previousSchool, parentGuardianName,
                 normalizedRelationship, phoneNumber, email,
                 status,

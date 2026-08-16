@@ -19,6 +19,7 @@ const searchRoutes = require("./routes/searchRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const teacherRoutes = require("./routes/teacherRoutes");
 const settingsRoutes = require("./routes/settingsRoutes");
+const classesRoutes = require("./routes/classesRoutes");
 
 const app = express();
 
@@ -103,6 +104,7 @@ app.use("/api/search", searchRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/teachers", teacherRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/classes", classesRoutes);
 app.use("/api", panelRoutes);
 
 // Health check

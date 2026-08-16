@@ -320,12 +320,6 @@
     overflow-y: auto;
 }
 
-/* Without this, the browser's default [hidden]{display:none} rule loses to
-   the author-stylesheet `display: flex` above (author rules always beat
-   user-agent rules, regardless of selector specificity), so both the
-   "Remove Student" and "Student Details" modals render open on page load
-   instead of only when studentModal.hidden / deleteModal.hidden is toggled
-   by students.js. */
 .pg-modal-backdrop[hidden] {
     display: none !important;
     pointer-events: none !important;

@@ -191,9 +191,11 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label for="section">Section / Class <span class="required-mark">*</span></label>
-              <input type="text" id="section" name="section" placeholder="e.g. 10A" required>
-              <span class="field-error" id="err-section" role="alert"></span>
+              <label for="classId">Class <span class="required-mark">*</span></label>
+              <select id="classId" name="classId" required disabled>
+                <option value="">Select a grade first</option>
+              </select>
+              <span class="field-error" id="err-classId" role="alert"></span>
             </div>
             <div class="form-group">
               <label for="enrollmentDate">Enrollment Date <span class="required-mark">*</span></label>
@@ -277,7 +279,8 @@
   </div><!-- /main-container -->
 
   <!-- ─── SUCCESS OVERLAY ───────────────────────────────────────────────────── -->
-  <div class="success-overlay is-hidden" id="successOverlay" role="dialog" aria-modal="true" aria-labelledby="successTitle">
+  <div class="success-overlay is-hidden" id="successOverlay" role="dialog" aria-modal="true"
+    aria-labelledby="successTitle">
     <div class="success-card">
       <div class="success-icon" aria-hidden="true">✅</div>
       <h2 class="success-title" id="successTitle">Student Enrolled Successfully!</h2>
