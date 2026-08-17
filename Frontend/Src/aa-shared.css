@@ -3,6 +3,7 @@
    All Sprint 3-5 pages link to this file AFTER theme.css.
    Uses tokens from theme.css — never hardcoded hex values.
    ============================================================ */
+@import url('loader.css');
 
 /* ─── Design Token Fallbacks ─────────────────────────────────
    Duplicate :root block so aa-shared works even without theme.css

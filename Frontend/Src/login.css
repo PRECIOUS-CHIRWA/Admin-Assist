@@ -3,8 +3,9 @@
  * Uses #1E5AA8 Primary Blue + #D4AF37 Academic Gold
  */
 
-/* ─── Fonts ──────────────────────────────────────────────────── */
+/* ─── Fonts & Modules ────────────────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('loader.css');
 
 :root {
     --navy: #1B2A4A;

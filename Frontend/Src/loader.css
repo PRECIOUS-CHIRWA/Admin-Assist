@@ -1,0 +1,412 @@
+/* ================================================================
+   loader.css — Admin Assist Page Loading & Transition System
+   Matches Navy (#1B2A4A / #062b55) & Gold (#e7a51a / #C9A227) aesthetic
+   ================================================================ */
+
+/* ─── 1. Top Glowing Progress Bar ───────────────────────────────── */
+#aa-top-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    z-index: 999999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+#aa-top-progress.active {
+    opacity: 1;
+}
+
+.aa-top-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #0b4f9c 0%, #1671c9 35%, #e7a51a 75%, #ffd166 100%);
+    box-shadow: 0 0 10px rgba(231, 165, 26, 0.7), 0 0 4px rgba(231, 165, 26, 0.4);
+    border-radius: 0 2px 2px 0;
+    transition: width 0.2s cubic-bezier(0.1, 0.05, 0.2, 1);
+    position: relative;
+}
+
+.aa-top-progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 80px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8));
+    animation: aa-top-bar-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes aa-top-bar-pulse {
+    from { opacity: 0.4; }
+    to { opacity: 1; }
+}
+
+/* ─── 2. Full-Page Branded Splash Loader ────────────────────────── */
+#aa-page-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 999990;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 22, 44, 0.88);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                visibility 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    user-select: none;
+}
+
+#aa-page-loader.aa-loader-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: scale(0.98);
+}
+
+.aa-loader-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 36px 44px;
+    background: rgba(15, 30, 60, 0.85);
+    border: 1px solid rgba(231, 165, 26, 0.3);
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(231, 165, 26, 0.12);
+    text-align: center;
+    max-width: 360px;
+    width: 90%;
+    animation: aa-loader-card-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes aa-loader-card-in {
+    from {
+        opacity: 0;
+        transform: translateY(14px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Shield with Orbiting Halo */
+.aa-shield-container {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.aa-shield-halo {
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    border-top-color: #e7a51a;
+    border-right-color: rgba(231, 165, 26, 0.3);
+    border-bottom-color: #1671c9;
+    animation: aa-spin 1.4s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+    filter: drop-shadow(0 0 6px rgba(231, 165, 26, 0.5));
+}
+
+.aa-shield-halo-outer {
+    position: absolute;
+    inset: -14px;
+    border-radius: 50%;
+    border: 1px dashed rgba(231, 165, 26, 0.25);
+    animation: aa-spin-reverse 6s linear infinite;
+}
+
+.aa-shield-glow {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(231, 165, 26, 0.35) 0%, rgba(22, 113, 201, 0.15) 60%, transparent 80%);
+    animation: aa-pulse-glow 2s ease-in-out infinite alternate;
+}
+
+.aa-shield-icon {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    background: #062b55;
+    border: 2.5px solid #e7a51a;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    z-index: 2;
+}
+
+.aa-shield-icon span {
+    font-size: 18px;
+    font-weight: 900;
+    color: #ffffff;
+    letter-spacing: 0.06em;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Brand & Status Text */
+.aa-loader-brand {
+    font-size: 15px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+}
+
+.aa-loader-sub {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 0.05em;
+    margin-bottom: 18px;
+}
+
+.aa-loader-status-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #ffd166;
+    font-weight: 500;
+    margin-bottom: 16px;
+}
+
+.aa-loader-dots {
+    display: inline-flex;
+    gap: 4px;
+}
+
+.aa-loader-dots span {
+    width: 5px;
+    height: 5px;
+    background: #e7a51a;
+    border-radius: 50%;
+    animation: aa-dot-bounce 1.2s infinite ease-in-out both;
+}
+
+.aa-loader-dots span:nth-child(1) { animation-delay: -0.32s; }
+.aa-loader-dots span:nth-child(2) { animation-delay: -0.16s; }
+.aa-loader-dots span:nth-child(3) { animation-delay: 0s; }
+
+@keyframes aa-dot-bounce {
+    0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+/* Progress Track */
+.aa-loader-progress-track {
+    width: 180px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+}
+
+.aa-loader-progress-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 40%;
+    background: linear-gradient(90deg, #1671c9, #e7a51a, #ffd166);
+    border-radius: 999px;
+    animation: aa-progress-indeterminate 1.6s ease-in-out infinite;
+}
+
+@keyframes aa-progress-indeterminate {
+    0% {
+        left: -40%;
+        width: 40%;
+    }
+    50% {
+        left: 30%;
+        width: 60%;
+    }
+    100% {
+        left: 100%;
+        width: 40%;
+    }
+}
+
+/* ─── 3. Component & Container Loading Overlays ─────────────────── */
+.aa-loading-container {
+    position: relative !important;
+    min-height: 80px;
+}
+
+.aa-spinner-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    z-index: 50;
+    border-radius: inherit;
+    animation: aa-fade-in 0.2s ease-out;
+}
+
+[data-theme="dark"] .aa-spinner-overlay {
+    background: rgba(17, 24, 39, 0.82);
+}
+
+.aa-spinner-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--aa-text, #1e293b);
+}
+
+/* Standalone Spinners */
+.aa-spinner {
+    display: inline-block;
+    border-radius: 50%;
+    border: 3px solid rgba(231, 165, 26, 0.2);
+    border-top-color: var(--aa-gold, #e7a51a);
+    border-right-color: var(--aa-blue, #1671c9);
+    animation: aa-spin 0.8s linear infinite;
+}
+
+.aa-spinner-sm {
+    width: 18px;
+    height: 18px;
+    border-width: 2px;
+}
+
+.aa-spinner-md {
+    width: 32px;
+    height: 32px;
+    border-width: 3px;
+}
+
+.aa-spinner-lg {
+    width: 48px;
+    height: 48px;
+    border-width: 4px;
+}
+
+/* Button Loading State */
+.aa-btn-loading {
+    position: relative !important;
+    pointer-events: none !important;
+    color: transparent !important;
+}
+
+.aa-btn-loading .aa-btn-spinner {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: aa-spin 0.7s linear infinite;
+}
+
+/* ─── 4. Skeleton Shimmer Placeholders ──────────────────────────── */
+.aa-skeleton {
+    background: linear-gradient(
+        90deg,
+        rgba(226, 232, 240, 0.6) 0%,
+        rgba(241, 245, 249, 0.9) 50%,
+        rgba(226, 232, 240, 0.6) 100%
+    );
+    background-size: 200% 100%;
+    animation: aa-shimmer 1.5s infinite ease-in-out;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+[data-theme="dark"] .aa-skeleton {
+    background: linear-gradient(
+        90deg,
+        rgba(31, 41, 55, 0.6) 0%,
+        rgba(55, 65, 81, 0.9) 50%,
+        rgba(31, 41, 55, 0.6) 100%
+    );
+    background-size: 200% 100%;
+}
+
+.aa-skeleton-text {
+    height: 14px;
+    width: 100%;
+    margin-bottom: 6px;
+    border-radius: 4px;
+}
+
+.aa-skeleton-title {
+    height: 22px;
+    width: 60%;
+    margin-bottom: 12px;
+    border-radius: 6px;
+}
+
+.aa-skeleton-circle {
+    border-radius: 50% !important;
+}
+
+.aa-skeleton-card {
+    height: 120px;
+    width: 100%;
+    border-radius: 12px;
+}
+
+.aa-skeleton-table-row {
+    height: 48px;
+    width: 100%;
+    border-radius: 6px;
+    margin-bottom: 8px;
+}
+
+/* ─── 5. Core Keyframes ─────────────────────────────────────────── */
+@keyframes aa-spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes aa-spin-reverse {
+    to { transform: rotate(-360deg); }
+}
+
+@keyframes aa-pulse-glow {
+    from {
+        transform: scale(0.9);
+        opacity: 0.4;
+    }
+    to {
+        transform: scale(1.15);
+        opacity: 0.85;
+    }
+}
+
+@keyframes aa-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+@keyframes aa-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

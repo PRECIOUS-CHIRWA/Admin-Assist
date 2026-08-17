@@ -50,27 +50,36 @@ function clearSession() {
  *   const data = await authFetch("/api/auth/me");
  */
 async function authFetch(url, options = {}) {
-    const token = getAccessToken();
-
-    const headers = {
-        "Content-Type": "application/json",
-        ...(options.headers || {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
-
-    // Deduplicate any accidental double /api/api/ in URLs
-    const cleanUrl = String(url || "").replace(/\/api\/api\//g, "/api/");
-
-    const res = await fetch(cleanUrl, { ...options, headers, credentials: "include" });
-
-    // Session expired or invalid — clear local state and bounce to login
-    if (res.status === 401) {
-        clearSession();
-        window.location.href = "login.html";
-        return;
+    if (window.AALoader && typeof window.AALoader.reqStart === "function") {
+        window.AALoader.reqStart();
     }
+    try {
+        const token = getAccessToken();
 
-    return res;
+        const headers = {
+            "Content-Type": "application/json",
+            ...(options.headers || {}),
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        };
+
+        // Deduplicate any accidental double /api/api/ in URLs
+        const cleanUrl = String(url || "").replace(/\/api\/api\//g, "/api/");
+
+        const res = await fetch(cleanUrl, { ...options, headers, credentials: "include" });
+
+        // Session expired or invalid — clear local state and bounce to login
+        if (res.status === 401) {
+            clearSession();
+            window.location.href = "login.html";
+            return;
+        }
+
+        return res;
+    } finally {
+        if (window.AALoader && typeof window.AALoader.reqEnd === "function") {
+            window.AALoader.reqEnd();
+        }
+    }
 }
 
 /**
