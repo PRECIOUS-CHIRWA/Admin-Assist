@@ -336,7 +336,14 @@ async function _loadClassesForGrade(grade) {
       _allClasses = await res.json();
     }
 
-    const matches = _allClasses.filter((c) => c.grade_level === grade);
+    const normG = String(grade).trim().toLowerCase();
+    const cleanG = normG.replace(/^grade\s*/i, "");
+
+    const matches = _allClasses.filter((c) => {
+      const cg = String(c.grade_level || "").trim().toLowerCase();
+      const cleanCG = cg.replace(/^grade\s*/i, "");
+      return cg === normG || cleanCG === cleanG;
+    });
 
     if (!matches.length) {
       select.innerHTML = '<option value="">No classes set up for this grade yet</option>';
@@ -346,7 +353,10 @@ async function _loadClassesForGrade(grade) {
     select.innerHTML = '<option value="">Select a class…</option>' +
       matches
         .map((c) => {
-          const label = c.class_name || (c.grade_level + (c.stream ? " " + c.stream : ""));
+          const streamStr = c.stream ? String(c.stream).trim() : "";
+          const shortName = (c.grade_level.replace(/^Grade\s*/i, "") + streamStr).trim();
+          const fullName = c.class_name || (c.grade_level + (streamStr ? " " + streamStr : ""));
+          const label = shortName && shortName !== fullName ? `${shortName} (${fullName})` : fullName;
           const count = typeof c.student_count === "number" ? ` (${c.student_count} enrolled)` : "";
           return `<option value="${c.id}">${_esc(label)}${count}</option>`;
         })

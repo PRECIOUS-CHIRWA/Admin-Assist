@@ -108,7 +108,14 @@ const getClasses = async (req, res) => {
                     COUNT(s.id) AS student_count
              FROM   classes c
              LEFT JOIN users u ON u.id = c.class_teacher_id
-             LEFT JOIN students s ON (s.class_id = c.id OR CONCAT(s.grade, IF(s.section != '' AND s.section IS NOT NULL, CONCAT(' ', s.section), '')) = CONCAT(c.grade_level, IF(c.stream != '' AND c.stream IS NOT NULL, CONCAT(' ', c.stream), ''))) AND s.status = 'Active'
+             LEFT JOIN students s ON (
+                 s.class_id = c.id 
+                 OR (s.grade = c.grade_level AND (
+                     s.section = c.stream 
+                     OR s.section = CONCAT(REPLACE(c.grade_level, 'Grade ', ''), c.stream)
+                     OR CONCAT(s.grade, IF(s.section != '' AND s.section IS NOT NULL, CONCAT(' ', s.section), '')) = CONCAT(c.grade_level, IF(c.stream != '' AND c.stream IS NOT NULL, CONCAT(' ', c.stream), ''))
+                 ))
+             ) AND s.status = 'Active'
              GROUP BY c.id
              ORDER BY c.grade_level, c.stream`
         );
@@ -203,14 +210,23 @@ const getRegister = async (req, res) => {
             return res.status(404).json({ error: "Class not found" });
         }
 
+        const shortSection = (classInfo.grade_level.replace(/^Grade\s*/i, '') + (classInfo.stream || '')).trim();
+
         // 2. Fetch Active students enrolled in this class
         const [students] = await pool.execute(
             `SELECT s.id, s.admission_number, s.first_name, s.last_name, s.gender, s.status AS student_status
              FROM   students s
-             WHERE  (s.class_id = ? OR CONCAT(s.grade, IF(s.section != '' AND s.section IS NOT NULL, CONCAT(' ', s.section), '')) = ?)
+             WHERE  (
+                 s.class_id = ? 
+                 OR (s.grade = ? AND (
+                     s.section = ? 
+                     OR s.section = ? 
+                     OR CONCAT(s.grade, IF(s.section != '' AND s.section IS NOT NULL, CONCAT(' ', s.section), '')) = ?
+                 ))
+             )
                AND  s.status = 'Active'
              ORDER BY s.last_name, s.first_name`,
-            [class_id, classInfo.class_name]
+            [class_id, classInfo.grade_level, classInfo.stream, shortSection, classInfo.class_name]
         );
 
         // 3. Check for an existing session matching this class, date, period, and optional subject
