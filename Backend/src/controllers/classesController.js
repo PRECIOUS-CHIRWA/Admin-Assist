@@ -48,16 +48,33 @@ const getClassById = async (req, res) => {
 };
 
 // ─── Create class ─────────────────────────────────────────────────────────────
+// Zambian secondary school grades this system currently supports. Fixed
+// whitelist rather than free text, so "Grade 10" here always means exactly
+// the same thing as "Grade 10" typed anywhere else in the app (enrollment,
+// attendance registers, results) — nothing to accidentally spell differently.
+const ALLOWED_GRADE_LEVELS = ["Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"];
+
 const createClass = async (req, res) => {
     const { grade_level, gradeLevel, stream = "", capacity = 40, class_teacher_id = null, classTeacherId = null } = req.body;
     const grade = (grade_level || gradeLevel || "").trim();
-    const str = String(stream || "").trim();
+    const str = String(stream || "").trim().toUpperCase();
     const cap = parseInt(capacity, 10) || 40;
     const teacherId = class_teacher_id || classTeacherId || null;
 
-    if (!grade) return res.status(400).json({ error: "grade_level is required" });
+    if (!ALLOWED_GRADE_LEVELS.includes(grade)) {
+        return res.status(400).json({ error: `grade_level must be one of: ${ALLOWED_GRADE_LEVELS.join(", ")}` });
+    }
+    if (!str) return res.status(400).json({ error: "stream is required, e.g. 'A'" });
 
     try {
+        const [[dupe]] = await pool.execute(
+            "SELECT id FROM classes WHERE grade_level = ? AND stream = ?",
+            [grade, str]
+        );
+        if (dupe) {
+            return res.status(409).json({ error: `${grade} ${str} already exists` });
+        }
+
         const [result] = await pool.execute(
             "INSERT INTO classes (grade_level, stream, capacity, class_teacher_id) VALUES (?, ?, ?, ?)",
             [grade, str, cap, teacherId]

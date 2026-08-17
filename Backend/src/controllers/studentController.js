@@ -263,46 +263,120 @@ const createStudent = async (req, res) => {
 const updateStudent = async (req, res) => {
     try {
         const body = req.body;
+        const id = req.params.id;
 
-        const missing = REQUIRED_FIELDS.filter(f => !body[f]);
-        if (missing.length) {
-            return res.status(400).json({ error: `Missing required fields: ${missing.join(", ")}` });
+        // Partial update: only touch fields that were actually sent. The old
+        // version required the ENTIRE record (REQUIRED_FIELDS) on every save,
+        // which broke the moment any lighter-weight form — like the students
+        // list's quick-edit modal, which only shows name/admission#/DOB/class/
+        // guardian/status — tried to save just those fields. Every other
+        // required field would come back as "missing" even though the user
+        // never had a box to fill it in.
+        //
+        // Also accepts both camelCase (admissionNumber) and snake_case
+        // (admission_number) keys per field, since different callers in this
+        // codebase send different conventions (e.g. students.js's edit modal
+        // sends snake_case) — previously only camelCase was read here, so a
+        // snake_case payload would look completely empty to this function.
+        const map = {
+            admissionNumber: ["admissionNumber", "admission_number"],
+            firstName: ["firstName", "first_name"],
+            lastName: ["lastName", "last_name"],
+            dateOfBirth: ["dateOfBirth", "date_of_birth"],
+            gender: ["gender"],
+            nrcNumber: ["nrcNumber", "nrc_number"],
+            homeAddress: ["homeAddress", "home_address"],
+            district: ["district"],
+            province: ["province"],
+            enrollmentDate: ["enrollmentDate", "enrollment_date"],
+            previousSchool: ["previousSchool", "previous_school"],
+            parentGuardianName: ["parentGuardianName", "parent_guardian_name", "guardian_name"],
+            relationship: ["relationship", "guardian_relationship"],
+            phoneNumber: ["phoneNumber", "phone_number", "guardian_phone"],
+            email: ["email", "guardian_email"],
+            status: ["status"],
+        };
+        const pick = (keys) => {
+            for (const k of keys) {
+                if (body[k] !== undefined) return body[k];
+            }
+            return undefined;
+        };
+
+        const columns = {
+            admissionNumber: "admission_number", firstName: "first_name", lastName: "last_name",
+            dateOfBirth: "date_of_birth", gender: "gender", nrcNumber: "nrc_number",
+            homeAddress: "home_address", district: "district", province: "province",
+            enrollmentDate: "enrollment_date", previousSchool: "previous_school",
+            parentGuardianName: "parent_guardian_name", relationship: "relationship",
+            phoneNumber: "phone_number", email: "email", status: "status",
+        };
+
+        const fields = [];
+        const values = [];
+
+        for (const [key, aliases] of Object.entries(map)) {
+            const value = pick(aliases);
+            if (value === undefined) continue;
+
+            if (key === "phoneNumber") {
+                let phone = String(value).trim();
+                if (/^0\d{9}$/.test(phone)) phone = "+260" + phone.slice(1);
+                if (!PHONE_PATTERN.test(phone)) {
+                    return res.status(400).json({ error: "Phone number must be in format +260XXXXXXXXX" });
+                }
+                fields.push(`${columns[key]} = ?`);
+                values.push(phone);
+                continue;
+            }
+
+            fields.push(`${columns[key]} = ?`);
+            values.push(value === "" ? null : value);
         }
 
-        if (!PHONE_PATTERN.test(body.phoneNumber)) {
-            return res.status(400).json({ error: "Phone number must be in format +260XXXXXXXXX" });
+        // classId, when provided, is the source of truth for grade/section —
+        // same reasoning as createStudent: a class dropdown can't drift out of
+        // sync with the classes table the way free-typed text could, and that
+        // drift is exactly what made attendance registers come up empty for
+        // students who were, in fact, enrolled in the class being taken.
+        const classId = body.classId !== undefined ? body.classId : body.class_id;
+        if (classId !== undefined) {
+            if (classId === null || classId === "") {
+                fields.push("class_id = ?", "grade = grade", "section = section");
+                values.push(null);
+            } else {
+                const [[classRow]] = await pool.execute(
+                    "SELECT grade_level, stream FROM classes WHERE id = ?",
+                    [classId]
+                );
+                if (!classRow) {
+                    return res.status(400).json({ error: "Selected class was not found." });
+                }
+                fields.push("class_id = ?", "grade = ?", "section = ?");
+                values.push(classId, classRow.grade_level, classRow.stream || "");
+            }
         }
 
+        if (!fields.length) {
+            return res.status(400).json({ error: "No fields provided to update" });
+        }
+
+        values.push(id);
         const [result] = await pool.execute(
-            `UPDATE students SET
-                admission_number = ?, first_name = ?, last_name = ?,
-                date_of_birth = ?, gender = ?,
-                nrc_number = ?, home_address = ?, district = ?, province = ?,
-                grade = ?, section = ?, enrollment_date = ?,
-                previous_school = ?, parent_guardian_name = ?, relationship = ?,
-                phone_number = ?, email = ?, status = ?
-             WHERE id = ?`,
-            [
-                body.admissionNumber, body.firstName, body.lastName,
-                body.dateOfBirth, body.gender,
-                body.nrcNumber || null, body.homeAddress || null,
-                body.district || null, body.province,
-                body.grade, body.section, body.enrollmentDate,
-                body.previousSchool || null, body.parentGuardianName,
-                body.relationship, body.phoneNumber, body.email || null,
-                body.status || "Active",
-                req.params.id,
-            ]
+            `UPDATE students SET ${fields.join(", ")} WHERE id = ?`,
+            values
         );
 
         if (result.affectedRows === 0) {
-            return res.status(404).json({ error: "Student not found" });
+            const [[exists]] = await pool.execute("SELECT id FROM students WHERE id = ?", [id]);
+            if (!exists) return res.status(404).json({ error: "Student not found" });
+            // affectedRows is 0 when the new values match the old ones — not an error
         }
 
-        await _auditLog(req.user.sub, `Updated student record`, "student", req.params.id, {});
+        await _auditLog(req.user.sub, `Updated student record`, "student", id, Object.keys(req.body));
 
         const [rows] = await pool.execute(
-            "SELECT * FROM students WHERE id = ? LIMIT 1", [req.params.id]
+            "SELECT * FROM students WHERE id = ? LIMIT 1", [id]
         );
         res.json({ message: "Student updated successfully", student: toApiShape(rows[0]) });
     } catch (err) {

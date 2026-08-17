@@ -1,15 +1,6 @@
-/**
- * enroll-student.js
- * Page initialiser for enroll-student.html.
- *
- * Responsibilities:
- *  1. Auth guard (synchronous — redirects to login if no token)
- *  2. Load live enrollment stats into the stat cards
- *  3. Initialise the multi-step form (defined below)
- *  4. Wire the success overlay buttons
- *
- * Load order: auth.js → auth-guard.js → navigation.js → THIS FILE
- */
+
+// Load order: auth.js → auth-guard.js → navigation.js → THIS FILE
+
 
 /* ── Module state ───────────────────────────────────────────────────────── */
 let _currentStep = 1;
@@ -55,6 +46,13 @@ function initializeMultiStepForm() {
   if (!nextBtn || !backBtn || !submitBtn) {
     console.warn("initializeMultiStepForm: required buttons not found.");
     return;
+  }
+
+  const gradeSelect = document.getElementById("grade");
+  if (gradeSelect) {
+    gradeSelect.addEventListener("change", () => _loadClassesForGrade(gradeSelect.value));
+    // In case the browser restored a previous value on refresh
+    if (gradeSelect.value) _loadClassesForGrade(gradeSelect.value);
   }
 
   // Show step 1 on load
@@ -156,7 +154,7 @@ function _validateStep(step) {
   if (step === 2) {
     _require("admissionNumber", "Admission number is required.");
     _require("grade", "Please select a grade.");
-    _require("section", "Section / class is required.");
+    _require("classId", "Please select a class.");
     _require("enrollmentDate", "Enrollment date is required.");
   }
 
@@ -199,7 +197,7 @@ function _renderReviewSummary() {
     ["District", _val("district")],
     ["Admission Number", _val("admissionNumber")],
     ["Grade / Form", _val("grade")],
-    ["Section / Class", _val("section")],
+    ["Class", _selectedOptionText("classId")],
     ["Enrollment Date", _val("enrollmentDate")],
     ["Previous School", _val("previousSchool")],
     ["Guardian Name", _val("parentGuardianName")],
@@ -239,8 +237,7 @@ async function _submitEnrollment() {
     district: _getVal("district") || null,
     province: _getVal("province") || null,
     admission_number: _getVal("admissionNumber"),
-    grade: _getVal("grade"),
-    section: _getVal("section"),
+    class_id: _getVal("classId"),
     enrollment_date: _getVal("enrollmentDate"),
     previous_school: _getVal("previousSchool") || null,
     guardian_name: _getVal("parentGuardianName"),
@@ -302,6 +299,63 @@ async function _loadEnrollmentStats() {
 function _getVal(id) {
   const el = document.getElementById(id);
   return el ? el.value.trim() : "";
+}
+
+function _selectedOptionText(id) {
+  const el = document.getElementById(id);
+  if (!el || el.selectedIndex < 0) return "—";
+  const opt = el.options[el.selectedIndex];
+  return (opt && opt.textContent.trim()) || "—";
+}
+
+/* ── Class dropdown, filtered by the selected grade ─────────────────────────
+   classesController.listClasses doesn't take a grade filter, so we fetch the
+   full (small) class list once and filter client-side whenever the grade
+   changes. This is what "classId" (added to replace the old free-text
+   "section" field) is populated from — enrolling against a real class_id,
+   instead of free-typed text, is what makes the attendance register able to
+   find these students later. ─────────────────────────────────────────────── */
+let _allClasses = null;
+
+async function _loadClassesForGrade(grade) {
+  const select = document.getElementById("classId");
+  if (!select) return;
+
+  select.innerHTML = '<option value="">Loading classes…</option>';
+  select.disabled = true;
+
+  if (!grade) {
+    select.innerHTML = '<option value="">Select a grade first</option>';
+    return;
+  }
+
+  try {
+    if (!_allClasses) {
+      const res = await apiFetch("/api/classes");
+      if (!res || !res.ok) throw new Error("Failed to load classes");
+      _allClasses = await res.json();
+    }
+
+    const matches = _allClasses.filter((c) => c.grade_level === grade);
+
+    if (!matches.length) {
+      select.innerHTML = '<option value="">No classes set up for this grade yet</option>';
+      return;
+    }
+
+    select.innerHTML = '<option value="">Select a class…</option>' +
+      matches
+        .map((c) => {
+          const label = c.class_name || (c.grade_level + (c.stream ? " " + c.stream : ""));
+          const count = typeof c.student_count === "number" ? ` (${c.student_count} enrolled)` : "";
+          return `<option value="${c.id}">${_esc(label)}${count}</option>`;
+        })
+        .join("");
+    select.disabled = false;
+  } catch (err) {
+    console.error("_loadClassesForGrade:", err);
+    select.innerHTML = '<option value="">Unable to load classes — try again</option>';
+  }
 }
 
 function _esc(v) {
