@@ -1,4 +1,4 @@
-/* attendance-management.css — Roster UI & session-specific styles */
+/* attendance-management.css — Roster UI & Session-specific styles with Dark Theme */
 
 /* ─── Roster list ────────────────────────────────────────────── */
 .aa-roster-list {
@@ -7,6 +7,7 @@
     border: 1px solid var(--aa-border);
     border-radius: var(--aa-radius);
     margin-bottom: 1rem;
+    background: var(--aa-surface);
 }
 
 .aa-roster-row {
@@ -17,6 +18,7 @@
     border-bottom: 1px solid var(--aa-border);
     gap: 1rem;
     flex-wrap: wrap;
+    transition: background-color .15s;
 }
 
 .aa-roster-row:last-child {
@@ -24,7 +26,11 @@
 }
 
 .aa-roster-row:nth-child(even) {
-    background: #fafbfc;
+    background: var(--aa-surface-2, #fafbfc);
+}
+
+.aa-roster-row:hover {
+    background: var(--aa-surface-hover, #f1f5f9);
 }
 
 .aa-roster-name {
@@ -36,12 +42,12 @@
 
 .aa-roster-name strong {
     font-size: .875rem;
-    color: var(--aa-navy);
+    color: var(--aa-text, #1e293b);
 }
 
 .aa-roster-name span {
     font-size: .75rem;
-    color: var(--aa-text-muted);
+    color: var(--aa-text-muted, #64748b);
 }
 
 /* ─── Status radio buttons ───────────────────────────────────── */
@@ -68,7 +74,7 @@
     font-size: .75rem;
     font-weight: 600;
     border: 1.5px solid var(--aa-border-dark);
-    background: var(--aa-white);
+    background: var(--aa-surface-2, #fff);
     color: var(--aa-text-muted);
     transition: all .12s;
     text-transform: capitalize;
@@ -77,27 +83,32 @@
 
 .aa-status-radio input:checked+span {
     border-color: transparent;
-    color: var(--aa-white);
+    color: #ffffff;
 }
 
 .aa-status-radio-present input:checked+span {
-    background: #10b981;
+    background: #10B981;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.35);
 }
 
 .aa-status-radio-absent input:checked+span {
-    background: #ef4444;
+    background: #EF4444;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
 }
 
 .aa-status-radio-late input:checked+span {
-    background: #f59e0b;
+    background: #F59E0B;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.35);
 }
 
 .aa-status-radio-excused input:checked+span {
-    background: #3b82f6;
+    background: #3B82F6;
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.35);
 }
 
 .aa-status-radio span:hover {
-    border-color: var(--aa-navy);
+    border-color: var(--aa-blue, #2563EB);
+    color: var(--aa-text);
 }
 
 /* ─── Roster toolbar ─────────────────────────────────────────── */

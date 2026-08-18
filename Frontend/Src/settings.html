@@ -125,7 +125,7 @@
       font-size: 13.5px;
       font-weight: 600;
       cursor: pointer;
-      transition: background .15s;
+      transition: background .15s, transform .15s;
     }
     .btn-primary:hover { background: var(--aa-blue-dark); }
     .btn-secondary {
@@ -140,6 +140,142 @@
       transition: all .15s;
     }
     .btn-secondary:hover { border-color: var(--aa-border-dark); color: var(--aa-text); }
+
+    /* ─── Appearance & Theme Controls ────────────────────────── */
+    .appearance-block {
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--aa-border);
+    }
+    .appearance-block h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--aa-text);
+      margin-bottom: 4px;
+    }
+    .appearance-block .settings-subdesc {
+      font-size: 12.5px;
+      color: var(--aa-text-muted);
+      margin-bottom: 14px;
+    }
+    .theme-picker-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 520px) {
+      .theme-picker-grid { grid-template-columns: 1fr; }
+    }
+    .theme-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: var(--aa-radius-md);
+      border: 2px solid var(--aa-border);
+      background: var(--aa-surface-2);
+      cursor: pointer;
+      transition: all .15s ease;
+    }
+    .theme-card:hover {
+      border-color: var(--aa-blue);
+      background: var(--aa-surface);
+    }
+    .theme-card.is-active {
+      border-color: var(--aa-blue);
+      background: var(--aa-blue-light);
+      box-shadow: 0 0 0 1px var(--aa-blue);
+    }
+    .theme-card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--aa-surface);
+      color: var(--aa-gold);
+      flex-shrink: 0;
+      box-shadow: var(--aa-shadow-xs);
+    }
+    .theme-card[data-theme-val="dark"] .theme-card-icon {
+      color: #F59E0B;
+    }
+    .theme-card-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .theme-card-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--aa-text);
+    }
+    .theme-card-desc {
+      font-size: 11.5px;
+      color: var(--aa-text-muted);
+    }
+    .theme-sync-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 14px;
+      background: var(--aa-surface-2);
+      border-radius: var(--aa-radius-md);
+      border: 1px solid var(--aa-border);
+    }
+    .theme-sync-text {
+      display: flex;
+      flex-direction: column;
+    }
+    .theme-sync-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--aa-text);
+    }
+    .theme-sync-sub {
+      font-size: 11.5px;
+      color: var(--aa-text-muted);
+    }
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: var(--aa-border-dark);
+      transition: .2s;
+      border-radius: 24px;
+    }
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .2s;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: var(--aa-blue);
+    }
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+    }
   </style>
 </head>
 
@@ -179,7 +315,58 @@
         <!-- GENERAL -->
         <section class="settings-section is-active" id="general">
           <h2>General Settings</h2>
-          <p class="settings-desc">Manage your school information and academic year details.</p>
+          <p class="settings-desc">Manage your school information, appearance, and academic details.</p>
+
+          <!-- Appearance / Theme Section (Mockup Item 9) -->
+          <div class="appearance-block">
+            <h3>Appearance</h3>
+            <p class="settings-subdesc">Choose your preferred theme for Admin Assist.</p>
+
+            <div class="theme-picker-grid">
+              <div class="theme-card" id="themeCardLight" data-theme-val="light" role="button" tabindex="0">
+                <div class="theme-card-icon">
+                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                  </svg>
+                </div>
+                <div class="theme-card-info">
+                  <span class="theme-card-title">Light</span>
+                  <span class="theme-card-desc">Clean bright interface</span>
+                </div>
+              </div>
+
+              <div class="theme-card" id="themeCardDark" data-theme-val="dark" role="button" tabindex="0">
+                <div class="theme-card-icon">
+                  <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                  </svg>
+                </div>
+                <div class="theme-card-info">
+                  <span class="theme-card-title">Dark</span>
+                  <span class="theme-card-desc">Deep midnight navy</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="theme-sync-row">
+              <div class="theme-sync-text">
+                <span class="theme-sync-label">Sync with system</span>
+                <span class="theme-sync-sub">Automatically switch theme based on your system settings</span>
+              </div>
+              <label class="toggle-switch" aria-label="Sync with system">
+                <input type="checkbox" id="syncSystemToggle">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
           <div class="settings-group">
             <div class="form-field">
               <label for="schoolName">School Name</label>

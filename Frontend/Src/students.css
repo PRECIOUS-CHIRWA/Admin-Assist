@@ -1,4 +1,4 @@
-/* students.css — Admin Assist Students Page */
+/* students.css — Admin Assist Students Page & Dark Mode Support */
 
 /* ── Page Header ────────────────────────────────────────────────── */
 .pg-header {
@@ -13,22 +13,23 @@
 .pg-header h1 {
     font-size: 22px;
     font-weight: 700;
-    color: #1B2A4A;
+    color: var(--aa-text, #1B2A4A);
 }
 
 .pg-header p {
     font-size: 14px;
-    color: #6B7280;
+    color: var(--aa-text-muted, #6B7280);
     margin-top: 2px;
 }
 
 /* ── Table Card ─────────────────────────────────────────────────── */
 .pg-table-card {
-    background: #fff;
-    border: 1px solid #E5E7EB;
+    background: var(--aa-surface, #fff);
+    border: 1px solid var(--aa-border, #E5E7EB);
     border-radius: 14px;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+    box-shadow: var(--aa-shadow-xs, 0 1px 3px rgba(0, 0, 0, .05));
+    transition: background-color .2s ease, border-color .2s ease;
 }
 
 /* ── Toolbar ─────────────────────────────────────────────────────── */
@@ -37,8 +38,9 @@
     align-items: center;
     gap: 12px;
     padding: 16px 20px;
-    border-bottom: 1px solid #E5E7EB;
+    border-bottom: 1px solid var(--aa-border, #E5E7EB);
     flex-wrap: wrap;
+    background: var(--aa-surface, #fff);
 }
 
 .pg-toolbar-right {
@@ -58,43 +60,45 @@
     left: 11px;
     top: 50%;
     transform: translateY(-50%);
-    color: #9CA3AF;
+    color: var(--aa-text-light, #9CA3AF);
     pointer-events: none;
 }
 
 .pg-search {
     padding: 9px 14px 9px 36px;
-    border: 1.5px solid #E5E7EB;
+    border: 1.5px solid var(--aa-border, #E5E7EB);
     border-radius: 10px;
     font-size: 14px;
     font-family: inherit;
-    background: #F9FAFB;
-    color: #111827;
+    background: var(--aa-surface-2, #F9FAFB);
+    color: var(--aa-text, #111827);
     outline: none;
     width: 260px;
-    transition: border-color .15s, background .15s;
+    transition: border-color .15s, background .15s, box-shadow .15s;
 }
 
 .pg-search:focus {
-    border-color: #2563EB;
-    background: #fff;
+    border-color: var(--aa-blue, #2563EB);
+    background: var(--aa-surface, #fff);
+    box-shadow: 0 0 0 3px rgba(37,99,235,.15);
 }
 
 .pg-filter {
     padding: 9px 12px;
-    border: 1.5px solid #E5E7EB;
+    border: 1.5px solid var(--aa-border, #E5E7EB);
     border-radius: 10px;
     font-size: 14px;
     font-family: inherit;
-    background: #F9FAFB;
-    color: #374151;
+    background: var(--aa-surface-2, #F9FAFB);
+    color: var(--aa-text, #374151);
     outline: none;
     cursor: pointer;
-    transition: border-color .15s;
+    transition: border-color .15s, background .15s;
 }
 
 .pg-filter:focus {
-    border-color: #2563EB;
+    border-color: var(--aa-blue, #2563EB);
+    background: var(--aa-surface, #fff);
 }
 
 /* ── Table ───────────────────────────────────────────────────────── */
@@ -109,22 +113,22 @@
 }
 
 .pg-table th {
-    background: #F8FAFC;
-    color: #6B7280;
+    background: var(--aa-surface-2, #F8FAFC);
+    color: var(--aa-text-muted, #6B7280);
     font-size: 12px;
     font-weight: 600;
     letter-spacing: .04em;
     text-transform: uppercase;
     padding: 12px 16px;
     text-align: left;
-    border-bottom: 1px solid #E5E7EB;
+    border-bottom: 1px solid var(--aa-border, #E5E7EB);
     white-space: nowrap;
 }
 
 .pg-table td {
     padding: 14px 16px;
-    border-bottom: 1px solid #F3F4F6;
-    color: #111827;
+    border-bottom: 1px solid var(--aa-border, #F3F4F6);
+    color: var(--aa-text, #111827);
     vertical-align: middle;
 }
 
@@ -133,11 +137,11 @@
 }
 
 .pg-table tbody tr:hover td {
-    background: #FAFBFC;
+    background: var(--aa-surface-hover, #FAFBFC);
 }
 
 .pg-table .row-num {
-    color: #9CA3AF;
+    color: var(--aa-text-light, #9CA3AF);
     font-size: 13px;
     font-weight: 500;
 }
@@ -153,8 +157,8 @@
     width: 34px;
     height: 34px;
     border-radius: 50%;
-    background: #EFF6FF;
-    color: #2563EB;
+    background: var(--aa-blue-light, #EFF6FF);
+    color: var(--aa-blue, #2563EB);
     font-size: 12px;
     font-weight: 700;
     display: flex;
@@ -165,44 +169,47 @@
 
 .pg-student-name {
     font-weight: 600;
-    color: #1B2A4A;
+    color: var(--aa-text, #1B2A4A);
 }
 
 .pg-student-email {
     font-size: 12px;
-    color: #6B7280;
+    color: var(--aa-text-muted, #6B7280);
     margin-top: 1px;
 }
 
 /* Status badges */
 .badge-active {
-    background: #DCFCE7;
-    color: #15803D;
+    background: var(--aa-success-bg, #DCFCE7);
+    color: var(--aa-success-text, #15803D);
     font-size: 12px;
     font-weight: 600;
     padding: 3px 10px;
     border-radius: 999px;
     display: inline-block;
+    border: 1px solid rgba(16,185,129,.25);
 }
 
 .badge-inactive {
-    background: #F3F4F6;
-    color: #6B7280;
+    background: var(--aa-surface-2, #F3F4F6);
+    color: var(--aa-text-muted, #6B7280);
     font-size: 12px;
     font-weight: 600;
     padding: 3px 10px;
     border-radius: 999px;
     display: inline-block;
+    border: 1px solid var(--aa-border, #E5E7EB);
 }
 
 .badge-suspended {
-    background: #FEF9C3;
-    color: #854D0E;
+    background: var(--aa-warning-bg, #FEF9C3);
+    color: var(--aa-warning-text, #854D0E);
     font-size: 12px;
     font-weight: 600;
     padding: 3px 10px;
     border-radius: 999px;
     display: inline-block;
+    border: 1px solid rgba(245,158,11,.25);
 }
 
 /* Action buttons in table */
@@ -212,9 +219,9 @@
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    border: 1.5px solid #E5E7EB;
-    background: #fff;
-    color: #374151;
+    border: 1.5px solid var(--aa-border, #E5E7EB);
+    background: var(--aa-surface-2, #fff);
+    color: var(--aa-text, #374151);
     font-family: inherit;
     transition: all .15s;
     text-decoration: none;
@@ -224,16 +231,16 @@
 }
 
 .pg-action-btn:hover {
-    border-color: #2563EB;
-    color: #2563EB;
-    background: #EFF6FF;
+    border-color: var(--aa-blue, #2563EB);
+    color: var(--aa-blue, #2563EB);
+    background: var(--aa-blue-light, #EFF6FF);
     text-decoration: none;
 }
 
 .pg-action-btn-danger:hover {
-    border-color: #EF4444;
-    color: #EF4444;
-    background: #FEF2F2;
+    border-color: var(--aa-danger, #EF4444);
+    color: var(--aa-danger, #EF4444);
+    background: var(--aa-danger-bg, #FEF2F2);
 }
 
 /* ── Pagination ──────────────────────────────────────────────────── */
@@ -242,9 +249,10 @@
     align-items: center;
     justify-content: space-between;
     padding: 14px 20px;
-    border-top: 1px solid #E5E7EB;
+    border-top: 1px solid var(--aa-border, #E5E7EB);
     font-size: 13px;
-    color: #6B7280;
+    color: var(--aa-text-muted, #6B7280);
+    background: var(--aa-surface, #fff);
     flex-wrap: wrap;
     gap: 10px;
 }
@@ -258,13 +266,13 @@
 .pg-page-btn {
     width: 32px;
     height: 32px;
-    border: 1.5px solid #E5E7EB;
+    border: 1.5px solid var(--aa-border, #E5E7EB);
     border-radius: 8px;
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    background: #fff;
-    color: #374151;
+    background: var(--aa-surface-2, #fff);
+    color: var(--aa-text, #374151);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -273,18 +281,18 @@
 }
 
 .pg-page-btn:hover {
-    border-color: #2563EB;
-    color: #2563EB;
+    border-color: var(--aa-blue, #2563EB);
+    color: var(--aa-blue, #2563EB);
 }
 
 .pg-page-btn.pg-active {
-    background: #1B2A4A;
-    border-color: #1B2A4A;
+    background: var(--aa-blue, #2563EB);
+    border-color: var(--aa-blue, #2563EB);
     color: #fff;
 }
 
 .pg-page-btn:disabled {
-    opacity: .4;
+    opacity: .35;
     cursor: not-allowed;
 }
 
@@ -292,13 +300,13 @@
 .pg-empty {
     text-align: center;
     padding: 60px 20px;
-    color: #6B7280;
+    color: var(--aa-text-muted, #6B7280);
 }
 
 .pg-empty h3 {
     font-size: 16px;
     font-weight: 600;
-    color: #1B2A4A;
+    color: var(--aa-text, #1B2A4A);
     margin-bottom: 6px;
 }
 
@@ -311,7 +319,8 @@
 .pg-modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(15, 28, 53, .45);
+    background: rgba(0, 0, 0, .65);
+    backdrop-filter: blur(4px);
     z-index: 1000;
     display: flex;
     align-items: flex-start;
@@ -326,11 +335,12 @@
 }
 
 .pg-modal {
-    background: #fff;
+    background: var(--aa-surface, #fff);
     border-radius: 16px;
     width: 100%;
     max-width: 580px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, .15);
+    box-shadow: var(--aa-shadow-lg, 0 20px 60px rgba(0, 0, 0, .15));
+    border: 1px solid var(--aa-border, #E5E7EB);
     flex-shrink: 0;
 }
 
@@ -339,20 +349,20 @@
     align-items: center;
     justify-content: space-between;
     padding: 20px 24px;
-    border-bottom: 1px solid #E5E7EB;
+    border-bottom: 1px solid var(--aa-border, #E5E7EB);
 }
 
 .pg-modal-title {
     font-size: 16px;
     font-weight: 700;
-    color: #1B2A4A;
+    color: var(--aa-text, #1B2A4A);
 }
 
 .pg-modal-close {
     width: 32px;
     height: 32px;
     border: none;
-    background: #F3F4F6;
+    background: var(--aa-surface-2, #F3F4F6);
     border-radius: 8px;
     cursor: pointer;
     font-size: 18px;
@@ -360,13 +370,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #6B7280;
+    color: var(--aa-text-muted, #6B7280);
     transition: background .15s;
 }
 
 .pg-modal-close:hover {
-    background: #E5E7EB;
-    color: #374151;
+    background: var(--aa-border, #E5E7EB);
+    color: var(--aa-text, #374151);
 }
 
 .pg-modal-body {
@@ -379,8 +389,8 @@
     justify-content: flex-end;
     gap: 10px;
     padding: 16px 24px;
-    border-top: 1px solid #E5E7EB;
-    background: #F9FAFB;
+    border-top: 1px solid var(--aa-border, #E5E7EB);
+    background: var(--aa-surface-2, #F9FAFB);
     border-radius: 0 0 16px 16px;
 }
 
@@ -404,24 +414,26 @@
 .pg-form-label {
     font-size: 13px;
     font-weight: 600;
-    color: #374151;
+    color: var(--aa-text, #374151);
 }
 
 .pg-form-control {
     padding: 10px 14px;
-    border: 1.5px solid #E5E7EB;
+    border: 1.5px solid var(--aa-border, #E5E7EB);
     border-radius: 10px;
     font-size: 14px;
-    color: #111827;
-    background: #fff;
+    color: var(--aa-text, #111827);
+    background: var(--aa-surface-2, #fff);
     outline: none;
-    transition: border-color .15s;
+    transition: border-color .15s, background .15s, box-shadow .15s;
     font-family: inherit;
     width: 100%;
 }
 
 .pg-form-control:focus {
-    border-color: #2563EB;
+    border-color: var(--aa-blue, #2563EB);
+    background: var(--aa-surface, #fff);
+    box-shadow: 0 0 0 3px rgba(37,99,235,.15);
 }
 
 @media (max-width: 520px) {

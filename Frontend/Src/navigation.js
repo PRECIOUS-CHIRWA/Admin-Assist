@@ -1,8 +1,9 @@
 /**
- * navigation.js — Admin Assist Navigation Shell v4
- * Matches the Image 2 design precisely:
+ * navigation.js — Admin Assist Navigation Shell v4 & Theme System
+ * Matches the Reference Mockup precisely:
  *   - Navy sidebar (220px) with AA shield logo + 7 nav items w/ SVG icons
- *   - White sticky topbar: hamburger | page title | settings+bell+user
+ *   - Sticky topbar: hamburger | page title | theme toggle + settings + bell + user
+ *   - Universal Toggleable Dark/Light Theme with zero-FOUC and local persistence
  *   - Active page detection, mobile overlay, RBAC filtering
  */
 
@@ -21,7 +22,111 @@
         bell: '<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>',
         gear: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>',
         logout: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>',
+        sun: '<svg width="19" height="19" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>',
+        moon: '<svg width="19" height="19" fill="currentColor" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
     };
+
+    /* ── Theme Manager ────────────────────────────────────────────────── */
+    var ThemeManager = {
+        STORAGE_KEY: 'aa-theme',
+        SYNC_KEY: 'aa-theme-sync-system',
+
+        getTheme: function () {
+            return localStorage.getItem(this.STORAGE_KEY) || 'system';
+        },
+
+        isSystemSync: function () {
+            var val = localStorage.getItem(this.SYNC_KEY);
+            if (val !== null) return val === 'true';
+            return this.getTheme() === 'system';
+        },
+
+        getEffectiveTheme: function () {
+            var theme = this.getTheme();
+            if (theme === 'system') {
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                return prefersDark ? 'dark' : 'light';
+            }
+            return theme === 'dark' ? 'dark' : 'light';
+        },
+
+        setTheme: function (theme, syncSystem) {
+            if (typeof syncSystem === 'boolean') {
+                localStorage.setItem(this.SYNC_KEY, String(syncSystem));
+                if (syncSystem) theme = 'system';
+            } else if (theme !== 'system') {
+                localStorage.setItem(this.SYNC_KEY, 'false');
+            }
+
+            localStorage.setItem(this.STORAGE_KEY, theme);
+            this.applyTheme();
+        },
+
+        toggleTheme: function () {
+            var current = this.getEffectiveTheme();
+            var next = current === 'dark' ? 'light' : 'dark';
+            this.setTheme(next, false);
+        },
+
+        applyTheme: function () {
+            var effective = this.getEffectiveTheme();
+            var theme = this.getTheme();
+            var isDark = effective === 'dark';
+
+            if (isDark) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                if (document.body) document.body.classList.add('dark-theme');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                if (document.body) document.body.classList.remove('dark-theme');
+            }
+
+            // Update topbar theme toggle button if present
+            var toggleBtn = document.getElementById('tb-theme-toggle');
+            if (toggleBtn) {
+                toggleBtn.innerHTML = isDark ? ICONS.moon : ICONS.sun;
+                toggleBtn.title = isDark ? 'Dark theme active (click to switch to light)' : 'Light theme active (click to switch to dark)';
+                toggleBtn.setAttribute('aria-label', toggleBtn.title);
+                toggleBtn.classList.toggle('is-dark', isDark);
+            }
+
+            // Dispatch global event for listeners (e.g., settings page, charts)
+            window.dispatchEvent(new CustomEvent('aa-theme-change', {
+                detail: {
+                    theme: theme,
+                    effectiveTheme: effective,
+                    isDark: isDark,
+                    syncSystem: this.isSystemSync()
+                }
+            }));
+        },
+
+        init: function () {
+            // Apply immediately to prevent FOUC
+            this.applyTheme();
+
+            // Listen for OS system theme changes
+            if (window.matchMedia) {
+                var mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+                var handler = function () {
+                    if (ThemeManager.isSystemSync() || ThemeManager.getTheme() === 'system') {
+                        ThemeManager.applyTheme();
+                    }
+                };
+                if (mediaQuery.addEventListener) {
+                    mediaQuery.addEventListener('change', handler);
+                } else if (mediaQuery.addListener) {
+                    mediaQuery.addListener(handler);
+                }
+            }
+        }
+    };
+
+    // Expose ThemeManager globally
+    window.ThemeManager = ThemeManager;
+
+    // Run theme initialization immediately
+    ThemeManager.init();
 
     /* ── Navigation config ────────────────────────────────────────────── */
     var NAV_ITEMS = [
@@ -56,6 +161,7 @@
 
     /* ── Init ─────────────────────────────────────────────────────────── */
     document.addEventListener('DOMContentLoaded', function () {
+        ThemeManager.applyTheme();
         _injectStyles();
         _buildSidebar();
         _buildTopbar();
@@ -67,7 +173,6 @@
 
     /* ── Wrap existing page content in .page-body ─────────────────────── */
     function _wrapContent() {
-        // If the page already uses .page-body, skip
         if (document.querySelector('.page-body')) return;
 
         var main = document.querySelector('main') ||
@@ -132,6 +237,7 @@
     function _buildTopbar() {
         var currentPage = _currentPage();
         var pageTitle = PAGE_TITLES[currentPage] || 'Admin Assist';
+        var isDark = ThemeManager.getEffectiveTheme() === 'dark';
 
         var bar = document.createElement('div');
         bar.id = 'app-topbar';
@@ -143,6 +249,9 @@
             '<span class="tb-title" id="topbar-page-title">' + _esc(pageTitle) + '</span>' +
 
             '<div class="tb-right">' +
+            '<button class="tb-icon-btn tb-theme-toggle' + (isDark ? ' is-dark' : '') + '" id="tb-theme-toggle" type="button" title="' + (isDark ? 'Dark theme active (click to switch to light)' : 'Light theme active (click to switch to dark)') + '" aria-label="Toggle theme">' +
+            (isDark ? ICONS.moon : ICONS.sun) +
+            '</button>' +
             '<button class="tb-icon-btn" title="Settings" onclick="window.location=\'settings.html\'">' +
             ICONS.gear +
             '</button>' +
@@ -175,7 +284,8 @@
             if (a.getAttribute('data-page') === current || a.getAttribute('href') === current) {
                 a.classList.add('active');
                 a.setAttribute('aria-current', 'page');
-                a.closest('.sb-item').classList.add('active');
+                var item = a.closest('.sb-item');
+                if (item) item.classList.add('active');
             }
         });
     }
@@ -185,7 +295,6 @@
         if (typeof loadCurrentUser !== 'function') return;
         loadCurrentUser().then(function (user) {
             if (!user) return;
-            // FIXED: API returns fullName; fall back to name for safety.
             var name = user.fullName || user.name || 'User';
             var role = user.role || '';
             var initials = _initials(name);
@@ -195,7 +304,6 @@
             var avatarEl = document.getElementById('tb-avatar');
 
             if (nameEl) nameEl.textContent = name;
-            // Use a proper label map so raw DB values become readable strings.
             if (roleEl) roleEl.textContent = _roleLabel(role);
             if (avatarEl) avatarEl.textContent = initials;
 
@@ -227,15 +335,27 @@
 
     /* ── Event binding ───────────────────────────────────────────────── */
     function _bindEvents() {
+        // Theme toggle button click
+        document.addEventListener('click', function (e) {
+            var themeBtn = e.target.closest('#tb-theme-toggle');
+            if (themeBtn) {
+                ThemeManager.toggleTheme();
+            }
+        });
+
         // Hamburger
         document.addEventListener('click', function (e) {
             if (e.target.closest('#tb-hamburger')) {
-                document.getElementById('app-sidebar').classList.toggle('open');
-                document.getElementById('sb-backdrop').classList.toggle('open');
+                var sb = document.getElementById('app-sidebar');
+                var bd = document.getElementById('sb-backdrop');
+                if (sb) sb.classList.toggle('open');
+                if (bd) bd.classList.toggle('open');
             }
             if (e.target.id === 'sb-backdrop') {
-                document.getElementById('app-sidebar').classList.remove('open');
-                document.getElementById('sb-backdrop').classList.remove('open');
+                var sb2 = document.getElementById('app-sidebar');
+                var bd2 = document.getElementById('sb-backdrop');
+                if (sb2) sb2.classList.remove('open');
+                if (bd2) bd2.classList.remove('open');
             }
         });
 
@@ -262,17 +382,18 @@
         s.id = 'nav-shell-styles';
         s.textContent = `
 /* ═══════════════════════════════════════════════════════
-   Navigation Shell — matches Image 2 design precisely
+   Navigation Shell & Theme System Styles
 ════════════════════════════════════════════════════════ */
 
 /* ── Sidebar ─────────────────────────────────────────── */
 #app-sidebar {
     position: fixed; top: 0; left: 0; bottom: 0;
-    width: 220px; background: #1B2A4A;
+    width: 220px; background: var(--aa-sidebar-bg, #0B1528);
     display: flex; flex-direction: column;
     z-index: 200; overflow: hidden;
-    transition: transform .28s cubic-bezier(.4,0,.2,1);
+    transition: transform .28s cubic-bezier(.4,0,.2,1), background-color .2s ease;
     font-family: 'Inter', -apple-system, sans-serif;
+    border-right: 1px solid rgba(255,255,255,.06);
 }
 
 /* Logo area */
@@ -283,9 +404,10 @@
 }
 .sb-logo-shield {
     width: 40px; height: 40px; border-radius: 10px;
-    background: #0F1C35; border: 2px solid #C9A227;
+    background: #0F1C35; border: 2px solid #E7A51A;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
+    box-shadow: 0 0 12px rgba(231, 165, 26, 0.2);
 }
 .sb-logo-shield span {
     font-size: 13px; font-weight: 800; color: #fff; letter-spacing: .04em;
@@ -307,36 +429,29 @@
 .sb-nav::-webkit-scrollbar { width: 4px; }
 .sb-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
 
-.sb-item { margin: 2px 8px; }
+.sb-item { margin: 3px 8px; }
 
 .sb-link {
     display: flex; align-items: center; gap: 12px;
     padding: 10px 12px; border-radius: 10px;
-    color: rgba(255,255,255,.62); text-decoration: none;
+    color: rgba(255,255,255,.68); text-decoration: none;
     font-size: 14px; font-weight: 500;
     transition: background .15s, color .15s;
     position: relative;
 }
 .sb-link:hover {
-    background: rgba(255,255,255,.08); color: rgba(255,255,255,.9);
+    background: rgba(255,255,255,.08); color: #FFFFFF;
     text-decoration: none;
 }
 .sb-link.active {
-    background: rgba(37,99,235,.28); color: #fff; font-weight: 600;
+    background: #2563EB !important; color: #FFFFFF !important; font-weight: 600;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
 }
 .sb-link.active::before {
-    content: ''; position: absolute; left: 0; top: 6px; bottom: 6px;
-    width: 3px; background: #C9A227; border-radius: 0 3px 3px 0; left: -8px;
+    content: ''; position: absolute; left: -8px; top: 6px; bottom: 6px;
+    width: 3px; background: #E7A51A; border-radius: 0 3px 3px 0;
 }
 .sb-icon { display: flex; align-items: center; flex-shrink: 0; }
-
-/* Section header */
-.sb-section-header {
-    padding: 12px 20px 4px;
-    font-size: 10px; font-weight: 700; letter-spacing: .1em;
-    text-transform: uppercase; color: rgba(255,255,255,.3);
-    pointer-events: none; user-select: none;
-}
 
 /* Footer */
 .sb-footer {
@@ -346,7 +461,7 @@
     width: 100%; display: flex; align-items: center; gap: 12px;
     padding: 10px 12px; border-radius: 10px;
     background: none; border: none; cursor: pointer;
-    color: rgba(255,255,255,.5); font-size: 14px; font-weight: 500;
+    color: rgba(255,255,255,.55); font-size: 14px; font-weight: 500;
     font-family: inherit; transition: background .15s, color .15s;
 }
 .sb-logout:hover { background: rgba(239,68,68,.18); color: #fca5a5; }
@@ -354,11 +469,10 @@
 /* Mobile backdrop */
 #sb-backdrop {
     display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,.45); z-index: 190;
+    background: rgba(0,0,0,.55); z-index: 190;
 }
 #sb-backdrop.open { display: block; }
 
-/* Mobile: hide sidebar, show on .open */
 @media (max-width: 768px) {
     #app-sidebar { transform: translateX(-100%); }
     #app-sidebar.open { transform: translateX(0); }
@@ -368,10 +482,12 @@
 /* ── Topbar ──────────────────────────────────────────── */
 #app-topbar {
     position: fixed; top: 0; left: 220px; right: 0; height: 64px;
-    background: #fff; border-bottom: 1px solid #E5E7EB;
+    background: var(--aa-header-bg, #FFFFFF);
+    border-bottom: 1px solid var(--aa-header-border, #E5E7EB);
     display: flex; align-items: center; padding: 0 24px;
-    z-index: 100; gap: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    z-index: 100; gap: 16px; box-shadow: var(--aa-shadow-xs, 0 1px 3px rgba(0,0,0,.06));
     font-family: 'Inter', -apple-system, sans-serif;
+    transition: background-color .2s ease, border-color .2s ease;
 }
 @media (max-width: 768px) { #app-topbar { left: 0; } }
 
@@ -381,12 +497,12 @@
     gap: 5px; border-radius: 8px; padding: 0; flex-shrink: 0;
 }
 .tb-hamburger span {
-    display: block; width: 20px; height: 2px; background: #374151; border-radius: 2px;
+    display: block; width: 20px; height: 2px; background: var(--aa-text, #374151); border-radius: 2px;
 }
-.tb-hamburger:hover { background: #F3F4F6; }
+.tb-hamburger:hover { background: var(--aa-surface-2, #F3F4F6); }
 
 .tb-title {
-    font-size: 18px; font-weight: 700; color: #1B2A4A; flex: 1;
+    font-size: 18px; font-weight: 700; color: var(--aa-header-text, #111827); flex: 1;
 }
 
 .tb-right {
@@ -394,18 +510,36 @@
 }
 
 .tb-icon-btn {
-    width: 38px; height: 38px; border: none; background: #F3F4F6;
+    width: 38px; height: 38px; border: 1px solid transparent; background: var(--aa-surface-2, #F3F4F6);
     border-radius: 10px; cursor: pointer; display: flex; align-items: center;
-    justify-content: center; color: #6B7280; position: relative;
-    transition: background .15s; flex-shrink: 0;
+    justify-content: center; color: var(--aa-header-icon, #6B7280); position: relative;
+    transition: background .15s, color .15s, border-color .15s, transform .15s; flex-shrink: 0;
 }
-.tb-icon-btn:hover { background: #E5E7EB; color: #374151; }
+.tb-icon-btn:hover { background: var(--aa-border, #E5E7EB); color: var(--aa-text, #111827); }
+
+/* Theme Toggle Button Specific Styling */
+.tb-theme-toggle {
+    color: #F59E0B;
+}
+.tb-theme-toggle:hover {
+    transform: scale(1.05);
+}
+.tb-theme-toggle.is-dark,
+[data-theme="dark"] .tb-theme-toggle {
+    color: #FBBF24;
+    background: #0F1A2E;
+    border-color: #1B2E4B;
+}
+.tb-theme-toggle.is-dark svg,
+[data-theme="dark"] .tb-theme-toggle svg {
+    filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.45));
+}
 
 .tb-badge {
     position: absolute; top: 4px; right: 4px; width: 16px; height: 16px;
     background: #EF4444; color: #fff; border-radius: 50%;
     font-size: 9px; font-weight: 700; display: flex; align-items: center;
-    justify-content: center; border: 2px solid #fff;
+    justify-content: center; border: 2px solid var(--aa-header-bg, #fff);
 }
 
 .tb-user {
@@ -413,26 +547,30 @@
     padding: 6px 10px; border-radius: 10px; cursor: pointer;
     transition: background .15s;
 }
-.tb-user:hover { background: #F3F4F6; }
+.tb-user:hover { background: var(--aa-surface-2, #F3F4F6); }
 
 .tb-avatar {
-    width: 36px; height: 36px; border-radius: 50%; background: #1B2A4A;
-    color: #fff; font-size: 12px; font-weight: 700;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #0F1C35;
+    color: #F59E0B;
+    border: 2px solid #E7A51A;
+    font-size: 12px; font-weight: 700;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 
 .tb-user-info { display: flex; flex-direction: column; }
-.tb-user-name { font-size: 13px; font-weight: 600; color: #111827; line-height: 1.2; }
-.tb-user-role { font-size: 11px; color: #6B7280; text-transform: capitalize; }
+.tb-user-name { font-size: 13px; font-weight: 600; color: var(--aa-header-text, #111827); line-height: 1.2; }
+.tb-user-role { font-size: 11px; color: var(--aa-text-muted, #6B7280); text-transform: capitalize; }
 
-/* ── Ensure page content clears sidebar + topbar ──── */
+/* ── Content Layout ──────────────────────────────────── */
 body { overflow-x: hidden; }
 
 .main-container, main, .page-content {
     margin-left: 220px;
     padding-top: 64px;
     min-height: 100vh;
-    background: #F0F2F5;
+    background: var(--aa-bg, #F0F2F5);
+    transition: background-color .2s ease;
 }
 
 .main-container, main {

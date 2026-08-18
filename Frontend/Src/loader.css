@@ -269,8 +269,9 @@
     animation: aa-fade-in 0.2s ease-out;
 }
 
-[data-theme="dark"] .aa-spinner-overlay {
-    background: rgba(17, 24, 39, 0.82);
+[data-theme="dark"] .aa-spinner-overlay,
+body.dark-theme .aa-spinner-overlay {
+    background: rgba(8, 15, 29, 0.88);
 }
 
 .aa-spinner-text {
@@ -285,7 +286,7 @@
     border-radius: 50%;
     border: 3px solid rgba(231, 165, 26, 0.2);
     border-top-color: var(--aa-gold, #e7a51a);
-    border-right-color: var(--aa-blue, #1671c9);
+    border-right-color: var(--aa-blue, #2563EB);
     animation: aa-spin 0.8s linear infinite;
 }
 
@@ -340,12 +341,13 @@
     display: inline-block;
 }
 
-[data-theme="dark"] .aa-skeleton {
+[data-theme="dark"] .aa-skeleton,
+body.dark-theme .aa-skeleton {
     background: linear-gradient(
         90deg,
-        rgba(31, 41, 55, 0.6) 0%,
-        rgba(55, 65, 81, 0.9) 50%,
-        rgba(31, 41, 55, 0.6) 100%
+        rgba(15, 26, 46, 0.6) 0%,
+        rgba(27, 46, 75, 0.9) 50%,
+        rgba(15, 26, 46, 0.6) 100%
     );
     background-size: 200% 100%;
 }

@@ -1,10 +1,12 @@
+/* teachers.css — Admin Assist Staff Page & Dark Theme Support */
+
 /* Teacher avatar — gold tint to distinguish from student blue */
 .pg-teacher-avatar {
     width: 34px;
     height: 34px;
     border-radius: 50%;
-    background: #FEF9C3;
-    color: #854D0E;
+    background: var(--aa-gold-light, #FEF9C3);
+    color: var(--aa-gold, #854D0E);
     font-size: 12px;
     font-weight: 700;
     display: flex;
@@ -21,27 +23,27 @@
 
 .pg-teacher-name {
     font-weight: 600;
-    color: #1B2A4A;
+    color: var(--aa-text, #1B2A4A);
 }
 
 .pg-teacher-email {
     font-size: 12px;
-    color: #6B7280;
+    color: var(--aa-text-muted, #6B7280);
     margin-top: 1px;
 }
 
 #addTeacherBtn {
-    background: var(--gold-300);
-    color: var(--white);
-    box-shadow: var(--shadow-sm);
+    background: var(--aa-blue, #2563EB);
+    color: #fff;
+    box-shadow: var(--aa-shadow-xs);
 }
 
 /* Subject tag pill in table */
 .pg-subject-tag {
     display: inline-block;
     padding: 2px 8px;
-    background: #EFF6FF;
-    color: #1D4ED8;
+    background: var(--aa-blue-light, #EFF6FF);
+    color: var(--aa-blue, #1D4ED8);
     font-size: 12px;
     font-weight: 600;
     border-radius: 999px;
@@ -51,54 +53,55 @@
 .pg-subject-tag-more {
     display: inline-block;
     padding: 2px 8px;
-    background: #F3F4F6;
-    color: #6B7280;
+    background: var(--aa-surface-2, #F3F4F6);
+    color: var(--aa-text-muted, #6B7280);
     font-size: 12px;
     font-weight: 500;
     border-radius: 999px;
     margin-left: 4px;
 }
 
-/* "View" + dropdown action pattern as in Image 2 */
+/* "View" + dropdown action pattern */
 .pg-action-split {
     display: flex;
     align-items: center;
-    border: 1.5px solid #E5E7EB;
+    border: 1.5px solid var(--aa-border, #E5E7EB);
     border-radius: 8px;
     overflow: hidden;
+    background: var(--aa-surface, #fff);
 }
 
 .pg-action-split-main {
     padding: 5px 12px;
     font-size: 13px;
     font-weight: 500;
-    background: #fff;
-    color: #374151;
+    background: var(--aa-surface, #fff);
+    color: var(--aa-text, #374151);
     border: none;
     cursor: pointer;
     font-family: inherit;
-    transition: background .15s;
+    transition: background .15s, color .15s;
 }
 
 .pg-action-split-main:hover {
-    background: #EFF6FF;
-    color: #2563EB;
+    background: var(--aa-blue-light, #EFF6FF);
+    color: var(--aa-blue, #2563EB);
 }
 
 .pg-action-split-caret {
     padding: 5px 8px;
     font-size: 11px;
-    background: #F9FAFB;
-    color: #6B7280;
+    background: var(--aa-surface-2, #F9FAFB);
+    color: var(--aa-text-muted, #6B7280);
     border: none;
-    border-left: 1.5px solid #E5E7EB;
+    border-left: 1.5px solid var(--aa-border, #E5E7EB);
     cursor: pointer;
     font-family: inherit;
     transition: background .15s;
 }
 
 .pg-action-split-caret:hover {
-    background: #E5E7EB;
+    background: var(--aa-border, #E5E7EB);
 }
 
 /* Stats strip above the table */
@@ -110,14 +113,15 @@
 }
 
 .teacher-stat-card {
-    background: #fff;
-    border: 1px solid #E5E7EB;
+    background: var(--aa-surface, #fff);
+    border: 1px solid var(--aa-border, #E5E7EB);
     border-radius: 14px;
     padding: 16px 20px;
     display: flex;
     align-items: center;
     gap: 14px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+    box-shadow: var(--aa-shadow-xs, 0 1px 3px rgba(0, 0, 0, .05));
+    transition: background-color .2s, border-color .2s;
 }
 
 .teacher-stat-icon {
@@ -131,29 +135,29 @@
 }
 
 .teacher-stat-icon-gold {
-    background: #FEF9C3;
-    color: #854D0E;
+    background: var(--aa-gold-light, #FEF9C3);
+    color: var(--aa-gold, #854D0E);
 }
 
 .teacher-stat-icon-green {
-    background: #F0FDF4;
-    color: #16A34A;
+    background: var(--aa-success-bg, #F0FDF4);
+    color: var(--aa-success, #16A34A);
 }
 
 .teacher-stat-icon-blue {
-    background: #EFF6FF;
-    color: #2563EB;
+    background: var(--aa-blue-light, #EFF6FF);
+    color: var(--aa-blue, #2563EB);
 }
 
 .teacher-stat-value {
     font-size: 22px;
     font-weight: 800;
-    color: #1B2A4A;
+    color: var(--aa-text, #1B2A4A);
 }
 
 .teacher-stat-label {
     font-size: 12px;
-    color: #6B7280;
+    color: var(--aa-text-muted, #6B7280);
     font-weight: 500;
     margin-top: 2px;
 }
@@ -169,10 +173,10 @@
     right: 0;
     top: calc(100% + 4px);
     min-width: 140px;
-    background: #fff;
-    border: 1px solid #E5E7EB;
+    background: var(--aa-surface, #fff);
+    border: 1px solid var(--aa-border, #E5E7EB);
     border-radius: 10px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, .1);
+    box-shadow: var(--aa-shadow-lg, 0 4px 16px rgba(0, 0, 0, .1));
     z-index: 50;
     display: none;
     flex-direction: column;
@@ -190,21 +194,21 @@
     cursor: pointer;
     font-size: 13px;
     font-family: inherit;
-    color: #374151;
+    color: var(--aa-text, #374151);
     text-align: left;
     transition: background .12s;
 }
 
 .pg-dropdown-menu button:hover {
-    background: #F3F4F6;
+    background: var(--aa-surface-hover, #F3F4F6);
 }
 
 .pg-dropdown-menu button.danger {
-    color: #EF4444;
+    color: var(--aa-danger, #EF4444);
 }
 
 .pg-dropdown-menu button.danger:hover {
-    background: #FEF2F2;
+    background: var(--aa-danger-bg, #FEF2F2);
 }
 
 @media (max-width: 768px) {

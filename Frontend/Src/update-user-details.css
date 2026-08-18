@@ -127,25 +127,26 @@
 /* ── Profile Card ────────────────────────────────────────────────────────── */
 
 .profile-card {
-    background: #ffffff;
+    background: var(--aa-surface, #ffffff);
     border-radius: 12px;
     padding: 28px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
-    border-top: 3px solid var(--accent);
+    box-shadow: var(--aa-shadow, 0 2px 8px rgba(0, 0, 0, 0.07));
+    border: 1px solid var(--aa-border, #E5E7EB);
+    border-top: 3px solid var(--aa-gold, #E7A51A);
 }
 
 .profile-card--danger {
-    border-top-color: var(--danger);
+    border-top-color: var(--aa-danger, #EF4444);
 }
 
 .profile-card-title {
-    font-family: 'Playfair Display', serif;
+    font-family: inherit;
     font-size: 17px;
     font-weight: 700;
-    color: var(--primary);
+    color: var(--aa-text, var(--primary));
     margin: 0 0 20px;
     padding-bottom: 14px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--aa-border, var(--border));
 }
 
 .profile-section-desc {

@@ -180,10 +180,64 @@
         }
     }
 
+    /* ── THEME & APPEARANCE CONTROLS ─────────────────────── */
+    function updateThemeControlsUI() {
+        if (typeof window.ThemeManager === "undefined") return;
+        var effective = window.ThemeManager.getEffectiveTheme();
+        var isSystem = window.ThemeManager.isSystemSync();
+
+        var cardLight = document.getElementById("themeCardLight");
+        var cardDark = document.getElementById("themeCardDark");
+        var syncToggle = document.getElementById("syncSystemToggle");
+
+        if (cardLight) cardLight.classList.toggle("is-active", effective === "light");
+        if (cardDark) cardDark.classList.toggle("is-active", effective === "dark");
+        if (syncToggle) syncToggle.checked = isSystem;
+    }
+
+    function initThemeControls() {
+        if (typeof window.ThemeManager === "undefined") return;
+
+        updateThemeControlsUI();
+
+        var cardLight = document.getElementById("themeCardLight");
+        if (cardLight) {
+            cardLight.addEventListener("click", function () {
+                window.ThemeManager.setTheme("light", false);
+                updateThemeControlsUI();
+                _toast("Theme switched to Light mode.", "info");
+            });
+        }
+
+        var cardDark = document.getElementById("themeCardDark");
+        if (cardDark) {
+            cardDark.addEventListener("click", function () {
+                window.ThemeManager.setTheme("dark", false);
+                updateThemeControlsUI();
+                _toast("Theme switched to Dark mode.", "info");
+            });
+        }
+
+        var syncToggle = document.getElementById("syncSystemToggle");
+        if (syncToggle) {
+            syncToggle.addEventListener("change", function () {
+                var checked = this.checked;
+                window.ThemeManager.setTheme(checked ? "system" : window.ThemeManager.getEffectiveTheme(), checked);
+                updateThemeControlsUI();
+                _toast(checked ? "Theme set to sync with system." : "System sync disabled.", "info");
+            });
+        }
+
+        window.addEventListener("aa-theme-change", function () {
+            updateThemeControlsUI();
+        });
+    }
+
     /* ── Event binding ────────────────────────────────────── */
     document.addEventListener("DOMContentLoaded", function () {
         loadProfile();
         loadSettings();
+        initThemeControls();
 
         // Profile
         var saveProfileBtn = document.getElementById("saveProfileBtn");
@@ -212,3 +266,4 @@
     });
 
 })();
+
