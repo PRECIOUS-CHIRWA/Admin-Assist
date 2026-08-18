@@ -90,17 +90,19 @@ body.dark-theme {
 
 /* ─── Layout ─────────────────────────────────────────────────── */
 .aa-main {
-    margin-left: 0;
-    padding: 1.75rem 2.25rem 2.5rem;
+    margin-left: 0 !important;
+    padding: 80px 28px 28px;
     min-height: 100vh;
     background: var(--aa-bg);
+    width: 100%;
+    box-sizing: border-box;
 }
 
-.aa-main > * { max-width: 1440px; margin-left: auto; margin-right: auto; }
+.aa-main > * { max-width: 100%; }
 .aa-page-header { padding-bottom: .25rem; }
 .aa-page-header h1 { letter-spacing: -.025em; }
-.aa-card { border-radius: var(--aa-radius); box-shadow: 0 2px 10px rgba(16,42,76,.06); }
-.aa-filter-bar { border-radius: var(--aa-radius); box-shadow: 0 2px 10px rgba(16,42,76,.04); }
+.aa-card { border-radius: var(--aa-radius); box-shadow: var(--aa-shadow-xs, 0 2px 10px rgba(16,42,76,.06)); }
+.aa-filter-bar { border-radius: var(--aa-radius); box-shadow: var(--aa-shadow-xs, 0 2px 10px rgba(16,42,76,.04)); }
 
 
 .aa-page-header {
