@@ -141,6 +141,13 @@
             if (enrCheck) enrCheck.checked = s.notify_on_enrollment === 1 || s.notify_on_enrollment === true;
             if (resCheck) resCheck.checked = s.notify_on_results === 1 || s.notify_on_results === true;
             if (annCheck) annCheck.checked = s.notify_on_announcements === 1 || s.notify_on_announcements === true;
+
+            if (s.school_name) {
+                localStorage.setItem("aa_school_name", s.school_name);
+                window.dispatchEvent(new CustomEvent("aa-settings-updated", {
+                    detail: { school_name: s.school_name }
+                }));
+            }
         } catch (err) {
             console.warn("loadSettings:", err.message);
         }
@@ -150,8 +157,9 @@
         var btn = document.getElementById("saveGeneralBtn");
         if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
         try {
+            var schoolName = _val("schoolName").trim();
             var payload = {
-                school_name:         _val("schoolName").trim() || undefined,
+                school_name:         schoolName || undefined,
                 academic_year_label: _val("academicYear").trim() || undefined,
                 department:          _val("schoolDept").trim() || undefined,
                 country:             _val("country").trim() || undefined,
@@ -166,6 +174,14 @@
                 var d = await res.json().catch(function () { return {}; });
                 throw new Error(d.error || "Save failed");
             }
+
+            if (schoolName) {
+                localStorage.setItem("aa_school_name", schoolName);
+                window.dispatchEvent(new CustomEvent("aa-settings-updated", {
+                    detail: { school_name: schoolName }
+                }));
+            }
+
             _toast("General settings saved.", "success");
         } catch (err) {
             _toast(err.message || "Could not save settings.", "error");

@@ -30,6 +30,52 @@ const DEFAULTS = {
     max_login_attempts:   5,
 };
 
+/**
+ * Self-healing helper: ensures school_settings table exists with all required columns
+ */
+const ensureSettingsTable = async () => {
+    try {
+        await pool.execute(`
+            CREATE TABLE IF NOT EXISTS school_settings (
+                id                      INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                school_id               INT UNSIGNED NOT NULL DEFAULT 1,
+                school_name             VARCHAR(255)          DEFAULT 'Admin Assist School',
+                school_code             VARCHAR(50)           DEFAULT NULL,
+                department              VARCHAR(100)          DEFAULT NULL,
+                country                 VARCHAR(100)          DEFAULT 'Zambia',
+                academic_year_label     VARCHAR(20)           DEFAULT NULL,
+                address                 TEXT                  DEFAULT NULL,
+                phone                   VARCHAR(30)           DEFAULT NULL,
+                email                   VARCHAR(255)          DEFAULT NULL,
+                logo_url                VARCHAR(500)          DEFAULT NULL,
+                timezone                VARCHAR(100)          DEFAULT 'Africa/Lusaka',
+                date_format             VARCHAR(30)           DEFAULT 'DD/MM/YYYY',
+                max_students_per_class  INT UNSIGNED          DEFAULT 40,
+                grading_system          VARCHAR(20)           DEFAULT 'ECZ',
+                notify_on_enrollment    TINYINT(1)           DEFAULT 1,
+                notify_on_attendance    TINYINT(1)           DEFAULT 1,
+                notify_on_results       TINYINT(1)           DEFAULT 1,
+                notify_on_announcements TINYINT(1)           DEFAULT 1,
+                max_login_attempts      TINYINT UNSIGNED     DEFAULT 5,
+                updated_at              TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                UNIQUE KEY uq_school_id (school_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+
+        // Check if any row exists, if not seed default row
+        const [rows] = await pool.execute("SELECT id FROM school_settings WHERE school_id = 1 LIMIT 1");
+        if (!rows.length) {
+            await pool.execute(`
+                INSERT INTO school_settings (school_id, school_name, timezone, country, grading_system)
+                VALUES (1, 'Admin Assist School', 'Africa/Lusaka', 'Zambia', 'ECZ')
+            `);
+        }
+    } catch (err) {
+        console.warn("ensureSettingsTable notice:", err.message);
+    }
+};
+
 // ─── GET /api/settings ────────────────────────────────────────────────────────
 const getSettings = async (req, res) => {
     try {
@@ -38,15 +84,19 @@ const getSettings = async (req, res) => {
         );
 
         if (!rows.length) {
-            // Table exists but row not seeded yet — return defaults
-            return res.json({ settings: DEFAULTS });
+            await ensureSettingsTable();
+            let [retryRows] = await pool.execute(
+                "SELECT * FROM school_settings WHERE school_id = 1 LIMIT 1"
+            );
+            const row = retryRows.length ? retryRows[0] : {};
+            return res.json({ settings: { ...DEFAULTS, ...row } });
         }
 
         const row = rows[0];
-        // Merge with defaults so missing cols don't cause undefined
         res.json({ settings: { ...DEFAULTS, ...row } });
     } catch (err) {
         if (err.code === "ER_NO_SUCH_TABLE") {
+            await ensureSettingsTable();
             return res.json({ settings: DEFAULTS });
         }
         console.error("getSettings error:", err.message);
@@ -76,21 +126,22 @@ const updateSettings = async (req, res) => {
     if (!fields.length) return res.status(400).json({ error: "No valid fields to update" });
 
     try {
-        // Upsert: insert default row if it doesn''t exist, then update
-        await pool.execute(
-            "INSERT IGNORE INTO school_settings (school_id, school_name) VALUES (1, ?)",
-            [req.body.school_name || DEFAULTS.school_name]
-        );
+        await ensureSettingsTable();
+
         values.push(1);
         await pool.execute(
             `UPDATE school_settings SET ${fields.join(", ")} WHERE school_id = 1`,
             values
         );
-        res.json({ message: "Settings saved successfully" });
+
+        // Return updated settings
+        const [updatedRows] = await pool.execute(
+            "SELECT * FROM school_settings WHERE school_id = 1 LIMIT 1"
+        );
+        const updated = updatedRows.length ? { ...DEFAULTS, ...updatedRows[0] } : DEFAULTS;
+
+        res.json({ message: "Settings saved successfully", settings: updated });
     } catch (err) {
-        if (err.code === "ER_NO_SUCH_TABLE") {
-            return res.status(503).json({ error: "Settings table not yet created — run schema.sql first" });
-        }
         console.error("updateSettings error:", err.message);
         res.status(500).json({ error: "Could not save settings" });
     }

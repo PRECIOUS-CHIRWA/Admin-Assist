@@ -169,6 +169,7 @@
         _buildTopbar();
         _markActivePage();
         _loadUser();
+        _loadSchoolBranding();
         _bindEvents();
         _wrapContent();
     });
@@ -198,9 +199,9 @@
         nav.innerHTML =
             // Logo area
             '<div class="sb-logo-area">' +
-            '<div class="sb-logo-shield"><span>AA</span></div>' +
+            '<div class="sb-logo-shield"><span id="sb-school-initials">AA</span></div>' +
             '<div class="sb-logo-text">' +
-            '<span class="sb-logo-name">ADMIN ASSIST</span>' +
+            '<span class="sb-logo-name" id="sb-school-name">ADMIN ASSIST</span>' +
             '<span class="sb-logo-sub">School Information System</span>' +
             '</div>' +
             '</div>' +
@@ -495,9 +496,51 @@
             if (e.target.closest('#nav-logout-btn')) _doLogout();
         });
 
+        // Live school name update event
+        window.addEventListener('aa-settings-updated', function (e) {
+            if (e.detail && e.detail.school_name) {
+                _applySchoolBranding(e.detail.school_name);
+            }
+        });
+
         // Initial notification load + polling
         _loadNotifications();
         setInterval(_loadNotifications, 60000);
+    }
+
+    /* ── School Branding ─────────────────────────────────────────────── */
+    function _applySchoolBranding(name) {
+        if (!name) return;
+        var nameEl = document.getElementById('sb-school-name');
+        var initialsEl = document.getElementById('sb-school-initials');
+        if (nameEl) nameEl.textContent = String(name).toUpperCase();
+        if (initialsEl) {
+            var words = String(name).trim().split(/\s+/).filter(Boolean);
+            var inits = words.length > 1
+                ? (words[0][0] + words[1][0]).toUpperCase()
+                : String(name).trim().slice(0, 2).toUpperCase();
+            initialsEl.textContent = inits || 'AA';
+        }
+    }
+
+    async function _loadSchoolBranding() {
+        var cached = localStorage.getItem('aa_school_name');
+        if (cached) _applySchoolBranding(cached);
+
+        if (typeof apiFetch !== 'function') return;
+        try {
+            var res = await apiFetch('/api/settings');
+            if (res && res.ok) {
+                var data = await res.json();
+                var s = data.settings || {};
+                if (s.school_name) {
+                    localStorage.setItem('aa_school_name', s.school_name);
+                    _applySchoolBranding(s.school_name);
+                }
+            }
+        } catch (err) {
+            // Silently fall back to cached or default
+        }
     }
 
     function _doLogout() {
