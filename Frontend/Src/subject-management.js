@@ -10,32 +10,50 @@
         await loadMeta();
         await Promise.all([loadSubjects(), loadAssignments()]);
         bindEvents();
+
+        // If URL has teacher_id query param, open Assign Modal with that teacher pre-selected
+        const urlParams = new URLSearchParams(window.location.search);
+        const preselectTeacherId = urlParams.get('teacher_id') || urlParams.get('teacherId');
+        if (preselectTeacherId) {
+            openAssignModal(preselectTeacherId);
+        }
     });
 
     /* ─── Meta ─────────────────────────────────────────────────────────────── */
     async function loadMeta() {
         try {
-            const [cr, tr, teacherRes] = await Promise.all([
-                apiFetch('/api/attendance/classes'),
-                apiFetch('/api/attendance/terms'),
-                apiFetch('/api/teachers?limit=100&status=active'),
+            const [cr, tr, yrRes, teacherRes] = await Promise.all([
+                apiFetch('/api/attendance/classes').catch(() => null),
+                apiFetch('/api/attendance/terms').catch(() => null),
+                apiFetch('/api/attendance/academic-years').catch(() => null),
+                apiFetch('/api/teachers?limit=100&status=active').catch(() => null),
             ]);
 
-            allClasses = await cr.json();
-            allTerms = await tr.json();
-            const teacherData = teacherRes && teacherRes.ok ? await teacherRes.json() : {};
+            allClasses = (cr && cr.ok) ? await cr.json().catch(() => []) : [];
+            allTerms = (tr && tr.ok) ? await tr.json().catch(() => []) : [];
+            const fetchedYears = (yrRes && yrRes.ok) ? await yrRes.json().catch(() => []) : [];
+            
+            const teacherData = (teacherRes && teacherRes.ok) ? await teacherRes.json().catch(() => ({})) : {};
             allTeachers = teacherData.teachers || (Array.isArray(teacherData) ? teacherData : []);
 
-            const years = [...new Map(allTerms.map(t =>
-                [t.academic_year_id, { id: t.academic_year_id, label: t.year_label }]
-            )).values()];
+            let years = fetchedYears.map(y => ({ id: y.id, label: y.year_label || String(y.year || y.id) }));
+            if (!years.length && allTerms.length) {
+                years = [...new Map(allTerms.map(t =>
+                    [t.academic_year_id, { id: t.academic_year_id, label: t.year_label }]
+                )).values()];
+            }
+            if (!years.length) {
+                years = [{ id: 1, label: '2026' }];
+            }
 
             _populate('filterAssignClass', allClasses, 'id', _classLabel, 'All Classes');
             _populate('filterAssignYear', years, 'id', y => y.label, 'All Years');
             _populate('aTeacher', allTeachers, 'id', u => u.name, 'Select Teacher…');
             _populate('aClass', allClasses, 'id', _classLabel, 'Select Class…');
             _populate('aYear', years, 'id', y => y.label, 'Select Year…');
-        } catch (err) { console.error('loadMeta:', err); }
+        } catch (err) {
+            console.error('loadMeta:', err);
+        }
     }
 
     /* ─── Subjects ──────────────────────────────────────────────────────────── */
@@ -97,7 +115,7 @@
         document.getElementById('editSubjectId').value = '';
         document.getElementById('subjectModalTitle').textContent = 'Add Subject';
         ['fCode', 'fName', 'fDesc'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-        document.getElementById('subjectModal').hidden = false;
+        _showModal('subjectModal');
     }
 
     function openEditSubject(s) {
@@ -106,7 +124,7 @@
         document.getElementById('fCode').value = s.subject_code;
         document.getElementById('fName').value = s.subject_name;
         document.getElementById('fDesc').value = s.description || '';
-        document.getElementById('subjectModal').hidden = false;
+        _showModal('subjectModal');
     }
 
     async function saveSubject() {
@@ -123,8 +141,8 @@
                 method: id ? 'PUT' : 'POST',
                 body: JSON.stringify({ subject_code: code, subject_name: name, description: desc }),
             });
-            if (!res || !res.ok) { const d = await res.json(); throw new Error(d.error); }
-            document.getElementById('subjectModal').hidden = true;
+            if (!res || !res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Failed to save subject'); }
+            _hideModal('subjectModal');
             await loadSubjects();
         } catch (err) { alert(err.message || 'Failed to save subject.'); }
         finally { btn.disabled = false; btn.textContent = 'Save Subject'; }
@@ -174,8 +192,8 @@
 
         tbody.innerHTML = rows.map(r => `
             <tr>
-                <td>${_esc(r.teacher_name)}</td>
-                <td>${_esc(r.subject_name)}</td>
+                <td><strong>${_esc(r.teacher_name)}</strong></td>
+                <td><span class="aa-badge aa-badge-info" style="font-weight:600">${_esc(r.subject_code ? r.subject_code + ' — ' + r.subject_name : r.subject_name)}</span></td>
                 <td>${_esc(r.class_name)}</td>
                 <td>${_esc(r.year_label)}</td>
                 <td class="aa-table-actions">
@@ -188,6 +206,14 @@
         );
     }
 
+    function openAssignModal(preselectTeacherId) {
+        if (preselectTeacherId) {
+            const teacherSelect = document.getElementById('aTeacher');
+            if (teacherSelect) teacherSelect.value = preselectTeacherId;
+        }
+        _showModal('assignModal');
+    }
+
     async function saveAssignment() {
         const payload = {
             teacher_id: document.getElementById('aTeacher')?.value,
@@ -196,7 +222,7 @@
             academic_year_id: document.getElementById('aYear')?.value,
         };
         if (!payload.teacher_id || !payload.subject_id || !payload.class_id || !payload.academic_year_id) {
-            return alert('All fields are required.');
+            return alert('All fields (Teacher, Subject, Class, Academic Year) are required.');
         }
 
         const btn = document.getElementById('saveAssignBtn');
@@ -206,9 +232,9 @@
                 method: 'POST',
                 body: JSON.stringify(payload),
             });
-            if (!res || !res.ok) { const d = await res.json(); throw new Error(d.error); }
-            document.getElementById('assignModal').hidden = true;
-            await loadAssignments();
+            if (!res || !res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Failed to assign teacher'); }
+            _hideModal('assignModal');
+            await Promise.all([loadAssignments(), loadSubjects()]);
         } catch (err) { alert(err.message || 'Failed to assign teacher.'); }
         finally { btn.disabled = false; btn.textContent = 'Assign'; }
     }
@@ -218,27 +244,37 @@
         try {
             const res = await apiFetch(`/api/subjects/assign/${id}`, { method: 'DELETE' });
             if (!res || !res.ok) throw new Error('Delete failed');
-            await loadAssignments();
+            await Promise.all([loadAssignments(), loadSubjects()]);
         } catch { alert('Unable to remove assignment.'); }
+    }
+
+    /* ─── Modal Helpers ───────────────────────────────────────────────────────── */
+    function _showModal(id) {
+        const m = document.getElementById(id);
+        if (!m) return;
+        m.hidden = false;
+        m.classList.add('aa-modal-visible');
+    }
+
+    function _hideModal(id) {
+        const m = document.getElementById(id);
+        if (!m) return;
+        m.hidden = true;
+        m.classList.remove('aa-modal-visible');
     }
 
     /* ─── Events ─────────────────────────────────────────────────────────────── */
     function bindEvents() {
         // Subject modal
         document.getElementById('addSubjectBtn')?.addEventListener('click', openAddSubject);
-        document.getElementById('closeSubjectModal')?.addEventListener('click',
-            () => document.getElementById('subjectModal').hidden = true);
-        document.getElementById('cancelSubjectBtn')?.addEventListener('click',
-            () => document.getElementById('subjectModal').hidden = true);
+        document.getElementById('closeSubjectModal')?.addEventListener('click', () => _hideModal('subjectModal'));
+        document.getElementById('cancelSubjectBtn')?.addEventListener('click', () => _hideModal('subjectModal'));
         document.getElementById('saveSubjectBtn')?.addEventListener('click', saveSubject);
 
         // Assign modal
-        document.getElementById('assignBtn')?.addEventListener('click',
-            () => document.getElementById('assignModal').hidden = false);
-        document.getElementById('closeAssignModal')?.addEventListener('click',
-            () => document.getElementById('assignModal').hidden = true);
-        document.getElementById('cancelAssignBtn')?.addEventListener('click',
-            () => document.getElementById('assignModal').hidden = true);
+        document.getElementById('assignBtn')?.addEventListener('click', () => openAssignModal());
+        document.getElementById('closeAssignModal')?.addEventListener('click', () => _hideModal('assignModal'));
+        document.getElementById('cancelAssignBtn')?.addEventListener('click', () => _hideModal('assignModal'));
         document.getElementById('saveAssignBtn')?.addEventListener('click', saveAssignment);
 
         // Assignment filters

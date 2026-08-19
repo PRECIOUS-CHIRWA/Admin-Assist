@@ -280,15 +280,7 @@
 </head>
 
 <body data-page="settings">
-  <header>
-    <div class="logo">Admin Assist</div>
-    <div class="user-profile">
-      <div class="user-avatar" id="headerAvatar">?</div>
-      <span id="headerUserName">…</span>
-      <span id="roleBadge" class="role-badge"></span>
-      <button id="logoutBtn">Logout</button>
-    </div>
-  </header>
+  <div id="navigation-root"></div>
 
   <main class="aa-main">
     <header class="aa-page-header">
@@ -472,52 +464,47 @@
         <!-- SYSTEM -->
         <section class="settings-section" id="system">
           <h2>System Settings</h2>
-          <p class="settings-desc">Configure system-level preferences and data management.</p>
+          <p class="settings-desc">Configure system-level preferences and security limits.</p>
           <div class="settings-group">
             <div class="form-field">
               <label for="dateFormat">Date Format</label>
               <select id="dateFormat">
-                <option>DD/MM/YYYY</option>
-                <option>MM/DD/YYYY</option>
-                <option>YYYY-MM-DD</option>
+                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
               </select>
             </div>
             <div class="form-field">
-              <label for="language">Language</label>
-              <select id="language">
-                <option>English</option>
-              </select>
+              <label for="maxLoginAttempts">Max Login Attempts</label>
+              <input type="number" id="maxLoginAttempts" min="1" max="20" placeholder="5">
             </div>
           </div>
           <div class="settings-actions">
-            <button class="btn-secondary" type="button">Discard</button>
-            <button class="btn-primary" type="button" id="saveSystemBtn">Save</button>
+            <button class="btn-secondary" type="button" data-discard="general">Discard</button>
+            <button class="btn-primary" type="button" id="saveSystemBtn">Save System</button>
           </div>
         </section>
 
         <!-- NOTIFICATIONS -->
         <section class="settings-section" id="notifications">
           <h2>Notification Settings</h2>
-          <p class="settings-desc">Choose what notifications you want to receive.</p>
-          <p style="color:var(--aa-text-muted);font-size:13px;margin-bottom:20px;">
-            Notification preferences are saved with school settings. Real-time push notifications are coming in a future sprint.
-          </p>
-          <div style="display:flex;flex-direction:column;gap:14px;opacity:.55;">
-            <label style="display:flex;align-items:center;gap:10px;font-size:13px;">
-              <input type="checkbox" disabled style="width:16px;height:16px;"> Attendance alerts
+          <p class="settings-desc">Choose what notifications you want to receive across the school portal.</p>
+          <div style="display:flex;flex-direction:column;gap:16px;margin:20px 0;">
+            <label style="display:flex;align-items:center;gap:12px;font-size:13.5px;cursor:pointer;">
+              <input type="checkbox" id="notifyAttendance" style="width:17px;height:17px;cursor:pointer;"> Attendance alerts &amp; weekly summaries
             </label>
-            <label style="display:flex;align-items:center;gap:10px;font-size:13px;">
-              <input type="checkbox" disabled style="width:16px;height:16px;"> New student enrollments
+            <label style="display:flex;align-items:center;gap:12px;font-size:13.5px;cursor:pointer;">
+              <input type="checkbox" id="notifyEnrollment" style="width:17px;height:17px;cursor:pointer;"> New student &amp; teacher enrollments
             </label>
-            <label style="display:flex;align-items:center;gap:10px;font-size:13px;">
-              <input type="checkbox" disabled style="width:16px;height:16px;"> Report generation complete
+            <label style="display:flex;align-items:center;gap:12px;font-size:13.5px;cursor:pointer;">
+              <input type="checkbox" id="notifyResults" style="width:17px;height:17px;cursor:pointer;"> Academic report &amp; exam results published
             </label>
-            <label style="display:flex;align-items:center;gap:10px;font-size:13px;">
-              <input type="checkbox" disabled style="width:16px;height:16px;"> System announcements
+            <label style="display:flex;align-items:center;gap:12px;font-size:13.5px;cursor:pointer;">
+              <input type="checkbox" id="notifyAnnouncements" style="width:17px;height:17px;cursor:pointer;"> System announcements &amp; academic assignments
             </label>
           </div>
           <div class="settings-actions">
-            <button class="btn-primary" type="button">Save Preferences</button>
+            <button class="btn-primary" type="button" id="saveNotifBtn">Save Notification Preferences</button>
           </div>
         </section>
 

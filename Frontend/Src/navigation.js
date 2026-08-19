@@ -18,6 +18,7 @@
         attendance: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M9 16l2 2 4-4"/></svg>',
         results: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
         reports: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
+        subjects: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>',
         settings: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>',
         bell: '<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>',
         gear: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>',
@@ -133,6 +134,7 @@
         { href: 'dashboard.html', label: 'Dashboard', icon: 'dashboard', roles: [] },
         { href: 'students.html', label: 'Enrollment', icon: 'students', roles: [] },
         { href: 'teachers.html', label: 'Staff', icon: 'teachers', roles: ['admin', 'headmaster', 'staff'] },
+        { href: 'subject-management.html', label: 'Subjects', icon: 'subjects', roles: ['admin', 'headmaster', 'staff'] },
         { href: 'attendance-management.html', label: 'Attendance', icon: 'attendance', roles: [] },
         { href: 'academic-records.html', label: 'Results', icon: 'results', roles: [] },
         { href: 'reports-dashboard.html', label: 'Reports', icon: 'reports', roles: ['admin', 'headmaster', 'staff'] },
@@ -255,10 +257,22 @@
             '<button class="tb-icon-btn" title="Settings" onclick="window.location=\'settings.html\'">' +
             ICONS.gear +
             '</button>' +
-            '<button class="tb-icon-btn" title="Notifications" style="position:relative">' +
+            '<div style="position:relative" id="tb-notif-wrap">' +
+            '<button class="tb-icon-btn" id="tb-notif-btn" title="Notifications" type="button" aria-haspopup="true" aria-expanded="false" style="position:relative">' +
             ICONS.bell +
             '<span class="tb-badge" id="notif-badge" hidden>0</span>' +
             '</button>' +
+            '<div class="tb-notif-dropdown" id="tb-notif-dropdown" hidden>' +
+            '<div class="tb-notif-header">' +
+            '<span class="tb-notif-header-title">Notifications</span>' +
+            '<button class="tb-notif-mark-all" id="tb-notif-mark-all" type="button">Mark all read</button>' +
+            '</div>' +
+            '<div class="tb-notif-list" id="tb-notif-list">' +
+            '<div class="tb-notif-empty">Loading notifications…</div>' +
+            '</div>' +
+            '<a href="notifications.html" class="tb-notif-footer">View all notifications &rarr;</a>' +
+            '</div>' +
+            '</div>' +
             '<div class="tb-user" id="tb-user">' +
             '<div class="tb-avatar" id="tb-avatar">?</div>' +
             '<div class="tb-user-info">' +
@@ -275,6 +289,91 @@
         } else {
             document.body.appendChild(bar);
         }
+    }
+
+    /* ── Notifications loader ─────────────────────────────────────────── */
+    var _notifCache = [];
+
+    async function _loadNotifications() {
+        if (typeof apiFetch !== 'function') return;
+        try {
+            var res = await apiFetch('/api/notifications');
+            if (!res || !res.ok) return;
+            var data = await res.json();
+            var unreadCount = data.unreadCount || 0;
+            _notifCache = data.notifications || [];
+
+            var badge = document.getElementById('notif-badge');
+            if (badge) {
+                badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                badge.hidden = unreadCount <= 0;
+            }
+
+            _renderNotifDropdown(_notifCache);
+        } catch (err) {
+            console.warn('_loadNotifications:', err.message);
+        }
+    }
+
+    function _renderNotifDropdown(items) {
+        var list = document.getElementById('tb-notif-list');
+        if (!list) return;
+
+        if (!items || !items.length) {
+            list.innerHTML = '<div class="tb-notif-empty">No notifications yet</div>';
+            return;
+        }
+
+        list.innerHTML = items.slice(0, 5).map(function (n) {
+            var isUnread = !n.read;
+            var icon = _notifCategoryIcon(n.type || n.category);
+            var timeStr = _relativeTime(n.timestamp);
+
+            return '<div class="tb-notif-item' + (isUnread ? ' is-unread' : '') + '" data-notif-id="' + _esc(n.id) + '">' +
+                '<div class="tb-notif-item-icon">' + icon + '</div>' +
+                '<div class="tb-notif-item-body">' +
+                '<div class="tb-notif-item-title">' + _esc(n.title) + '</div>' +
+                '<div class="tb-notif-item-desc">' + _esc(n.description) + '</div>' +
+                '<div class="tb-notif-item-time">' + timeStr + '</div>' +
+                '</div>' +
+                (isUnread ? '<div class="tb-notif-dot"></div>' : '') +
+                '</div>';
+        }).join('');
+
+        list.querySelectorAll('.tb-notif-item').forEach(function (el) {
+            el.addEventListener('click', async function () {
+                var notifId = this.dataset.notifId;
+                if (notifId && this.classList.contains('is-unread')) {
+                    try {
+                        await apiFetch('/api/notifications/' + notifId + '/read', { method: 'PATCH' });
+                        _loadNotifications();
+                    } catch {}
+                }
+            });
+        });
+    }
+
+    function _notifCategoryIcon(cat) {
+        var c = String(cat || '').toLowerCase();
+        if (c.includes('academic') || c.includes('result') || c.includes('subject')) return '🎓';
+        if (c.includes('attendance')) return '📋';
+        if (c.includes('enroll') || c.includes('student') || c.includes('user') || c.includes('teacher')) return '👤';
+        if (c.includes('announc')) return '📢';
+        return '🔔';
+    }
+
+    function _relativeTime(dateStr) {
+        if (!dateStr) return '';
+        var diff = Date.now() - new Date(dateStr).getTime();
+        var mins = Math.floor(diff / 60000);
+        if (mins < 1) return 'Just now';
+        if (mins < 60) return mins + 'm ago';
+        var hrs = Math.floor(mins / 60);
+        if (hrs < 24) return hrs + 'h ago';
+        var days = Math.floor(hrs / 24);
+        if (days === 1) return 'Yesterday';
+        if (days < 7) return days + 'd ago';
+        return new Date(dateStr).toLocaleDateString();
     }
 
     /* ── Mark active page ─────────────────────────────────────────────── */
@@ -335,6 +434,38 @@
 
     /* ── Event binding ───────────────────────────────────────────────── */
     function _bindEvents() {
+        // Notification bell toggle
+        document.addEventListener('click', function (e) {
+            var notifBtn = e.target.closest('#tb-notif-btn');
+            var notifDropdown = document.getElementById('tb-notif-dropdown');
+            if (notifBtn && notifDropdown) {
+                var isHidden = notifDropdown.hidden;
+                notifDropdown.hidden = !isHidden;
+                notifBtn.setAttribute('aria-expanded', String(isHidden));
+                if (isHidden) _loadNotifications();
+                return;
+            }
+
+            // Close notification dropdown when clicking outside
+            if (notifDropdown && !notifDropdown.hidden && !e.target.closest('#tb-notif-wrap')) {
+                notifDropdown.hidden = true;
+                var btn = document.getElementById('tb-notif-btn');
+                if (btn) btn.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        // Mark all notifications read
+        document.addEventListener('click', async function (e) {
+            if (e.target.closest('#tb-notif-mark-all')) {
+                try {
+                    await apiFetch('/api/notifications/read-all', { method: 'POST' });
+                    _loadNotifications();
+                } catch (err) {
+                    console.warn('markAllRead:', err.message);
+                }
+            }
+        });
+
         // Theme toggle button click
         document.addEventListener('click', function (e) {
             var themeBtn = e.target.closest('#tb-theme-toggle');
@@ -363,6 +494,10 @@
         document.addEventListener('click', function (e) {
             if (e.target.closest('#nav-logout-btn')) _doLogout();
         });
+
+        // Initial notification load + polling
+        _loadNotifications();
+        setInterval(_loadNotifications, 60000);
     }
 
     function _doLogout() {
@@ -538,10 +673,154 @@
 }
 
 .tb-badge {
-    position: absolute; top: 4px; right: 4px; width: 16px; height: 16px;
-    background: #EF4444; color: #fff; border-radius: 50%;
-    font-size: 9px; font-weight: 700; display: flex; align-items: center;
+    position: absolute; top: 2px; right: 2px; min-width: 18px; height: 18px;
+    padding: 0 4px;
+    background: #EF4444; color: #fff; border-radius: 999px;
+    font-size: 10px; font-weight: 700; display: flex; align-items: center;
     justify-content: center; border: 2px solid var(--aa-header-bg, #fff);
+    box-shadow: 0 1px 3px rgba(0,0,0,.15);
+}
+
+/* ── Topbar Notification Dropdown ────────────────────── */
+.tb-notif-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 340px;
+    max-width: 90vw;
+    background: var(--aa-surface, #FFFFFF);
+    border: 1px solid var(--aa-border, #E5E7EB);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: tbNotifFadeIn .15s ease;
+}
+.tb-notif-dropdown[hidden] {
+    display: none !important;
+}
+@keyframes tbNotifFadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.tb-notif-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--aa-border, #E5E7EB);
+    background: var(--aa-surface-2, #F9FAFB);
+}
+.tb-notif-header-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--aa-text, #111827);
+}
+.tb-notif-mark-all {
+    background: none;
+    border: none;
+    font-size: 12px;
+    font-weight: 600;
+    color: #2563EB;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background .12s, color .12s;
+}
+.tb-notif-mark-all:hover {
+    background: rgba(37, 99, 235, 0.08);
+    color: #1D4ED8;
+}
+.tb-notif-list {
+    max-height: 320px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+.tb-notif-empty {
+    padding: 28px 16px;
+    text-align: center;
+    color: var(--aa-text-muted, #6B7280);
+    font-size: 12.5px;
+}
+.tb-notif-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--aa-border, #F3F4F6);
+    cursor: pointer;
+    transition: background .12s ease;
+    position: relative;
+}
+.tb-notif-item:hover {
+    background: var(--aa-surface-2, #F9FAFB);
+}
+.tb-notif-item.is-unread {
+    background: rgba(37, 99, 235, 0.04);
+}
+.tb-notif-item.is-unread:hover {
+    background: rgba(37, 99, 235, 0.08);
+}
+.tb-notif-item-icon {
+    font-size: 18px;
+    line-height: 1;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+.tb-notif-item-body {
+    flex: 1;
+    min-width: 0;
+}
+.tb-notif-item-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--aa-text, #111827);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tb-notif-item-desc {
+    font-size: 11.5px;
+    color: var(--aa-text-muted, #6B7280);
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.tb-notif-item-time {
+    font-size: 10.5px;
+    color: var(--aa-text-muted, #9CA3AF);
+    margin-top: 4px;
+}
+.tb-notif-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #2563EB;
+    flex-shrink: 0;
+    margin-top: 6px;
+}
+.tb-notif-footer {
+    display: block;
+    text-align: center;
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #2563EB;
+    background: var(--aa-surface-2, #F9FAFB);
+    border-top: 1px solid var(--aa-border, #E5E7EB);
+    text-decoration: none;
+    transition: background .12s, color .12s;
+}
+.tb-notif-footer:hover {
+    background: var(--aa-border, #E5E7EB);
+    color: #1D4ED8;
+    text-decoration: none;
 }
 
 .tb-user {

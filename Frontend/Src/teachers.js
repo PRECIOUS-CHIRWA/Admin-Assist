@@ -29,17 +29,38 @@
 
     async function loadSubjects() {
         try {
-            const res = await apiFetch('/api/subjects?is_active=1');
-            if (!res || !res.ok) return;
-            allSubjects = await res.json();
-            const sel = document.getElementById('fTSubject');
-            if (!sel) return;
-            allSubjects.forEach(function (s) {
-                const opt = document.createElement('option');
-                opt.value = s.id;
-                opt.textContent = s.subject_code + ' — ' + s.subject_name;
-                sel.appendChild(opt);
-            });
+            const [subRes, clsRes] = await Promise.all([
+                apiFetch('/api/subjects?is_active=1').catch(() => null),
+                apiFetch('/api/attendance/classes').catch(() => null),
+            ]);
+
+            if (subRes && subRes.ok) {
+                allSubjects = await subRes.json();
+                const sel = document.getElementById('fTSubject');
+                if (sel) {
+                    sel.innerHTML = '<option value="">Select Subject…</option>';
+                    allSubjects.forEach(function (s) {
+                        const opt = document.createElement('option');
+                        opt.value = s.id;
+                        opt.textContent = s.subject_code + ' — ' + s.subject_name;
+                        sel.appendChild(opt);
+                    });
+                }
+            }
+
+            if (clsRes && clsRes.ok) {
+                const classes = await clsRes.json();
+                const clsSel = document.getElementById('fTClass');
+                if (clsSel) {
+                    clsSel.innerHTML = '<option value="">Select Class (optional)…</option>';
+                    classes.forEach(function (c) {
+                        const opt = document.createElement('option');
+                        opt.value = c.id;
+                        opt.textContent = c.class_name || (c.grade_level + (c.stream ? ' ' + c.stream : ''));
+                        clsSel.appendChild(opt);
+                    });
+                }
+            }
         } catch (err) { console.error('loadSubjects:', err); }
     }
 
@@ -84,8 +105,6 @@
         currentPage = 1;
         loadTeachers();
     }
-
-    // renderTable and renderPagination now use server-page data directly
 
     function renderTable() {
         const tbody = document.getElementById('teachersBody');
@@ -136,6 +155,7 @@
                 '</div>' +
                 '<div class="pg-dropdown-menu" id="ddm-' + t.id + '">' +
                 '<button data-edit="' + t.id + '">Edit</button>' +
+                '<a href="subject-management.html?teacher_id=' + t.id + '" style="display:block;padding:8px 14px;text-align:left;font-size:13px;color:var(--aa-text,#1e293b);text-decoration:none;font-weight:500;">Assign Subject</a>' +
                 '<button class="danger" data-deactivate="' + t.id + '" data-name="' + _esc(t.name || '') + '" data-active="' + (active ? '1' : '0') + '">' +
                 (active ? 'Deactivate' : 'Activate') +
                 '</button>' +
@@ -229,6 +249,9 @@
             '<div class="pg-view-row"><span>Classes</span><strong>' +
             (assigns.length ? [...new Set(assigns.map(function (a) { return a.class_name; }))].join(', ') : '—') +
             '</strong></div>' +
+            '</div>' +
+            '<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--aa-border,#e2e8f0);display:flex;justify-content:flex-end;">' +
+            '<a href="subject-management.html?teacher_id=' + t.id + '" class="pg-btn-primary" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-size:13px;padding:8px 16px;border-radius:6px;background:#2563EB;color:#fff;">+ Assign to Subject / Class</a>' +
             '</div>';
 
         document.getElementById('viewTeacherModal').hidden = false;
@@ -243,6 +266,8 @@
         document.getElementById('fTEmail').value = '';
         document.getElementById('fTPhone').value = '';
         document.getElementById('fTSubject').value = '';
+        const clsEl = document.getElementById('fTClass');
+        if (clsEl) clsEl.value = '';
         document.getElementById('passwordGroup').style.display = '';
         document.getElementById('teacherModal').hidden = false;
     }
@@ -258,7 +283,11 @@
         document.getElementById('passwordGroup').style.display = 'none'; // hide on edit
         // Set primary subject from assignments
         const assigns = allAssignments.filter(function (a) { return a.teacher_id === t.id; });
-        if (assigns.length) document.getElementById('fTSubject').value = assigns[0].subject_id || '';
+        if (assigns.length) {
+            document.getElementById('fTSubject').value = assigns[0].subject_id || '';
+            const clsEl = document.getElementById('fTClass');
+            if (clsEl) clsEl.value = assigns[0].class_id || '';
+        }
         document.getElementById('teacherModal').hidden = false;
     }
 
@@ -270,6 +299,7 @@
         const name = document.getElementById('fTName').value.trim();
         const email = document.getElementById('fTEmail').value.trim();
         const subjectId = document.getElementById('fTSubject').value;
+        const classId = document.getElementById('fTClass')?.value || '';
 
         if (!name || !email) { _toast('Name and email are required.', 'error'); return; }
 
@@ -280,9 +310,14 @@
             if (isEdit) {
                 res = await apiFetch('/api/teachers/' + id, { method: 'PUT', body: JSON.stringify({ name, email }) });
             } else {
+                const payload = { name, email, role: 'staff' };
+                if (subjectId && classId) {
+                    payload.subject_id = subjectId;
+                    payload.class_id = classId;
+                }
                 res = await apiFetch('/api/teachers', {
                     method: 'POST',
-                    body: JSON.stringify({ name, email, role: 'staff' }),
+                    body: JSON.stringify(payload),
                 });
             }
 
@@ -298,17 +333,11 @@
             if (isEdit) {
                 _toast('Teacher updated.', 'success');
             } else {
-                // Account was created. An email with the temporary password was
-                // sent automatically, but Brevo may not be configured, or delivery
-                // can fail — so always show it here too as a reliable fallback.
-                // Subject/class assignment is intentionally NOT done from this
-                // form (it previously hardcoded class_id: 1 for every new teacher,
-                // silently assigning them to the wrong class). Use "Assign Subject"
-                // on the Subject Management page instead, where class + year are
-                // explicit dropdowns.
                 openTempPasswordModal(name, email, data.tempPassword);
-                if (subjectId) {
-                    _toast('Teacher created. Now assign their class on the Subject Management page.', 'info');
+                if (subjectId && classId) {
+                    _toast('Teacher created and assigned to subject.', 'success');
+                } else if (subjectId && !classId) {
+                    _toast('Teacher created. Select a class on Subject Management to complete assignment.', 'info');
                 }
             }
 

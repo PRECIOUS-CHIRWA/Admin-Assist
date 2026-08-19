@@ -8,16 +8,17 @@ const {
 
 const { authenticate, authorize } = require("../middleware/auth");
 
-// ─── Subject CRUD ───────────────────────────────────────────────────────────────
-router.get("/", authenticate, getSubjects);
-router.get("/:id", authenticate, getSubjectById);
-router.post("/", authenticate, authorize("admin", "headmaster"), createSubject);
-router.put("/:id", authenticate, authorize("admin", "headmaster"), updateSubject);
-router.delete("/:id", authenticate, authorize("admin", "headmaster"), deleteSubject);
-
-// ─── Teacher assignments ────────────────────────────────────────────────────────
+// ─── Teacher assignments (Must be registered before /:id) ───────────────────────
 router.get("/assignments/list", authenticate, getTeacherAssignments);
-router.post("/assign", authenticate, authorize("admin", "headmaster"), assignTeacher);
-router.delete("/assign/:id", authenticate, authorize("admin", "headmaster"), removeAssignment);
+router.get("/assignments",      authenticate, getTeacherAssignments);
+router.post("/assign",          authenticate, authorize("admin", "headmaster"), assignTeacher);
+router.delete("/assign/:id",    authenticate, authorize("admin", "headmaster"), removeAssignment);
+
+// ─── Subject CRUD ───────────────────────────────────────────────────────────────
+router.get("/",     authenticate, getSubjects);
+router.get("/:id",  authenticate, getSubjectById);
+router.post("/",    authenticate, authorize("admin", "headmaster"), createSubject);
+router.put("/:id",  authenticate, authorize("admin", "headmaster"), updateSubject);
+router.delete("/:id", authenticate, authorize("admin", "headmaster"), deleteSubject);
 
 module.exports = router;

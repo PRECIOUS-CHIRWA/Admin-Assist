@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const { sendNotification } = require("./notificationController");
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -206,6 +207,21 @@ const assignTeacher = async (req, res) => {
        VALUES (?, ?, ?, ?)`,
             [teacher_id, subject_id, class_id, academic_year_id]
         );
+
+        // Fetch subject details for notification
+        try {
+            const [[sub]] = await pool.execute("SELECT subject_name FROM subjects WHERE id = ?", [subject_id]);
+            const subName = sub ? sub.subject_name : "a subject";
+            await sendNotification({
+                userId: teacher_id,
+                type: "academics",
+                title: "New Subject Assigned",
+                description: `You have been assigned to teach ${subName}.`,
+                entityType: "subject",
+                entityId: subject_id,
+            });
+        } catch { /* non-fatal */ }
+
         res.status(201).json({ message: "Teacher assigned successfully", id: result.insertId });
     } catch (err) {
         if (err.code === "ER_DUP_ENTRY") {

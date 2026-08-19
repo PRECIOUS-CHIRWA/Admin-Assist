@@ -442,6 +442,8 @@ CREATE TABLE IF NOT EXISTS school_settings (
     school_id           INT UNSIGNED NOT NULL DEFAULT 1,
     school_name         VARCHAR(255)          DEFAULT 'Admin Assist School',
     school_code         VARCHAR(50)           DEFAULT NULL,
+    department          VARCHAR(100)          DEFAULT NULL,
+    country             VARCHAR(100)          DEFAULT 'Zambia',
     academic_year_label VARCHAR(20)           DEFAULT NULL,
     address             TEXT                  DEFAULT NULL,
     phone               VARCHAR(30)           DEFAULT NULL,
@@ -454,6 +456,8 @@ CREATE TABLE IF NOT EXISTS school_settings (
     notify_on_enrollment TINYINT(1)           DEFAULT 1,
     notify_on_attendance TINYINT(1)           DEFAULT 1,
     notify_on_results    TINYINT(1)           DEFAULT 1,
+    notify_on_announcements TINYINT(1)        DEFAULT 1,
+    max_login_attempts   TINYINT UNSIGNED     DEFAULT 5,
     updated_at          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE

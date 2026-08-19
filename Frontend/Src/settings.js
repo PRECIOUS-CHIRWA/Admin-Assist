@@ -122,12 +122,25 @@
             var data = await res.json();
             var s = data.settings || {};
             _cachedSettings = s;
-            _set("schoolName",    s.school_name         || "");
-            _set("academicYear",  s.academic_year_label || "");
-            _set("phoneNumber",   s.phone               || "");
-            _set("schoolAddress", s.address             || "");
-            _set("timezone",      s.timezone            || "Africa/Lusaka");
-            _set("dateFormat",    s.date_format         || "DD/MM/YYYY");
+            _set("schoolName",        s.school_name         || "");
+            _set("academicYear",      s.academic_year_label || "");
+            _set("schoolDept",        s.department          || "");
+            _set("country",           s.country             || "");
+            _set("phoneNumber",       s.phone               || "");
+            _set("schoolAddress",     s.address             || "");
+            _set("timezone",          s.timezone            || "Africa/Lusaka");
+            _set("dateFormat",        s.date_format         || "DD/MM/YYYY");
+            _set("maxLoginAttempts",  s.max_login_attempts  != null ? s.max_login_attempts : 5);
+
+            var attCheck = document.getElementById("notifyAttendance");
+            var enrCheck = document.getElementById("notifyEnrollment");
+            var resCheck = document.getElementById("notifyResults");
+            var annCheck = document.getElementById("notifyAnnouncements");
+
+            if (attCheck) attCheck.checked = s.notify_on_attendance === 1 || s.notify_on_attendance === true;
+            if (enrCheck) enrCheck.checked = s.notify_on_enrollment === 1 || s.notify_on_enrollment === true;
+            if (resCheck) resCheck.checked = s.notify_on_results === 1 || s.notify_on_results === true;
+            if (annCheck) annCheck.checked = s.notify_on_announcements === 1 || s.notify_on_announcements === true;
         } catch (err) {
             console.warn("loadSettings:", err.message);
         }
@@ -140,12 +153,14 @@
             var payload = {
                 school_name:         _val("schoolName").trim() || undefined,
                 academic_year_label: _val("academicYear").trim() || undefined,
+                department:          _val("schoolDept").trim() || undefined,
+                country:             _val("country").trim() || undefined,
                 phone:               _val("phoneNumber").trim() || undefined,
                 address:             _val("schoolAddress").trim() || undefined,
                 timezone:            _val("timezone") || undefined,
             };
             // Remove undefined keys
-            Object.keys(payload).forEach(function (k) { if (!payload[k]) delete payload[k]; });
+            Object.keys(payload).forEach(function (k) { if (payload[k] === undefined) delete payload[k]; });
             var res = await apiFetch("/api/settings", { method: "PUT", body: JSON.stringify(payload) });
             if (!res || !res.ok) {
                 var d = await res.json().catch(function () { return {}; });
@@ -164,9 +179,12 @@
         var btn = document.getElementById("saveSystemBtn");
         if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
         try {
+            var maxAttempts = parseInt(_val("maxLoginAttempts"), 10);
             var payload = {
                 date_format: _val("dateFormat") || undefined,
+                max_login_attempts: !isNaN(maxAttempts) ? maxAttempts : undefined,
             };
+            Object.keys(payload).forEach(function (k) { if (payload[k] === undefined) delete payload[k]; });
             var res = await apiFetch("/api/settings", { method: "PUT", body: JSON.stringify(payload) });
             if (!res || !res.ok) {
                 var d = await res.json().catch(function () { return {}; });
@@ -176,7 +194,37 @@
         } catch (err) {
             _toast(err.message || "Could not save system settings.", "error");
         } finally {
-            if (btn) { btn.disabled = false; btn.textContent = "Save"; }
+            if (btn) { btn.disabled = false; btn.textContent = "Save System"; }
+        }
+    }
+
+    /* ── NOTIFICATIONS TAB ────────────────────────────────── */
+    async function saveNotifications() {
+        var btn = document.getElementById("saveNotifBtn");
+        if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
+        try {
+            var attCheck = document.getElementById("notifyAttendance");
+            var enrCheck = document.getElementById("notifyEnrollment");
+            var resCheck = document.getElementById("notifyResults");
+            var annCheck = document.getElementById("notifyAnnouncements");
+
+            var payload = {
+                notify_on_attendance:    attCheck && attCheck.checked ? 1 : 0,
+                notify_on_enrollment:    enrCheck && enrCheck.checked ? 1 : 0,
+                notify_on_results:       resCheck && resCheck.checked ? 1 : 0,
+                notify_on_announcements: annCheck && annCheck.checked ? 1 : 0,
+            };
+
+            var res = await apiFetch("/api/settings", { method: "PUT", body: JSON.stringify(payload) });
+            if (!res || !res.ok) {
+                var d = await res.json().catch(function () { return {}; });
+                throw new Error(d.error || "Save failed");
+            }
+            _toast("Notification preferences saved.", "success");
+        } catch (err) {
+            _toast(err.message || "Could not save notification preferences.", "error");
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = "Save Notification Preferences"; }
         }
     }
 
@@ -255,11 +303,15 @@
         var saveSystemBtn = document.getElementById("saveSystemBtn");
         if (saveSystemBtn) saveSystemBtn.addEventListener("click", saveSystem);
 
+        // Notifications
+        var saveNotifBtn = document.getElementById("saveNotifBtn");
+        if (saveNotifBtn) saveNotifBtn.addEventListener("click", saveNotifications);
+
         // Discard buttons — reload from cache
         document.querySelectorAll(".btn-secondary[data-discard]").forEach(function (btn) {
             btn.addEventListener("click", function () {
                 var panel = btn.dataset.discard;
-                if (panel === "general") loadSettings();
+                if (panel === "general" || panel === "notifications") loadSettings();
                 if (panel === "profile") loadProfile();
             });
         });

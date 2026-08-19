@@ -93,15 +93,7 @@
 </head>
 
 <body data-page="notifications">
-  <header>
-    <div class="logo">Admin Assist</div>
-    <div class="user-profile">
-      <div class="user-avatar" id="headerAvatar">?</div>
-      <span id="headerUserName">…</span>
-      <span id="roleBadge" class="role-badge"></span>
-      <button id="logoutBtn">Logout</button>
-    </div>
-  </header>
+  <div id="navigation-root"></div>
 
   <main class="aa-main">
     <header class="aa-page-header">
@@ -134,12 +126,39 @@
   <script src="auth-guard.js"></script>
   <script src="navigation.js"></script>
   <script>
+    let allNotifs = [];
+    let currentFilter = 'all';
+
     document.addEventListener('DOMContentLoaded', async () => {
+      await loadNotifs();
+
+      document.querySelectorAll('.notif-tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.notif-tab-btn').forEach(b => b.classList.remove('is-active'));
+          this.classList.add('is-active');
+          currentFilter = this.dataset.filter || 'all';
+          filterAndRender();
+        });
+      });
+
+      const markBtn = document.getElementById('markAllReadBtn');
+      if (markBtn) {
+        markBtn.addEventListener('click', async () => {
+          await apiFetch('/api/notifications/read-all', { method: 'POST' }).catch(() => {});
+          allNotifs.forEach(n => n.read = true);
+          filterAndRender();
+          if (typeof _loadNotifications === 'function') _loadNotifications();
+        });
+      }
+    });
+
+    async function loadNotifs() {
       try {
-        const res = await authFetch(`${API_BASE}/notifications`);
+        const res = await apiFetch('/api/notifications');
         if (res && res.ok) {
           const data = await res.json();
-          renderNotifications(data.notifications || []);
+          allNotifs = data.notifications || [];
+          filterAndRender();
         } else {
           renderNotifications([]);
         }
@@ -147,22 +166,19 @@
         console.warn("Could not load notifications API:", err.message);
         renderNotifications([]);
       }
+    }
 
-      document.querySelectorAll('.notif-tab-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          document.querySelectorAll('.notif-tab-btn').forEach(b => b.classList.remove('is-active'));
-          this.classList.add('is-active');
-        });
-      });
-
-      const markBtn = document.getElementById('markAllReadBtn');
-      if (markBtn) {
-        markBtn.addEventListener('click', async () => {
-          await authFetch(`${API_BASE}/notifications/read-all`, { method: 'POST' }).catch(() => {});
-          document.querySelectorAll('.notif-card.unread').forEach(c => c.classList.remove('unread'));
-        });
+    function filterAndRender() {
+      let filtered = allNotifs;
+      if (currentFilter === 'unread') {
+        filtered = allNotifs.filter(n => !n.read);
+      } else if (currentFilter === 'announcements') {
+        filtered = allNotifs.filter(n => (n.type || '').includes('announc') || (n.category || '').includes('announc'));
+      } else if (currentFilter === 'system') {
+        filtered = allNotifs.filter(n => (n.type || '').includes('audit') || (n.type || '').includes('system') || (n.category || '').includes('system') || (n.id && String(n.id).startsWith('audit')));
       }
-    });
+      renderNotifications(filtered);
+    }
 
     function renderNotifications(items) {
       const container = document.getElementById('notificationsContainer');
@@ -171,31 +187,42 @@
       if (!items || items.length === 0) {
         container.innerHTML = `
           <div style="padding: 40px 20px; text-align: center; color: var(--aa-text-muted, #64748b); font-size: 13.5px;">
-            🔔 No system notifications or activity logs recorded yet.
+            🔔 No notifications match the selected filter.
           </div>`;
         return;
       }
 
       container.innerHTML = items.map(n => `
-        <div class="notif-card ${n.read ? '' : 'unread'}">
-          <div class="notif-icon-box">${_getIcon(n.type)}</div>
+        <div class="notif-card ${n.read ? '' : 'unread'}" data-id="${_esc(n.id)}" style="cursor:pointer">
+          <div class="notif-icon-box">${_getIcon(n.type || n.category)}</div>
           <div class="notif-content">
             <div class="notif-title">${_esc(n.title)}</div>
             <div class="notif-desc">${_esc(n.description)}</div>
-            <div class="notif-meta">${new Date(n.timestamp).toLocaleString()} &bull; <span class="notif-badge">${_esc(n.category || 'General')}</span></div>
+            <div class="notif-meta">${n.timestamp ? new Date(n.timestamp).toLocaleString() : ''} &bull; <span class="notif-badge">${_esc(n.category || 'General')}</span></div>
           </div>
         </div>
       `).join('');
+
+      container.querySelectorAll('.notif-card').forEach(card => {
+        card.addEventListener('click', async function() {
+          const id = this.dataset.id;
+          if (id && this.classList.contains('unread')) {
+            this.classList.remove('unread');
+            const found = allNotifs.find(x => String(x.id) === String(id));
+            if (found) found.read = true;
+            await apiFetch('/api/notifications/' + id + '/read', { method: 'PATCH' }).catch(() => {});
+          }
+        });
+      });
     }
 
     function _getIcon(type) {
-      switch(type) {
-        case 'announcement': return '📢';
-        case 'attendance': return '📋';
-        case 'enrollment': return '👤';
-        case 'results': return '🎓';
-        default: return '🔔';
-      }
+      const t = String(type || '').toLowerCase();
+      if (t.includes('announc')) return '📢';
+      if (t.includes('attendance')) return '📋';
+      if (t.includes('enroll') || t.includes('student') || t.includes('teacher') || t.includes('user')) return '👤';
+      if (t.includes('academic') || t.includes('result') || t.includes('subject')) return '🎓';
+      return '🔔';
     }
     function _esc(str) { return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
   </script>

@@ -18,6 +18,7 @@ const crypto = require("crypto");
 const { promisify } = require("util");
 const pool = require("../config/db");
 const { sendNewAccountEmail } = require("../services/emailService");
+const { sendNotification } = require("./notificationController");
 
 const scrypt = promisify(crypto.scrypt);
 
@@ -155,6 +156,41 @@ const createTeacher = async (req, res) => {
         }
 
         await _writeAuditLog(req.user.sub, "CREATE_TEACHER", "user", newId, { name, email, role });
+
+        // Trigger in-app welcome notification for the newly created teacher
+        await sendNotification({
+            userId: newId,
+            type: "system",
+            title: "Welcome to Admin Assist",
+            description: `Welcome ${name.trim()}! Your teacher account has been activated.`,
+            entityType: "user",
+            entityId: newId,
+        });
+
+        // If subject_id and class_id are provided, assign them immediately
+        if (req.body.subject_id && req.body.class_id) {
+            try {
+                let yearId = req.body.academic_year_id;
+                if (!yearId) {
+                    const [[curYear]] = await pool.execute("SELECT id FROM academic_years WHERE is_current = 1 LIMIT 1");
+                    yearId = curYear ? curYear.id : 1;
+                }
+                await pool.execute(
+                    "INSERT IGNORE INTO teacher_subjects (teacher_id, subject_id, class_id, academic_year_id) VALUES (?, ?, ?, ?)",
+                    [newId, req.body.subject_id, req.body.class_id, yearId]
+                );
+                await sendNotification({
+                    userId: newId,
+                    type: "academics",
+                    title: "New Subject Assigned",
+                    description: "You have been assigned to teach a subject.",
+                    entityType: "subject",
+                    entityId: req.body.subject_id,
+                });
+            } catch (assignErr) {
+                console.warn("Initial subject assignment failed:", assignErr.message);
+            }
+        }
 
         res.status(201).json({
             message: "Teacher account created successfully",

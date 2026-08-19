@@ -12,6 +12,8 @@ const pool = require("../config/db");
 const DEFAULTS = {
     school_name:          "Admin Assist School",
     school_code:          null,
+    department:           null,
+    country:              "Zambia",
     academic_year_label:  null,
     address:              null,
     phone:                null,
@@ -24,6 +26,8 @@ const DEFAULTS = {
     notify_on_enrollment: 1,
     notify_on_attendance: 1,
     notify_on_results:    1,
+    notify_on_announcements: 1,
+    max_login_attempts:   5,
 };
 
 // ─── GET /api/settings ────────────────────────────────────────────────────────
@@ -39,7 +43,7 @@ const getSettings = async (req, res) => {
         }
 
         const row = rows[0];
-        // Merge with defaults so missing cols don''t cause undefined
+        // Merge with defaults so missing cols don't cause undefined
         res.json({ settings: { ...DEFAULTS, ...row } });
     } catch (err) {
         if (err.code === "ER_NO_SUCH_TABLE") {
@@ -53,9 +57,10 @@ const getSettings = async (req, res) => {
 // ─── PUT /api/settings ────────────────────────────────────────────────────────
 const updateSettings = async (req, res) => {
     const allowed = [
-        "school_name", "school_code", "academic_year_label", "address", "phone", "email",
+        "school_name", "school_code", "department", "country", "academic_year_label", "address", "phone", "email",
         "logo_url", "timezone", "date_format", "max_students_per_class", "grading_system",
-        "notify_on_enrollment", "notify_on_attendance", "notify_on_results",
+        "notify_on_enrollment", "notify_on_attendance", "notify_on_results", "notify_on_announcements",
+        "max_login_attempts",
     ];
 
     const fields = [];
