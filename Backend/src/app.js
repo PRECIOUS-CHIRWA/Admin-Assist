@@ -65,14 +65,17 @@ app.use(cors({
 }));
 
 // ─── Rate Limiters ───────────────────────────────────────────────────────────
-const authLimiter = rateLimit({
+
+// Applied to the /api/auth prefix for all other auth routes (signup, /me, logout).
+const generalAuthLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: 30,
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: "Too many requests from this IP, please try again in 15 minutes" },
 });
 
+// Applied to all /api/* routes to prevent general API abuse.
 const generalLimiter = rateLimit({
     windowMs: 60 * 1000,
     max: 300,
@@ -80,6 +83,7 @@ const generalLimiter = rateLimit({
     legacyHeaders: false,
     message: { error: "Too many requests, please slow down" },
 });
+
 
 // ─── Body Parsing ────────────────────────────────────────────────────────────
 app.use(express.json({ limit: "50kb" }));
@@ -89,7 +93,7 @@ app.use(cookieParser());
 // ─── Routes ──────────────────────────────────────────────────────────────────
 const authRoutes = require("./routes/authRoutes");
 
-app.use("/api/auth", authLimiter, authRoutes);
+app.use("/api/auth", generalAuthLimiter, authRoutes);
 app.use("/api", generalLimiter);
 
 app.use("/api/students", studentRoutes);

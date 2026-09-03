@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const { sendNotification } = require("./notificationController");
 
 // ─── ECZ Grading Scale ────────────────────────────────────────────────────────
 
@@ -136,6 +137,21 @@ const createResult = async (req, res) => {
         await recalculatePositions(subject_id, class_id, term_id, academic_year_id);
 
         const [[created]] = await pool.execute("SELECT * FROM results WHERE id = ?", [result.insertId]);
+
+        // Notify the submitting teacher that their result was recorded (non-fatal)
+        try {
+            const [[sub]] = await pool.execute("SELECT subject_name FROM subjects WHERE id = ? LIMIT 1", [subject_id]);
+            const subName = sub ? sub.subject_name : "a subject";
+            await sendNotification({
+                userId: teacher_id,
+                type: "academics",
+                title: "Result Recorded",
+                description: `Result for ${subName} was saved successfully (${classification}, ${percentage.toFixed(1)}%).`,
+                entityType: "result",
+                entityId: result.insertId,
+            });
+        } catch { /* non-fatal */ }
+
         res.status(201).json({ message: "Result recorded successfully", result: created });
     } catch (err) {
         if (err.code === "ER_DUP_ENTRY") {

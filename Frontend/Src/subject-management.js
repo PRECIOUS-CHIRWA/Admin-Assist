@@ -222,7 +222,7 @@
             academic_year_id: document.getElementById('aYear')?.value,
         };
         if (!payload.teacher_id || !payload.subject_id || !payload.class_id || !payload.academic_year_id) {
-            return alert('All fields (Teacher, Subject, Class, Academic Year) are required.');
+            return _showAssignStatus('All fields (Teacher, Subject, Class, Academic Year) are required.', 'error');
         }
 
         const btn = document.getElementById('saveAssignBtn');
@@ -232,11 +232,20 @@
                 method: 'POST',
                 body: JSON.stringify(payload),
             });
-            if (!res || !res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Failed to assign teacher'); }
+            const data = await res.json().catch(() => ({}));
+            if (!res || !res.ok) {
+                // Surface the server's error message clearly:
+                // 409 = already assigned, 400 = missing field, 500 = server error
+                const msg = data.error || `Assignment failed (HTTP ${res ? res.status : 'unknown'})`;
+                return _showAssignStatus(msg, 'error');
+            }
             _hideModal('assignModal');
             await Promise.all([loadAssignments(), loadSubjects()]);
-        } catch (err) { alert(err.message || 'Failed to assign teacher.'); }
-        finally { btn.disabled = false; btn.textContent = 'Assign'; }
+        } catch (err) {
+            _showAssignStatus(err.message || 'Failed to assign teacher.', 'error');
+        } finally {
+            btn.disabled = false; btn.textContent = 'Assign';
+        }
     }
 
     async function removeAssignment(id) {
@@ -292,5 +301,31 @@
     }
     function _esc(v) {
         return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    /**
+     * Shows an inline status message inside the assign modal.
+     * type: 'error' | 'success'
+     * Auto-clears after 6s for errors (keeps 'success' visible until modal closes).
+     */
+    function _showAssignStatus(msg, type) {
+        let el = document.getElementById('assignStatusMsg');
+        if (!el) {
+            // Create status element dynamically if not already in HTML
+            el = document.createElement('p');
+            el.id = 'assignStatusMsg';
+            el.style.cssText = 'margin:8px 0 0;padding:8px 12px;border-radius:6px;font-size:13px;font-weight:600;';
+            const footer = document.querySelector('#assignModal .aa-modal-footer') ||
+                           document.getElementById('saveAssignBtn')?.parentElement;
+            if (footer) footer.insertBefore(el, footer.firstChild);
+        }
+        el.textContent = msg;
+        el.style.background = type === 'error' ? 'rgba(220,38,38,.1)' : 'rgba(22,163,74,.1)';
+        el.style.color       = type === 'error' ? '#dc2626'           : '#16a34a';
+        el.style.display     = 'block';
+        if (type === 'error') {
+            clearTimeout(el._timer);
+            el._timer = setTimeout(() => { el.style.display = 'none'; }, 6000);
+        }
     }
 })();

@@ -4,6 +4,14 @@
 (function () {
     'use strict';
 
+    // ─── Per-student state ─────────────────────────────────────────────────────
+    // Each tab independently tracks the selected student ID and search timer.
+    const _state = {
+        ac:  { studentId: null, timer: null, data: null },
+        ts:  { studentId: null, timer: null, data: null },
+        att: { studentId: null, timer: null },
+    };
+
     // ─── Bootstrap ────────────────────────────────────────────────────────────
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -15,29 +23,37 @@
 
     async function loadMeta() {
         try {
-            const [classRes, termRes] = await Promise.all([
+            const [classRes, yearRes, termRes] = await Promise.all([
                 apiFetch('/api/attendance/classes'),
                 apiFetch('/api/attendance/academic-years'),
+                apiFetch('/api/attendance/terms'),
             ]);
 
-            if (classRes && classRes.ok) {
-                const classes = await classRes.json();
-                populateSelect('filterClass', classes, 'id', c =>
-                    c.class_name || `${c.grade_level}${c.stream ? ' ' + c.stream : ''}`, 'All Classes');
-            }
+            const classes = (classRes && classRes.ok) ? await classRes.json() : [];
+            const years   = (yearRes  && yearRes.ok)  ? await yearRes.json()  : [];
+            const terms   = (termRes  && termRes.ok)  ? await termRes.json()  : [];
 
-            if (termRes && termRes.ok) {
-                const years = await termRes.json();
-                populateSelect('filterYear', years, 'id', y => y.year_label, 'All Years');
-            }
+            const classLabel = c => c.class_name || `${c.grade_level}${c.stream ? ' ' + c.stream : ''}`;
+            const yearLabel  = y => y.year_label;
+            const termLabel  = t => `${t.term_name} (${t.year_label})`;
 
-            // Terms (all, not year-filtered here — user can choose)
-            const allTermRes = await apiFetch('/api/attendance/terms');
-            if (allTermRes && allTermRes.ok) {
-                const terms = await allTermRes.json();
-                populateSelect('filterTerm', terms, 'id', t =>
-                    `${t.term_name} (${t.year_label})`, 'All Terms');
-            }
+            // Export tab filters
+            populateSelect('filterClass', classes, 'id', classLabel, 'All Classes');
+            populateSelect('filterYear',  years,   'id', yearLabel,  'All Years');
+            populateSelect('filterTerm',  terms,   'id', termLabel,  'All Terms');
+
+            // Export panel filters (duplicate selects with different IDs)
+            populateSelect('expFilterClass', classes, 'id', classLabel, 'All Classes');
+            populateSelect('expFilterYear',  years,   'id', yearLabel,  'All Years');
+            populateSelect('expFilterTerm',  terms,   'id', termLabel,  'All Terms');
+
+            // Per-student tab year filters
+            ['acYearFilter', 'tsYearFilter', 'attYearFilter'].forEach(id =>
+                populateSelect(id, years, 'id', yearLabel, 'All Years')
+            );
+            // Academic tab also has a term filter
+            populateSelect('acTermFilter', terms, 'id', termLabel, 'All Terms');
+
         } catch (err) {
             console.error('loadMeta:', err);
         }
@@ -286,29 +302,43 @@
     // ─── Event binding ────────────────────────────────────────────────────────
 
     function bindEvents() {
-        // Enrollment
+        // ── Enrollment (Export tab) ──────────────────────────────────────────
         btn('dlEnrollCsvBtn', () => downloadCSV(REPORTS.enrollment.endpoint, REPORTS.enrollment.csvFile));
         btn('dlEnrollPdfBtn', () => downloadPDF(REPORTS.enrollment.endpoint, REPORTS.enrollment.pdfFile, REPORTS.enrollment.pdf));
 
-        // Attendance
+        // Attendance (Export tab)
         btn('dlAttendCsvBtn', () => downloadCSV(REPORTS.attendance.endpoint, REPORTS.attendance.csvFile));
         btn('dlAttendPdfBtn', () => downloadPDF(REPORTS.attendance.endpoint, REPORTS.attendance.pdfFile, REPORTS.attendance.pdf));
 
-        // Academic
+        // Academic (Export tab)
         btn('dlAcadCsvBtn', () => downloadCSV(REPORTS.academic.endpoint, REPORTS.academic.csvFile));
         btn('dlAcadPdfBtn', () => downloadPDF(REPORTS.academic.endpoint, REPORTS.academic.pdfFile, REPORTS.academic.pdf));
 
-        // Top Performers
+        // Top Performers (Export tab)
         btn('dlTopCsvBtn', () => downloadCSV(REPORTS.top.endpoint, REPORTS.top.csvFile));
         btn('dlTopPdfBtn', () => downloadPDF(REPORTS.top.endpoint, REPORTS.top.pdfFile, REPORTS.top.pdf));
 
-        // Subject Performance
+        // Subject Performance (Export tab)
         btn('dlSubjCsvBtn', () => downloadCSV(REPORTS.subject.endpoint, REPORTS.subject.csvFile));
         btn('dlSubjPdfBtn', () => downloadPDF(REPORTS.subject.endpoint, REPORTS.subject.pdfFile, REPORTS.subject.pdf));
 
-        // Students at Risk
+        // Students at Risk (Export tab)
         btn('dlRiskCsvBtn', () => downloadCSV(REPORTS.risk.endpoint, REPORTS.risk.csvFile));
         btn('dlRiskPdfBtn', () => downloadPDF(REPORTS.risk.endpoint, REPORTS.risk.pdfFile, REPORTS.risk.pdf));
+
+        // ── Per-student: Academic Report tab ────────────────────────────────
+        bindStudentSearch('acStudentSearch', 'ac', 'acSuggestions');
+        btn('generateAcBtn', generateAcademicReport);
+
+        // ── Per-student: Transcript tab ─────────────────────────────────────
+        bindStudentSearch('tsStudentSearch', 'ts', 'tsSuggestions');
+        btn('generateTsBtn', generateTranscript);
+        btn('tsPdfBtn', () => { if (_state.ts.data) downloadTranscriptPDF(_state.ts.data); });
+        btn('tsCsvBtn', () => { if (_state.ts.data) downloadTranscriptCSV(_state.ts.data); });
+
+        // ── Per-student: Attendance tab ─────────────────────────────────────
+        bindStudentSearch('attStudentSearch', 'att', 'attSuggestions');
+        btn('generateAttBtn', generateAttendanceReport);
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
@@ -335,6 +365,7 @@
 
     function showStatus(msg, type) {
         const el = document.getElementById('statusMsg');
+        if (!el) return;
         el.textContent = msg;
         el.className   = `aa-alert aa-alert-${type}`;
         el.hidden      = false;
@@ -349,6 +380,363 @@
         a.download = filename;
         a.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function esc(v) {
+        return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // ─── Per-student: shared search helpers ──────────────────────────────────
+
+    /**
+     * Wires a search input to live-search students and fill a suggestion dropdown.
+     * @param {string} inputId  - The <input> element ID
+     * @param {string} stateKey - Key in _state ('ac'|'ts'|'att')
+     * @param {string} dropId   - The suggestions container element ID (will be created if missing)
+     */
+    function bindStudentSearch(inputId, stateKey, dropId) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+
+        // Create suggestion container if not already in HTML
+        let drop = document.getElementById(dropId);
+        if (!drop) {
+            drop = document.createElement('div');
+            drop.id = dropId;
+            drop.style.cssText = [
+                'position:absolute', 'z-index:100', 'background:var(--aa-surface)',
+                'border:1px solid var(--aa-border)', 'border-radius:var(--aa-radius-md)',
+                'box-shadow:var(--aa-shadow-sm)', 'max-height:220px', 'overflow-y:auto',
+                'display:none', 'min-width:100%',
+            ].join(';');
+            const wrap = input.closest('.rt-filter-field') || input.parentElement;
+            wrap.style.position = 'relative';
+            wrap.appendChild(drop);
+        }
+
+        input.addEventListener('input', () => {
+            clearTimeout(_state[stateKey].timer);
+            const q = input.value.trim();
+            _state[stateKey].studentId = null;
+            if (q.length < 2) { drop.style.display = 'none'; return; }
+            _state[stateKey].timer = setTimeout(() => _searchStudents(q, stateKey, inputId, drop), 300);
+        });
+
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Escape') drop.style.display = 'none';
+        });
+
+        document.addEventListener('click', e => {
+            if (!drop.contains(e.target) && e.target !== input) drop.style.display = 'none';
+        });
+    }
+
+    async function _searchStudents(q, stateKey, inputId, drop) {
+        try {
+            const res = await apiFetch(`/api/search/students?q=${encodeURIComponent(q)}`);
+            if (!res || !res.ok) return;
+            const data = await res.json();
+            _renderSuggestions(data.students || [], stateKey, inputId, drop);
+        } catch (err) {
+            console.error('_searchStudents:', err);
+        }
+    }
+
+    function _renderSuggestions(students, stateKey, inputId, drop) {
+        if (!students.length) {
+            drop.innerHTML = `<div style="padding:.75rem 1rem;color:var(--aa-text-muted);font-size:.875rem">No students found.</div>`;
+            drop.style.display = 'block';
+            return;
+        }
+        drop.innerHTML = students.map(s => `
+            <div class="rt-suggestion-item" data-id="${s.id}"
+                 style="padding:.6rem 1rem;cursor:pointer;border-bottom:1px solid var(--aa-border);
+                        font-size:.875rem;display:flex;justify-content:space-between;align-items:center">
+                <span><strong>${esc(s.last_name)}, ${esc(s.first_name)}</strong></span>
+                <span style="color:var(--aa-text-muted)">${esc(s.admission_number)} &nbsp;·&nbsp; ${esc(s.class_name || 'No class')}</span>
+            </div>`).join('');
+
+        drop.querySelectorAll('.rt-suggestion-item').forEach(item => {
+            item.addEventListener('mouseenter', () => item.style.background = 'var(--aa-surface-2)');
+            item.addEventListener('mouseleave', () => item.style.background = '');
+            item.addEventListener('click', () => {
+                const student = students.find(s => String(s.id) === item.dataset.id);
+                _state[stateKey].studentId = item.dataset.id;
+                const inp = document.getElementById(inputId);
+                if (inp && student) inp.value = `${student.last_name}, ${student.first_name} (${student.admission_number})`;
+                drop.style.display = 'none';
+            });
+        });
+        drop.style.display = 'block';
+    }
+
+    // ─── Per-student: Academic Report tab ─────────────────────────────────────
+
+    async function generateAcademicReport() {
+        const sid = _state.ac.studentId;
+        if (!sid) return _tabAlert('panel-academic', 'Please search for and select a student first.');
+
+        const yearId = document.getElementById('acYearFilter')?.value;
+        const termId = document.getElementById('acTermFilter')?.value;
+        const p = new URLSearchParams({ student_id: sid });
+        if (yearId) p.set('academic_year_id', yearId);
+        if (termId) p.set('term_id', termId);
+
+        const btn = document.getElementById('generateAcBtn');
+        if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+        try {
+            const res = await apiFetch(`/api/reports/academic?${p}`);
+            if (!res || !res.ok) throw new Error('Failed to load academic report');
+            const data = await res.json();
+            const rows = data.results || data.rows || (Array.isArray(data) ? data : []);
+            _state.ac.data = rows;
+            _renderAcademicReport(rows);
+        } catch (err) {
+            _tabAlert('panel-academic', err.message || 'Failed to load report.');
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = 'Generate Report'; }
+        }
+    }
+
+    function _renderAcademicReport(rows) {
+        const results  = document.getElementById('acResults');
+        const placeholder = document.getElementById('acPlaceholder');
+
+        if (!rows.length) {
+            if (results) results.hidden = true;
+            if (placeholder) {
+                placeholder.innerHTML = '<h3>No results found</h3><p>No academic results are recorded for this student with the selected filters.</p>';
+            }
+            return;
+        }
+
+        // Summary stats
+        const total   = rows.length;
+        const passed  = rows.filter(r => parseFloat(r.percentage) >= 50).length;
+        const failed  = total - passed;
+        const avg     = (rows.reduce((s, r) => s + parseFloat(r.percentage || 0), 0) / total).toFixed(1);
+
+        setText('acOverallPct', `${avg}%`);
+        setText('acTotalSubj', total);
+        setText('acPassed', passed);
+        setText('acFailed', failed);
+
+        // Table rows
+        const tbody = document.getElementById('acTableBody');
+        if (tbody) {
+            tbody.innerHTML = rows.map(r => {
+                const pct = parseFloat(r.percentage || 0);
+                const gradeClass = pct >= 75 ? 'grade-a' : pct >= 50 ? 'grade-b' : pct >= 30 ? 'grade-c' : 'grade-f';
+                return `<tr>
+                    <td>${esc(r.subject_name)}</td>
+                    <td>${pct.toFixed(1)}%</td>
+                    <td><span class="grade-badge ${gradeClass}">${esc(r.grade_classification)}</span></td>
+                    <td>${esc(r.remarks || '—')}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        if (placeholder) placeholder.hidden = true;
+        if (results) results.hidden = false;
+    }
+
+    // ─── Per-student: Transcript tab ──────────────────────────────────────────
+
+    async function generateTranscript() {
+        const sid = _state.ts.studentId;
+        if (!sid) return _tabAlert('panel-transcript', 'Please search for and select a student first.');
+
+        const yearId = document.getElementById('tsYearFilter')?.value;
+        const p = yearId ? `?academic_year_id=${yearId}` : '';
+
+        const btn = document.getElementById('generateTsBtn');
+        if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+        try {
+            const res = await apiFetch(`/api/results/transcript/${sid}${p}`);
+            if (!res || !res.ok) throw new Error('Failed to load transcript');
+            const data = await res.json();
+            _state.ts.data = data;
+            _renderTranscript(data);
+        } catch (err) {
+            _tabAlert('panel-transcript', err.message || 'Failed to load transcript.');
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = 'Load Transcript'; }
+        }
+    }
+
+    function _renderTranscript(data) {
+        const card      = document.getElementById('tsCard');
+        const placeholder = document.getElementById('tsPlaceholder');
+        const exportBar = document.getElementById('tsExportBar');
+        if (!card) return;
+
+        const { student, terms } = data;
+
+        if (!terms || !terms.length) {
+            card.innerHTML = `<p class="rt-placeholder"><strong>No results recorded</strong><br>No academic results found for this student.</p>`;
+            card.hidden = false;
+            if (placeholder) placeholder.hidden = true;
+            if (exportBar) exportBar.style.display = 'none';
+            return;
+        }
+
+        const termBlocks = terms.map(t => `
+            <div style="margin-bottom:24px">
+                <h3 style="font-size:14px;font-weight:700;color:var(--aa-text);margin-bottom:10px">
+                    ${esc(t.term_name)} — ${esc(t.year_label)}
+                </h3>
+                <div class="rt-table-wrap">
+                    <table class="rt-table">
+                        <thead><tr>
+                            <th>Subject</th><th>Test</th><th>Assignment</th>
+                            <th>Exam</th><th>Total</th><th>%</th>
+                            <th>Grade</th><th>Position</th><th>Remarks</th>
+                        </tr></thead>
+                        <tbody>
+                            ${(t.subjects || []).map(r => `<tr>
+                                <td>${esc(r.subject_name)}</td>
+                                <td>${r.test_mark}</td>
+                                <td>${r.assignment_mark}</td>
+                                <td>${r.exam_mark}</td>
+                                <td>${r.total_marks}</td>
+                                <td>${parseFloat(r.percentage).toFixed(1)}%</td>
+                                <td>${esc(r.grade_classification)}</td>
+                                <td>${r.class_position || '—'}</td>
+                                <td>${esc(r.remarks || '')}</td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <p style="font-size:12.5px;color:var(--aa-text-muted);margin-top:8px;text-align:right">
+                    Term Average: <strong>${t.average_percentage}%</strong>
+                </p>
+            </div>`).join('');
+
+        const studentName = student ? `${esc(student.first_name)} ${esc(student.last_name)}` : '';
+        const admNo = student ? `<span style="color:var(--aa-text-muted)"> · ${esc(student.admission_number)}</span>` : '';
+        card.innerHTML = `
+            <div style="margin-bottom:16px">
+                <h2 style="font-size:16px;font-weight:700;color:var(--aa-text)">
+                    ${studentName}${admNo}
+                </h2>
+            </div>
+            ${termBlocks}`;
+        card.hidden = false;
+        if (placeholder) placeholder.hidden = true;
+        if (exportBar) exportBar.style.display = 'flex';
+    }
+
+    function downloadTranscriptPDF(data) {
+        if (!window.jspdf) { alert('PDF library not loaded.'); return; }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+        const pageW = doc.internal.pageSize.getWidth();
+        const margin = 12;
+        const { student, terms } = data;
+
+        doc.setFillColor(30, 58, 138);
+        doc.rect(0, 0, pageW, 26, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(14);
+        doc.text('Academic Transcript', margin, 12);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+        if (student) doc.text(`${student.first_name} ${student.last_name} — ${student.admission_number}`, margin, 20);
+        doc.text(`Generated: ${new Date().toLocaleDateString('en-GB')}`, pageW - margin, 20, { align: 'right' });
+
+        let y = 32;
+        (terms || []).forEach(t => {
+            doc.setTextColor(0);
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+            doc.text(`${t.term_name} — ${t.year_label}`, margin, y); y += 5;
+            doc.autoTable({
+                startY: y,
+                margin: { left: margin, right: margin },
+                head: [['Subject', 'Test', 'Assign', 'Exam', 'Total', '%', 'Grade', 'Pos', 'Remarks']],
+                body: (t.subjects || []).map(r => [
+                    r.subject_name, r.test_mark, r.assignment_mark, r.exam_mark,
+                    r.total_marks, `${parseFloat(r.percentage).toFixed(1)}%`,
+                    r.grade_classification, r.class_position || '—', r.remarks || ''
+                ]),
+                styles: { fontSize: 7.5, cellPadding: 2 },
+                headStyles: { fillColor: [30, 58, 138], textColor: 255, fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [249, 250, 251] },
+            });
+            y = doc.lastAutoTable.finalY + 8;
+        });
+
+        const name = student ? `${student.last_name}_${student.first_name}` : 'transcript';
+        doc.save(`transcript_${name}.pdf`);
+    }
+
+    function downloadTranscriptCSV(data) {
+        const { student, terms } = data;
+        const rows = [];
+        rows.push(['Student', student ? `${student.first_name} ${student.last_name}` : ''].join(','));
+        rows.push(['Admission No', student ? student.admission_number : ''].join(','));
+        rows.push([]);
+        rows.push(['Term', 'Year', 'Subject', 'Test', 'Assignment', 'Exam', 'Total', '%', 'Grade', 'Position', 'Remarks'].join(','));
+        (terms || []).forEach(t => {
+            (t.subjects || []).forEach(r => {
+                rows.push([
+                    t.term_name, t.year_label, r.subject_name,
+                    r.test_mark, r.assignment_mark, r.exam_mark,
+                    r.total_marks, parseFloat(r.percentage).toFixed(1),
+                    r.grade_classification, r.class_position || '', r.remarks || ''
+                ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+            });
+        });
+        const name = student ? `${student.last_name}_${student.first_name}` : 'transcript';
+        triggerBlobDownload(rows.join('\n'), 'text/csv', `transcript_${name}.csv`);
+    }
+
+    // ─── Per-student: Attendance tab ──────────────────────────────────────────
+
+    async function generateAttendanceReport() {
+        const sid = _state.att.studentId;
+        if (!sid) return _tabAlert('panel-attendance', 'Please search for and select a student first.');
+
+        const yearId = document.getElementById('attYearFilter')?.value;
+        const p = yearId ? `?academic_year_id=${yearId}` : '';
+
+        const btn = document.getElementById('generateAttBtn');
+        if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+        try {
+            const res = await apiFetch(`/api/reports/student-attendance/${sid}${p}`);
+            if (!res || !res.ok) throw new Error('Failed to load attendance data');
+            const data = await res.json();
+            _renderAttendanceReport(data);
+        } catch (err) {
+            _tabAlert('panel-attendance', err.message || 'Failed to load attendance.');
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = 'Load Attendance'; }
+        }
+    }
+
+    function _renderAttendanceReport(data) {
+        const results     = document.getElementById('attResults');
+        const placeholder = document.getElementById('attPlaceholder');
+
+        setText('attTotal',   data.total_sessions || 0);
+        setText('attPresent', data.present        || 0);
+        setText('attAbsent',  data.absent         || 0);
+        setText('attLate',    data.late           || 0);
+        setText('attRate',    `${data.attendance_rate || 0}%`);
+
+        if (placeholder) placeholder.hidden = true;
+        if (results) results.hidden = false;
+    }
+
+    // ─── Per-student: shared alert helper ─────────────────────────────────────
+
+    function _tabAlert(panelId, msg) {
+        // Show an inline message in the panel's placeholder area instead of alert()
+        const panel = document.getElementById(panelId);
+        if (!panel) return;
+        const placeholder = panel.querySelector('[id$="Placeholder"]');
+        if (placeholder) {
+            placeholder.innerHTML = `<h3>Action needed</h3><p>${esc(msg)}</p>`;
+            placeholder.hidden = false;
+        }
     }
 
 })();

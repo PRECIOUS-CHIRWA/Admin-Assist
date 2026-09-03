@@ -4,12 +4,16 @@ const router = express.Router();
 const {
     getEnrollmentReport, getAttendanceReport, getAcademicReport, getSummaryReport,
     getSubjectPerformanceReport, getTopPerformersReport, getInterventionReport,
+    getStudentAttendanceSummary,
 } = require("../controllers/reportsController");
 
 const { authenticate, authorize } = require("../middleware/auth");
 
 // Summary — any authenticated user (used by dashboard KPIs)
 router.get("/summary", authenticate, getSummaryReport);
+
+// Per-student attendance summary — for the Attendance tab in reports dashboard
+router.get("/student-attendance/:studentId", authenticate, authorize("admin", "headmaster", "staff"), getStudentAttendanceSummary);
 
 // Standard reports — admin, headmaster, teacher
 router.get("/enrollment",          authenticate, authorize("admin", "headmaster", "staff"), getEnrollmentReport);

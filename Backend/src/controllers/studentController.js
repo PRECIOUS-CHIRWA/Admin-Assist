@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const { sendNotification } = require("./notificationController");
 
 // ─── Audit logging helper ─────────────────────────────────────────────────────
 const _auditLog = async (actorId, action, entityType, entityId, details = {}) => {
@@ -240,6 +241,18 @@ const createStudent = async (req, res) => {
             "student", result.insertId,
             { admissionNumber }
         );
+
+        // Notify the enrolling admin/staff that the enrollment succeeded
+        try {
+            await sendNotification({
+                userId: req.user.sub,
+                type: "enrollment",
+                title: "Student Enrolled",
+                description: `${firstName} ${lastName} (${admissionNumber}) has been enrolled successfully.`,
+                entityType: "student",
+                entityId: result.insertId,
+            });
+        } catch { /* non-fatal — enrollment must not fail if notification fails */ }
 
         res.status(201).json({
             message: "Student enrolled successfully",

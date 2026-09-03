@@ -71,12 +71,13 @@ const getEnrollmentReport = async (req, res) => {
  * Query: format? (json|csv), class_id?, term_id?, academic_year_id?
  */
 const getAttendanceReport = async (req, res) => {
-    const { format = "json", class_id, term_id, academic_year_id } = req.query;
+    const { format = "json", class_id, term_id, academic_year_id, student_id } = req.query;
 
     const filters = [];
     const values = [];
-    if (class_id) { filters.push("s.class_id = ?"); values.push(class_id); }
-    if (term_id) { filters.push("s.term_id = ?"); values.push(term_id); }
+    if (student_id)       { filters.push("ar.student_id = ?");       values.push(student_id); }
+    if (class_id)         { filters.push("s.class_id = ?");          values.push(class_id); }
+    if (term_id)          { filters.push("s.term_id = ?");           values.push(term_id); }
     if (academic_year_id) { filters.push("s.academic_year_id = ?"); values.push(academic_year_id); }
     const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
 
@@ -131,13 +132,14 @@ const getAttendanceReport = async (req, res) => {
  * Query: format? (json|csv), class_id?, subject_id?, term_id?, academic_year_id?
  */
 const getAcademicReport = async (req, res) => {
-    const { format = "json", class_id, subject_id, term_id, academic_year_id } = req.query;
+    const { format = "json", class_id, subject_id, term_id, academic_year_id, student_id } = req.query;
 
     const filters = [];
     const values = [];
-    if (class_id) { filters.push("r.class_id = ?"); values.push(class_id); }
-    if (subject_id) { filters.push("r.subject_id = ?"); values.push(subject_id); }
-    if (term_id) { filters.push("r.term_id = ?"); values.push(term_id); }
+    if (student_id)       { filters.push("r.student_id = ?");       values.push(student_id); }
+    if (class_id)         { filters.push("r.class_id = ?");         values.push(class_id); }
+    if (subject_id)       { filters.push("r.subject_id = ?");       values.push(subject_id); }
+    if (term_id)          { filters.push("r.term_id = ?");          values.push(term_id); }
     if (academic_year_id) { filters.push("r.academic_year_id = ?"); values.push(academic_year_id); }
     const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
 
@@ -385,7 +387,73 @@ const getInterventionReport = async (req, res) => {
     }
 };
 
+// ─── PER-STUDENT ATTENDANCE SUMMARY ──────────────────────────────────────────
+
+/**
+ * GET /api/reports/student-attendance/:studentId
+ * Query: academic_year_id?
+ * Returns a single student's attendance summary stats.
+ */
+const getStudentAttendanceSummary = async (req, res) => {
+    const { studentId } = req.params;
+    const { academic_year_id } = req.query;
+
+    const filters = ["ar.student_id = ?"];
+    const values  = [studentId];
+    if (academic_year_id) {
+        filters.push("s.academic_year_id = ?");
+        values.push(academic_year_id);
+    }
+    const where = `WHERE ${filters.join(" AND ")}`;
+
+    try {
+        const [[row]] = await pool.execute(
+            `SELECT st.id, st.first_name, st.last_name, st.admission_number,
+              CONCAT(c.grade_level, IF(c.stream != '', CONCAT(' ', c.stream), '')) AS class_name,
+              COUNT(ar.id)                                                          AS total_sessions,
+              SUM(ar.status = 'present')                                           AS present,
+              SUM(ar.status = 'absent')                                            AS absent,
+              SUM(ar.status = 'late')                                              AS late,
+              SUM(ar.status = 'excused')                                           AS excused,
+              ROUND(
+                CASE WHEN COUNT(ar.id) = 0 THEN 0
+                     ELSE SUM(ar.status = 'present') / COUNT(ar.id) * 100
+                END, 1
+              ) AS attendance_rate
+       FROM   attendance_records ar
+       JOIN   attendance_sessions s  ON s.id  = ar.session_id
+       JOIN   students            st ON st.id = ar.student_id
+       LEFT JOIN classes          c  ON c.id  = st.class_id
+       ${where}
+       GROUP BY ar.student_id`,
+            values
+        );
+
+        if (!row) {
+            // Student exists but no attendance records yet — return zero summary
+            const [[student]] = await pool.execute(
+                `SELECT st.id, st.first_name, st.last_name, st.admission_number,
+                  CONCAT(c.grade_level, IF(c.stream != '', CONCAT(' ', c.stream), '')) AS class_name
+                 FROM students st LEFT JOIN classes c ON c.id = st.class_id
+                 WHERE st.id = ? LIMIT 1`,
+                [studentId]
+            );
+            if (!student) return res.status(404).json({ error: "Student not found" });
+            return res.json({
+                student,
+                total_sessions: 0, present: 0, absent: 0,
+                late: 0, excused: 0, attendance_rate: 0,
+            });
+        }
+
+        res.json(row);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 module.exports = {
     getEnrollmentReport, getAttendanceReport, getAcademicReport, getSummaryReport,
     getSubjectPerformanceReport, getTopPerformersReport, getInterventionReport,
+    getStudentAttendanceSummary,
 };
