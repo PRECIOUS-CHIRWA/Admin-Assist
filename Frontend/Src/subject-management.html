@@ -94,6 +94,97 @@
                 </div>
             </section>
         </div>
+
+        <!-- ─── Class Record & Student Register ───────────────────────── -->
+        <section class="aa-card" style="margin-top:1.75rem">
+            <div class="aa-card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+                <div>
+                    <h2 style="margin:0 0 4px">Class Record &amp; Student Register</h2>
+                    <p style="font-size:13px;color:var(--aa-text-muted);margin:0">
+                        View class student rosters and core subject curriculum focus.
+                    </p>
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;">
+                    <button class="aa-btn aa-btn-secondary" id="editFocusBtn" type="button" style="display:none">
+                        ✏️ Edit Core Focus
+                    </button>
+                </div>
+            </div>
+
+            <!-- Class selection filter bar -->
+            <div class="aa-filter-bar" style="border:none;padding:0;box-shadow:none;margin-bottom:1.25rem">
+                <div class="aa-filter-field" style="max-width:320px">
+                    <label for="recordClassSelect">Select Class</label>
+                    <select id="recordClassSelect">
+                        <option value="">Choose a class…</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Class overview banner (shown when class selected) -->
+            <div id="classOverviewCard" style="display:none;background:var(--aa-surface-2, #F8FAFC);border:1px solid var(--aa-border, #E2E8F0);border-radius:10px;padding:16px 20px;margin-bottom:1.25rem">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+                    <div>
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+                            <h3 id="classTitle" style="font-size:17px;font-weight:700;margin:0;color:var(--aa-text)">—</h3>
+                            <span class="aa-badge" id="classRosterCount">0 students</span>
+                        </div>
+                        <div style="font-size:13px;color:var(--aa-text-muted)">
+                            Class Teacher: <strong id="classTeacherName" style="color:var(--aa-text)">—</strong>
+                        </div>
+                    </div>
+                    <div style="text-align:right">
+                        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--aa-text-muted);letter-spacing:.05em;margin-bottom:4px">
+                            Core Subject Focus
+                        </div>
+                        <div id="classFocusBadge" style="display:inline-flex;align-items:center;gap:6px;background:rgba(37,99,235,.1);color:var(--aa-blue, #2563EB);font-weight:700;font-size:13px;padding:4px 12px;border-radius:6px;border:1px solid rgba(37,99,235,.2)">
+                            🎯 <span id="classFocusText">General Secondary Core</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assigned subjects chips -->
+                <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--aa-border, #E2E8F0)">
+                    <div style="font-size:11.5px;font-weight:700;color:var(--aa-text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">
+                        Assigned Subjects for this Class:
+                    </div>
+                    <div id="classSubjectChips" style="display:flex;flex-wrap:wrap;gap:8px">
+                        <!-- populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty state when no class chosen -->
+            <div class="aa-empty-state" id="classRecordPlaceholder">
+                <div style="font-size:32px;margin-bottom:8px">📋</div>
+                <h3>Select a Class to View Record</h3>
+                <p>Choose any class from the dropdown above to view its student roster and core subject focus.</p>
+            </div>
+
+            <!-- Empty state when class has no students -->
+            <div class="aa-empty-state" id="classRecordEmpty" hidden>
+                <h3>No students enrolled</h3>
+                <p>No active students are currently enrolled in this class.</p>
+            </div>
+
+            <!-- Students table -->
+            <div class="aa-table-wrap" id="classRecordTableWrap" hidden>
+                <table class="aa-table">
+                    <thead>
+                        <tr>
+                            <th style="width:40px">#</th>
+                            <th>Admission No</th>
+                            <th>Student Name</th>
+                            <th>Gender</th>
+                            <th>Status</th>
+                            <th>Core Subject Focus</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="classRecordBody"></tbody>
+                </table>
+            </div>
+        </section>
     </main>
 
     <!-- Subject Modal -->
@@ -166,6 +257,40 @@
             <div class="aa-modal-actions">
                 <button class="aa-btn aa-btn-ghost" id="cancelAssignBtn" type="button">Cancel</button>
                 <button class="aa-btn aa-btn-primary" id="saveAssignBtn" type="button">Assign</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Core Focus Modal -->
+    <div class="aa-modal-backdrop" id="focusModal" hidden>
+        <div class="aa-modal aa-modal-sm" role="dialog" aria-modal="true">
+            <div class="aa-modal-header">
+                <h2>Edit Core Subject Focus</h2>
+                <button class="aa-modal-close" id="closeFocusModal" type="button">&times;</button>
+            </div>
+            <div class="aa-modal-body">
+                <input type="hidden" id="focusClassId" />
+                <div class="aa-form-grid">
+                    <div class="aa-form-field aa-form-field-full">
+                        <label for="focusSelect">Standard Presets</label>
+                        <select id="focusSelect">
+                            <option value="">Choose preset or type custom…</option>
+                            <option value="Sciences Focus">Natural Sciences Focus (Biology, Chemistry, Physics, Math)</option>
+                            <option value="Arts &amp; Humanities Focus">Arts &amp; Humanities Focus (History, Geography, CRE, English)</option>
+                            <option value="Commercial Studies Focus">Commercial &amp; Business Studies Focus</option>
+                            <option value="Technical &amp; Vocational Focus">Technical &amp; Vocational Focus (Computer Studies, Design)</option>
+                            <option value="Junior Secondary Core">Junior Secondary Core Curriculum</option>
+                        </select>
+                    </div>
+                    <div class="aa-form-field aa-form-field-full">
+                        <label for="focusCustom">Core Focus Label *</label>
+                        <input type="text" id="focusCustom" placeholder="e.g. Sciences Focus" />
+                    </div>
+                </div>
+            </div>
+            <div class="aa-modal-actions">
+                <button class="aa-btn aa-btn-ghost" id="cancelFocusBtn" type="button">Cancel</button>
+                <button class="aa-btn aa-btn-primary" id="saveFocusBtn" type="button">Save Focus</button>
             </div>
         </div>
     </div>

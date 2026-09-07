@@ -171,11 +171,6 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label for="admissionNumber">Admission Number <span class="required-mark">*</span></label>
-              <input type="text" id="admissionNumber" name="admissionNumber" placeholder="ADM-2026-0001" required>
-              <span class="field-error" id="err-admissionNumber" role="alert"></span>
-            </div>
-            <div class="form-group">
               <label for="grade">Grade / Form <span class="required-mark">*</span></label>
               <select id="grade" name="grade" required>
                 <option value="">Select a grade</option>
@@ -187,9 +182,6 @@
               </select>
               <span class="field-error" id="err-grade" role="alert"></span>
             </div>
-          </div>
-
-          <div class="form-row">
             <div class="form-group">
               <label for="classId">Class <span class="required-mark">*</span></label>
               <select id="classId" name="classId" required disabled>
@@ -197,10 +189,25 @@
               </select>
               <span class="field-error" id="err-classId" role="alert"></span>
             </div>
+          </div>
+
+          <div class="form-row">
             <div class="form-group">
               <label for="enrollmentDate">Enrollment Date <span class="required-mark">*</span></label>
               <input type="date" id="enrollmentDate" name="enrollmentDate" required>
               <span class="field-error" id="err-enrollmentDate" role="alert"></span>
+            </div>
+            <div class="form-group">
+              <label for="admissionNumber">Admission Number <span class="required-mark">*</span></label>
+              <div class="auto-gen-box">
+                <input type="text" id="admissionNumber" name="admissionNumber" readonly
+                  placeholder="Auto-assigned on selecting Grade &amp; Class" required>
+                <span class="auto-gen-lock" title="Auto-assigned by system">🔒</span>
+              </div>
+              <div class="auto-gen-badge">
+                <span>⚡ Auto-assigned by Year, Grade &amp; Class</span>
+              </div>
+              <span class="field-error" id="err-admissionNumber" role="alert"></span>
             </div>
           </div>
 

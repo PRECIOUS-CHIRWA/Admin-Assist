@@ -48,6 +48,7 @@
 
             _populate('filterAssignClass', allClasses, 'id', _classLabel, 'All Classes');
             _populate('filterAssignYear', years, 'id', y => y.label, 'All Years');
+            _populate('recordClassSelect', allClasses, 'id', _classLabel, 'Choose a class…');
             _populate('aTeacher', allTeachers, 'id', u => u.name, 'Select Teacher…');
             _populate('aClass', allClasses, 'id', _classLabel, 'Select Class…');
             _populate('aYear', years, 'id', y => y.label, 'Select Year…');
@@ -290,6 +291,167 @@
         ['filterAssignClass', 'filterAssignYear'].forEach(id =>
             document.getElementById(id)?.addEventListener('change', loadAssignments)
         );
+
+        // Class record selector
+        document.getElementById('recordClassSelect')?.addEventListener('change', (e) => loadClassRecord(e.target.value));
+
+        // Focus modal
+        document.getElementById('editFocusBtn')?.addEventListener('click', openFocusModal);
+        document.getElementById('closeFocusModal')?.addEventListener('click', closeFocusModal);
+        document.getElementById('cancelFocusBtn')?.addEventListener('click', closeFocusModal);
+        document.getElementById('saveFocusBtn')?.addEventListener('click', saveCoreFocus);
+        document.getElementById('focusSelect')?.addEventListener('change', (e) => {
+            if (e.target.value) {
+                document.getElementById('focusCustom').value = e.target.value;
+            }
+        });
+    }
+
+    /* ─── Class Record & Core Focus ─────────────────────────────────────────── */
+    let currentClassRecord = null;
+
+    async function loadClassRecord(classId) {
+        const placeholder = document.getElementById('classRecordPlaceholder');
+        const overview = document.getElementById('classOverviewCard');
+        const empty = document.getElementById('classRecordEmpty');
+        const tableWrap = document.getElementById('classRecordTableWrap');
+        const editBtn = document.getElementById('editFocusBtn');
+
+        if (!classId) {
+            if (placeholder) placeholder.hidden = false;
+            if (overview) overview.style.display = 'none';
+            if (empty) empty.hidden = true;
+            if (tableWrap) tableWrap.hidden = true;
+            if (editBtn) editBtn.style.display = 'none';
+            currentClassRecord = null;
+            return;
+        }
+
+        try {
+            const res = await apiFetch(`/api/classes/${classId}/students`);
+            if (!res || !res.ok) throw new Error('Failed to load class record');
+            const data = await res.json();
+            currentClassRecord = data;
+            renderClassRecord(data);
+        } catch (err) {
+            console.error('loadClassRecord:', err);
+            alert('Failed to load class record: ' + err.message);
+        }
+    }
+
+    function renderClassRecord(data) {
+        const placeholder = document.getElementById('classRecordPlaceholder');
+        const overview = document.getElementById('classOverviewCard');
+        const empty = document.getElementById('classRecordEmpty');
+        const tableWrap = document.getElementById('classRecordTableWrap');
+        const editBtn = document.getElementById('editFocusBtn');
+
+        const { class: cls, subjects, students } = data;
+
+        if (placeholder) placeholder.hidden = true;
+        if (overview) overview.style.display = 'block';
+        if (editBtn) editBtn.style.display = 'inline-flex';
+
+        // Title and teacher
+        const titleEl = document.getElementById('classTitle');
+        if (titleEl) titleEl.textContent = cls.class_name || `${cls.grade_level} ${cls.stream}`.trim();
+
+        const countEl = document.getElementById('classRosterCount');
+        if (countEl) countEl.textContent = `${students.length} ${students.length === 1 ? 'student' : 'students'}`;
+
+        const teacherEl = document.getElementById('classTeacherName');
+        if (teacherEl) teacherEl.textContent = cls.class_teacher_name || 'Not assigned';
+
+        // Focus
+        const focusEl = document.getElementById('classFocusText');
+        if (focusEl) focusEl.textContent = cls.core_focus || 'General Secondary Core';
+
+        // Subjects chips
+        const chipsEl = document.getElementById('classSubjectChips');
+        if (chipsEl) {
+            if (!subjects.length) {
+                chipsEl.innerHTML = '<span style="font-size:12.5px;color:var(--aa-text-muted);font-style:italic">No teacher-subject assignments for this class yet.</span>';
+            } else {
+                chipsEl.innerHTML = subjects.map(s => `
+                    <span class="aa-badge" style="background:var(--aa-surface);border:1px solid var(--aa-border);color:var(--aa-text);padding:4px 10px;font-size:12px">
+                        <strong>${_esc(s.subject_code)}</strong>: ${_esc(s.subject_name)} <span style="opacity:.7">(${_esc(s.teacher_name)})</span>
+                    </span>
+                `).join('');
+            }
+        }
+
+        // Students table
+        const tbody = document.getElementById('classRecordBody');
+        if (!students.length) {
+            if (empty) empty.hidden = false;
+            if (tableWrap) tableWrap.hidden = true;
+            if (tbody) tbody.innerHTML = '';
+            return;
+        }
+
+        if (empty) empty.hidden = true;
+        if (tableWrap) tableWrap.hidden = false;
+
+        const focusLabel = cls.core_focus || 'General Secondary Core';
+        tbody.innerHTML = students.map((s, idx) => `
+            <tr>
+                <td>${idx + 1}</td>
+                <td><strong style="font-family:monospace;color:var(--aa-blue)">${_esc(s.admission_number)}</strong></td>
+                <td><strong>${_esc(s.last_name)}, ${_esc(s.first_name)}</strong></td>
+                <td>${_esc(s.gender || '—')}</td>
+                <td><span class="aa-status-pill aa-status-${(s.status || 'active').toLowerCase()}">${_esc(s.status || 'Active')}</span></td>
+                <td><span class="aa-badge" style="background:rgba(37,99,235,.08);color:var(--aa-blue);font-weight:600">${_esc(focusLabel)}</span></td>
+                <td class="aa-table-actions">
+                    <a class="aa-btn aa-btn-sm aa-btn-secondary" href="student-transcript.html?id=${s.id}">
+                        📄 View Transcript
+                    </a>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function openFocusModal() {
+        if (!currentClassRecord) return;
+        const cls = currentClassRecord.class;
+        document.getElementById('focusClassId').value = cls.id;
+        document.getElementById('focusCustom').value = cls.core_focus || '';
+        document.getElementById('focusSelect').value = '';
+        _showModal('focusModal');
+    }
+
+    function closeFocusModal() {
+        _hideModal('focusModal');
+    }
+
+    async function saveCoreFocus() {
+        const classId = document.getElementById('focusClassId').value;
+        const customVal = document.getElementById('focusCustom').value.trim();
+        const selectVal = document.getElementById('focusSelect').value;
+        const focus = customVal || selectVal || 'General Secondary Core';
+
+        if (!focus) {
+            alert('Please specify a core focus label.');
+            return;
+        }
+
+        const saveBtn = document.getElementById('saveFocusBtn');
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving…';
+
+        try {
+            const res = await apiFetch(`/api/classes/${classId}`, {
+                method: 'PUT',
+                body: JSON.stringify({ core_focus: focus }),
+            });
+            if (!res || !res.ok) throw new Error('Failed to update core focus');
+            closeFocusModal();
+            await loadClassRecord(classId);
+        } catch (err) {
+            alert('Failed to save focus: ' + err.message);
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save Focus';
+        }
     }
 
     /* ─── Helpers ─────────────────────────────────────────────────────────────── */

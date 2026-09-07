@@ -132,13 +132,91 @@ const getStudentById = async (req, res) => {
     }
 };
 
+// ─── Auto-generate Admission Number ──────────────────────────────────────────
+// Format: ADM-[YEAR]-[CLASS_CODE]-[SEQUENCE]
+// e.g. ADM-2026-8A-0001 or ADM-2026-10B-0001
+const generateAdmissionNumber = async ({ year, classId, grade, stream }) => {
+    const yr = parseInt(year, 10) || new Date().getFullYear();
+
+    let gradeLevel = grade || "";
+    let streamCode = stream || "";
+
+    if (classId) {
+        const [[cls]] = await pool.execute(
+            "SELECT grade_level, stream FROM classes WHERE id = ?",
+            [classId]
+        );
+        if (cls) {
+            gradeLevel = cls.grade_level || gradeLevel;
+            streamCode = cls.stream || streamCode;
+        }
+    }
+
+    // Extract grade digit(s): e.g. "Grade 8" -> "8", "Grade 10" -> "10"
+    const gradeNum = String(gradeLevel).replace(/[^0-9]/g, "") || "8";
+    // Clean stream letter/code: e.g. "A" -> "A", "Science" -> "SCI"
+    let streamClean = String(streamCode).trim().toUpperCase();
+    if (streamClean.length > 3) streamClean = streamClean.slice(0, 3);
+
+    const classCode = `${gradeNum}${streamClean}`;
+    const prefix = `ADM-${yr}-${classCode}-`;
+
+    // Find highest existing sequence for this prefix
+    const [rows] = await pool.execute(
+        "SELECT admission_number FROM students WHERE admission_number LIKE ? ORDER BY admission_number DESC LIMIT 50",
+        [`${prefix}%`]
+    );
+
+    let maxSeq = 0;
+    for (const r of rows) {
+        const parts = r.admission_number.split("-");
+        const lastPart = parts[parts.length - 1];
+        const num = parseInt(lastPart, 10);
+        if (!isNaN(num) && num > maxSeq) {
+            maxSeq = num;
+        }
+    }
+
+    let nextSeq = maxSeq + 1;
+    let candidate = `${prefix}${String(nextSeq).padStart(4, "0")}`;
+
+    // Safety check: ensure absolute uniqueness in DB
+    while (true) {
+        const [[exists]] = await pool.execute(
+            "SELECT id FROM students WHERE admission_number = ? LIMIT 1",
+            [candidate]
+        );
+        if (!exists) break;
+        nextSeq++;
+        candidate = `${prefix}${String(nextSeq).padStart(4, "0")}`;
+    }
+
+    return candidate;
+};
+
+const getNextAdmissionNumber = async (req, res) => {
+    try {
+        const { year, class_id, grade, stream } = req.query;
+        const adm = await generateAdmissionNumber({
+            year,
+            classId: class_id,
+            grade,
+            stream,
+        });
+        res.json({ admission_number: adm, admissionNumber: adm });
+    } catch (err) {
+        console.error("getNextAdmissionNumber error:", err.message);
+        res.status(500).json({ error: "Failed to generate admission number" });
+    }
+};
+
 // ─── Create student / Enroll ──────────────────────────────────────────────────
 const createStudent = async (req, res) => {
     try {
         const body = req.body || {};
 
         // Normalize input from both camelCase and snake_case (enroll-student.js payload)
-        const admissionNumber = String(body.admissionNumber || body.admission_number || "").trim();
+        let admissionNumber = String(body.admissionNumber || body.admission_number || "").trim();
         const firstName = String(body.firstName || body.first_name || "").trim();
         const lastName = String(body.lastName || body.last_name || "").trim();
         const dateOfBirth = formatDate(body.dateOfBirth || body.date_of_birth);
@@ -156,9 +234,8 @@ const createStudent = async (req, res) => {
         const email = String(body.email || body.guardian_email || "").trim() || null;
         const status = String(body.status || "Active").trim();
 
-        // Check required fields
+        // Check required fields (admissionNumber is auto-generated if omitted)
         const missing = [];
-        if (!admissionNumber) missing.push("admissionNumber");
         if (!firstName) missing.push("firstName");
         if (!lastName) missing.push("lastName");
         if (!dateOfBirth) missing.push("dateOfBirth");
@@ -174,11 +251,6 @@ const createStudent = async (req, res) => {
         }
 
         // Look the class up rather than trusting free-typed grade/section text.
-        // grade/section are still stored (existing search/filter/display code
-        // reads them), but they're now always derived from a real class row,
-        // so they can never drift out of sync with it the way they used to —
-        // that drift is exactly what made attendance registers come up empty
-        // for classes that genuinely had enrolled students.
         const [[classRow]] = await pool.execute(
             "SELECT id, grade_level, stream FROM classes WHERE id = ?",
             [classId]
@@ -188,6 +260,17 @@ const createStudent = async (req, res) => {
         }
         const grade = classRow.grade_level;
         const section = classRow.stream || "";
+
+        // Automatically generate admission number if not provided
+        if (!admissionNumber) {
+            const enrollYear = enrollmentDate ? new Date(enrollmentDate).getFullYear() : new Date().getFullYear();
+            admissionNumber = await generateAdmissionNumber({
+                year: enrollYear,
+                classId,
+                grade,
+                stream: section,
+            });
+        }
 
         // Auto-format local Zambian numbers (e.g. 0971234567 -> +260971234567)
         if (/^0\d{9}$/.test(phoneNumber)) {
@@ -419,6 +502,11 @@ const deleteStudent = async (req, res) => {
 };
 
 module.exports = {
-    listStudents, getStudentById, createStudent,
-    updateStudent, deleteStudent,
+    listStudents,
+    getStudentById,
+    getNextAdmissionNumber,
+    generateAdmissionNumber,
+    createStudent,
+    updateStudent,
+    deleteStudent,
 };

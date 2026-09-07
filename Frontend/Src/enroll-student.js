@@ -49,10 +49,29 @@ function initializeMultiStepForm() {
   }
 
   const gradeSelect = document.getElementById("grade");
+  const classSelect = document.getElementById("classId");
+  const enrollDateInput = document.getElementById("enrollmentDate");
+
+  // Default enrollment date to today if blank
+  if (enrollDateInput && !enrollDateInput.value) {
+    enrollDateInput.value = new Date().toISOString().split("T")[0];
+  }
+
   if (gradeSelect) {
-    gradeSelect.addEventListener("change", () => _loadClassesForGrade(gradeSelect.value));
+    gradeSelect.addEventListener("change", () => {
+      _loadClassesForGrade(gradeSelect.value);
+      _updateAutoAdmissionNumber();
+    });
     // In case the browser restored a previous value on refresh
     if (gradeSelect.value) _loadClassesForGrade(gradeSelect.value);
+  }
+
+  if (classSelect) {
+    classSelect.addEventListener("change", _updateAutoAdmissionNumber);
+  }
+
+  if (enrollDateInput) {
+    enrollDateInput.addEventListener("change", _updateAutoAdmissionNumber);
   }
 
   // Show step 1 on load
@@ -152,10 +171,15 @@ function _validateStep(step) {
   }
 
   if (step === 2) {
-    _require("admissionNumber", "Admission number is required.");
     _require("grade", "Please select a grade.");
     _require("classId", "Please select a class.");
     _require("enrollmentDate", "Enrollment date is required.");
+
+    const admInput = document.getElementById("admissionNumber");
+    if (admInput && !admInput.value.trim() && _getVal("grade") && _getVal("classId")) {
+      _updateAutoAdmissionNumber();
+    }
+    _require("admissionNumber", "Admission number is required.");
   }
 
   if (step === 3) {
@@ -365,6 +389,56 @@ async function _loadClassesForGrade(grade) {
   } catch (err) {
     console.error("_loadClassesForGrade:", err);
     select.innerHTML = '<option value="">Unable to load classes — try again</option>';
+  }
+}
+
+/* ── Auto-generate Admission Number ────────────────────────────────────────── */
+let _admFetchSeq = 0;
+
+async function _updateAutoAdmissionNumber() {
+  const admInput = document.getElementById("admissionNumber");
+  if (!admInput) return;
+
+  const grade = _getVal("grade");
+  const classId = _getVal("classId");
+  const dateVal = _getVal("enrollmentDate") || new Date().toISOString().split("T")[0];
+  const year = new Date(dateVal).getFullYear();
+
+  if (!grade || !classId) {
+    admInput.value = "";
+    admInput.placeholder = "Auto-assigned on selecting Grade & Class";
+    return;
+  }
+
+  // Derive class code: e.g. Grade 8, Stream A -> 8A
+  const gradeNum = grade.replace(/[^0-9]/g, "") || "8";
+  const classText = _selectedOptionText("classId");
+  const streamMatch = classText.match(/\b([A-Z])\b/) || classText.match(/Stream\s+([A-Z])/i);
+  const streamLetter = streamMatch ? streamMatch[1].toUpperCase() : "A";
+  const classCode = `${gradeNum}${streamLetter}`;
+
+  admInput.placeholder = `Assigning ADM-${year}-${classCode}-…`;
+
+  const currentSeq = ++_admFetchSeq;
+  try {
+    const res = await apiFetch(`/api/students/next-admission-number?year=${year}&class_id=${classId}&grade=${encodeURIComponent(grade)}`);
+    if (currentSeq !== _admFetchSeq) return; // Discard stale response
+    if (res && res.ok) {
+      const data = await res.json();
+      if (data.admission_number) {
+        admInput.value = data.admission_number;
+        admInput.classList.remove("is-invalid");
+        const err = document.getElementById("err-admissionNumber");
+        if (err) err.textContent = "";
+        return;
+      }
+    }
+  } catch (err) {
+    console.warn("_updateAutoAdmissionNumber API error, using client fallback:", err);
+  }
+
+  if (currentSeq === _admFetchSeq && !admInput.value) {
+    admInput.value = `ADM-${year}-${classCode}-0001`;
   }
 }
 

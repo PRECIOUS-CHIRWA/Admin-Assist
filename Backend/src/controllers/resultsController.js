@@ -361,7 +361,12 @@ const generateTranscript = async (req, res) => {
 
     try {
         const [[student]] = await pool.execute(
-            `SELECT st.*, CONCAT(c.grade_level, IF(c.stream != '', CONCAT(' ', c.stream), '')) AS class_name
+            `SELECT st.*,
+                    COALESCE(
+                        NULLIF(CONCAT(c.grade_level, IF(c.stream != '' AND c.stream IS NOT NULL, CONCAT(' ', c.stream), '')), ''),
+                        NULLIF(CONCAT(st.grade, IF(st.section != '' AND st.section IS NOT NULL, CONCAT(' ', st.section), '')), ''),
+                        'Not assigned'
+                    ) AS class_name
        FROM   students st
        LEFT JOIN classes c ON c.id = st.class_id
        WHERE  st.id = ?`,
@@ -437,7 +442,22 @@ const generateTranscript = async (req, res) => {
                 : '0.0',
         };
 
-        const school_name = process.env.SCHOOL_NAME || 'Admin Assist School';
+        let school_name = process.env.SCHOOL_NAME || 'Admin Assist School';
+        try {
+            const [[settingRow]] = await pool.execute(
+                "SELECT school_name FROM school_settings WHERE school_id = 1 LIMIT 1"
+            );
+            if (settingRow && settingRow.school_name) {
+                school_name = settingRow.school_name;
+            } else {
+                const [[schoolRow]] = await pool.execute(
+                    "SELECT name FROM schools WHERE id = 1 LIMIT 1"
+                );
+                if (schoolRow && schoolRow.name) {
+                    school_name = schoolRow.name;
+                }
+            }
+        } catch { /* use default school_name */ }
 
         res.json({ student, terms, attendance_summary, school_name, generated_at: new Date().toISOString() });
     } catch (err) {

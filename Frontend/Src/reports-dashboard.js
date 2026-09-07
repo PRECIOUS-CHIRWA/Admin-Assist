@@ -612,13 +612,23 @@
                 </p>
             </div>`).join('');
 
+        const schoolName = data.school_name || 'Admin Assist School';
         const studentName = student ? `${esc(student.first_name)} ${esc(student.last_name)}` : '';
         const admNo = student ? `<span style="color:var(--aa-text-muted)"> · ${esc(student.admission_number)}</span>` : '';
+        const className = student && student.class_name ? `<span class="aa-badge" style="margin-left:8px;background:var(--aa-blue);color:#fff">${esc(student.class_name)}</span>` : '';
+
         card.innerHTML = `
-            <div style="margin-bottom:16px">
-                <h2 style="font-size:16px;font-weight:700;color:var(--aa-text)">
-                    ${studentName}${admNo}
+            <div style="margin-bottom:16px;padding:16px 20px;background:linear-gradient(135deg, #1E3A8A 0%, #172554 100%);border-radius:10px;color:#fff;">
+                <div style="font-size:11px;font-weight:700;color:#FCD34D;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">
+                    🏛️ ${esc(schoolName)} — Official Transcript
+                </div>
+                <h2 style="font-size:16px;font-weight:700;color:#fff;margin:0 0 6px">
+                    ${studentName}${admNo} ${className}
                 </h2>
+                <div style="font-size:12px;opacity:.85">
+                    Class: <strong>${esc((student && student.class_name) || 'Not assigned')}</strong> &nbsp;·&nbsp;
+                    Date: ${new Date(data.generated_at || Date.now()).toLocaleDateString('en-GB')}
+                </div>
             </div>
             ${termBlocks}`;
         card.hidden = false;
@@ -633,15 +643,18 @@
         const pageW = doc.internal.pageSize.getWidth();
         const margin = 12;
         const { student, terms } = data;
+        const schoolName = data.school_name || 'Admin Assist School';
+        const className = (student && student.class_name) || 'Not assigned';
 
         doc.setFillColor(30, 58, 138);
         doc.rect(0, 0, pageW, 26, 'F');
         doc.setTextColor(255, 255, 255);
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(14);
-        doc.text('Academic Transcript', margin, 12);
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
-        if (student) doc.text(`${student.first_name} ${student.last_name} — ${student.admission_number}`, margin, 20);
-        doc.text(`Generated: ${new Date().toLocaleDateString('en-GB')}`, pageW - margin, 20, { align: 'right' });
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
+        doc.text(schoolName, margin, 10);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+        doc.text('OFFICIAL ACADEMIC TRANSCRIPT', margin, 16);
+        if (student) doc.text(`${student.first_name} ${student.last_name} (${student.admission_number}) — Class: ${className}`, margin, 22);
+        doc.text(`Generated: ${new Date().toLocaleDateString('en-GB')}`, pageW - margin, 22, { align: 'right' });
 
         let y = 32;
         (terms || []).forEach(t => {
@@ -670,11 +683,15 @@
 
     function downloadTranscriptCSV(data) {
         const { student, terms } = data;
+        const schoolName = data.school_name || 'Admin Assist School';
         const rows = [];
-        rows.push(['Student', student ? `${student.first_name} ${student.last_name}` : ''].join(','));
-        rows.push(['Admission No', student ? student.admission_number : ''].join(','));
+        rows.push(['OFFICIAL ACADEMIC TRANSCRIPT']);
+        rows.push(['School', `"${schoolName.replace(/"/g, '""')}"`]);
+        rows.push(['Student', student ? `"${student.first_name} ${student.last_name}"` : '""']);
+        rows.push(['Admission No', student ? `"${student.admission_number}"` : '""']);
+        rows.push(['Class', student ? `"${student.class_name || 'Not assigned'}"` : '""']);
         rows.push([]);
-        rows.push(['Term', 'Year', 'Subject', 'Test', 'Assignment', 'Exam', 'Total', '%', 'Grade', 'Position', 'Remarks'].join(','));
+        rows.push(['Term,Year,Subject,Test,Assignment,Exam,Total,%,Grade,Position,Remarks']);
         (terms || []).forEach(t => {
             (t.subjects || []).forEach(r => {
                 rows.push([

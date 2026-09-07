@@ -246,6 +246,43 @@
     min-height: 90px;
 }
 
+/* ── Auto-generated Admission Input Styling ───────────────────────────── */
+.auto-gen-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.auto-gen-box input[readonly] {
+    background: var(--aa-surface-2, #F3F4F6);
+    color: var(--aa-blue, #2563EB);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-weight: 700;
+    letter-spacing: .04em;
+    cursor: default;
+    padding-right: 36px;
+    border-color: rgba(37,99,235,.3);
+}
+
+.auto-gen-lock {
+    position: absolute;
+    right: 12px;
+    font-size: 13px;
+    opacity: .6;
+    pointer-events: none;
+}
+
+.auto-gen-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--aa-blue, #2563EB);
+    margin-top: 3px;
+}
+
 /* ── Radio Group ─────────────────────────────────────────────────────── */
 .radio-group {
     display: flex;
