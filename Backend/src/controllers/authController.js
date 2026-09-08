@@ -36,7 +36,12 @@ const createTokens = (user) => {
     const secret = process.env.JWT_SECRET;
     if (!secret) throw new Error("JWT_SECRET environment variable is not set");
 
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    const payload = {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+        school_id: user.school_id || 1
+    };
     const accessToken = jwt.sign(payload, secret, { expiresIn: ACCESS_TTL });
     const refreshToken = jwt.sign({ sub: user.id }, secret, { expiresIn: REFRESH_TTL });
 
@@ -81,13 +86,13 @@ const signup = async (req, res) => {
 
         const passwordHash = await hashPassword(password);
         const [result] = await pool.execute(
-            "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)",
+            "INSERT INTO users (school_id, name, email, password_hash, role) VALUES (1, ?, ?, ?, ?)",
             [name, email, passwordHash, role]
         );
 
         res.status(201).json({
             message: "User signed up successfully",
-            user: { id: result.insertId, name, email, role },
+            user: { id: result.insertId, school_id: 1, name, email, role },
         });
     } catch (err) {
         if (err.code === "ER_DUP_ENTRY")
@@ -107,7 +112,7 @@ const login = async (req, res) => {
             return res.status(400).json({ error: "Email and password are required" });
 
         const [users] = await pool.execute(
-            `SELECT id, name, email, password_hash, role,
+            `SELECT id, school_id, name, email, password_hash, role,
                     is_active, failed_attempts, locked_until
              FROM users WHERE email = ? LIMIT 1`,
             [email]
@@ -173,10 +178,32 @@ const login = async (req, res) => {
 
         res.cookie("refreshToken", refreshToken, cookieOptions());
 
+        // Check if there is an associated student record (for unified accounts)
+        let studentId = null;
+        let admissionNumber = null;
+        try {
+            const [[st]] = await pool.execute(
+                "SELECT id, admission_number FROM students WHERE user_id = ? LIMIT 1",
+                [user.id]
+            );
+            if (st) {
+                studentId = st.id;
+                admissionNumber = st.admission_number;
+            }
+        } catch { /* column might be migrating */ }
+
         res.status(200).json({
             message: "User logged in successfully",
             accessToken,
-            user: { id: user.id, name: user.name, email: user.email, role: user.role },
+            user: {
+                id: user.id,
+                school_id: user.school_id || 1,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                student_id: studentId,
+                admission_number: admissionNumber
+            },
         });
     } catch (err) {
         console.error("Login error:", err.message);
@@ -188,7 +215,11 @@ const login = async (req, res) => {
 const getMe = async (req, res) => {
     try {
         const [rows] = await pool.execute(
-            "SELECT id, name as fullName, email, role, created_at FROM users WHERE id = ? LIMIT 1",
+            `SELECT u.id, u.school_id, u.name, u.name as fullName, u.email, u.role, u.created_at,
+                    s.id AS student_id, s.admission_number
+             FROM users u
+             LEFT JOIN students s ON s.user_id = u.id
+             WHERE u.id = ? LIMIT 1`,
             [req.user.sub]
         );
         if (!rows[0]) return res.status(404).json({ error: "User not found" });
@@ -209,6 +240,14 @@ const logout = async (req, res) => {
             await pool.execute(
                 "DELETE FROM refresh_tokens WHERE token_hash = ?",
                 [tokenHash]
+            );
+        }
+
+        // Also invalidate all refresh tokens for this user
+        if (req.user?.sub) {
+            await pool.execute(
+                "DELETE FROM refresh_tokens WHERE user_id = ?",
+                [req.user.sub]
             );
         }
 

@@ -1,5 +1,15 @@
+const crypto = require("crypto");
+const { promisify } = require("util");
 const pool = require("../config/db");
 const { sendNotification } = require("./notificationController");
+
+const scrypt = promisify(crypto.scrypt);
+
+const _hashPassword = async (password) => {
+    const salt = crypto.randomBytes(16).toString("hex");
+    const hash = await scrypt(password, salt, 64);
+    return `scrypt$${salt}$${hash.toString("hex")}`;
+};
 
 // ─── Audit logging helper ─────────────────────────────────────────────────────
 const _auditLog = async (actorId, action, entityType, entityId, details = {}) => {
@@ -27,6 +37,8 @@ const formatDate = (value) => {
 
 const toApiShape = (row) => ({
     id: row.id,
+    school_id: row.school_id,
+    user_id: row.user_id || null,
     admissionNumber: row.admission_number,
     admission_number: row.admission_number,
     firstName: row.first_name,
@@ -76,6 +88,7 @@ const PHONE_PATTERN = /^\+260\d{9}$/;
 // ─── List students ────────────────────────────────────────────────────────────
 const listStudents = async (req, res) => {
     try {
+        const schoolId = req.user?.school_id || 1;
         const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
         const limit = Math.max(parseInt(req.query.limit, 10) || 10, 1);
         const offset = (page - 1) * limit;
@@ -83,21 +96,27 @@ const listStudents = async (req, res) => {
         const grade = String(req.query.grade || "").trim();
         const status = String(req.query.status || "").trim();
 
-        const conditions = [];
-        const params = [];
+        const conditions = ["s.school_id = ?"];
+        const params = [schoolId];
+
+        // Role restriction: Unified Student/Parent ('user') can ONLY see their own record
+        if (req.user?.role === "user") {
+            conditions.push("s.user_id = ?");
+            params.push(req.user.sub);
+        }
 
         if (search) {
             const term = `%${search}%`;
-            conditions.push("(first_name LIKE ? OR last_name LIKE ? OR admission_number LIKE ? OR grade LIKE ?)");
+            conditions.push("(s.first_name LIKE ? OR s.last_name LIKE ? OR s.admission_number LIKE ? OR s.grade LIKE ?)");
             params.push(term, term, term, term);
         }
-        if (grade) { conditions.push("grade = ?"); params.push(grade); }
-        if (status) { conditions.push("status = ?"); params.push(status); }
+        if (grade) { conditions.push("s.grade = ?"); params.push(grade); }
+        if (status) { conditions.push("s.status = ?"); params.push(status); }
 
-        const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+        const where = `WHERE ${conditions.join(" AND ")}`;
 
         const [countRows] = await pool.execute(
-            `SELECT COUNT(*) AS total FROM students ${where}`, params
+            `SELECT COUNT(*) AS total FROM students s ${where}`, params
         );
         const total = countRows[0].total;
 
@@ -121,10 +140,23 @@ const listStudents = async (req, res) => {
 // ─── Get by ID ────────────────────────────────────────────────────────────────
 const getStudentById = async (req, res) => {
     try {
+        const schoolId = req.user?.school_id || 1;
         const [rows] = await pool.execute(
-            "SELECT * FROM students WHERE id = ? LIMIT 1", [req.params.id]
+            `SELECT s.*,
+                    CONCAT(c.grade_level, IF(c.stream != '', CONCAT(' ', c.stream), '')) AS class_name
+             FROM students s
+             LEFT JOIN classes c ON c.id = s.class_id
+             WHERE s.id = ? AND s.school_id = ?
+             LIMIT 1`,
+            [req.params.id, schoolId]
         );
         if (!rows[0]) return res.status(404).json({ error: "Student not found" });
+
+        // IDOR Protection: If student/parent role, verify ownership
+        if (req.user?.role === "user" && rows[0].user_id !== req.user.sub) {
+            return res.status(403).json({ error: "You do not have permission to view this student record" });
+        }
+
         res.json(toApiShape(rows[0]));
     } catch (err) {
         console.error("getStudentById error:", err.message);
@@ -298,21 +330,52 @@ const createStudent = async (req, res) => {
             normalizedRelationship = "Guardian";
         }
 
+        const schoolId = req.user?.school_id || 1;
+
+        // ── Unified Student / Parent User Account Association ────────────────
+        // A single unified account (role 'user') is associated with the student record.
+        // If an account email is provided or guardian email is provided, we use it;
+        // otherwise, generate a standard student portal email.
+        const cleanStudentName = `${firstName} ${lastName}`.trim();
+        const accountEmail = (email && email.trim()) 
+            ? email.trim().toLowerCase() 
+            : `${admissionNumber.toLowerCase().replace(/[^a-z0-9]/g, '')}@student.school.local`;
+
+        let userId = null;
+        const [existingUsers] = await pool.execute(
+            "SELECT id FROM users WHERE email = ? LIMIT 1",
+            [accountEmail]
+        );
+
+        if (existingUsers.length > 0) {
+            userId = existingUsers[0].id;
+        } else {
+            // Default password 'Student@123' for student/parent initial access
+            const defaultPassword = "Student@123";
+            const passwordHash = await _hashPassword(defaultPassword);
+            const [newUserRes] = await pool.execute(
+                `INSERT INTO users (school_id, name, email, password_hash, role, is_active, email_verified)
+                 VALUES (?, ?, ?, ?, 'user', 1, 1)`,
+                [schoolId, cleanStudentName, accountEmail, passwordHash]
+            );
+            userId = newUserRes.insertId;
+        }
+
         const [result] = await pool.execute(
             `INSERT INTO students (
-                admission_number, first_name, last_name, date_of_birth, gender,
+                school_id, user_id, admission_number, first_name, last_name, date_of_birth, gender,
                 nrc_number, home_address, district, province, grade, section, class_id,
                 enrollment_date, previous_school, parent_guardian_name, relationship,
                 phone_number, email, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                admissionNumber, firstName, lastName,
+                schoolId, userId, admissionNumber, firstName, lastName,
                 dateOfBirth, normalizedGender,
                 nrcNumber, homeAddress,
                 district, province,
                 grade, section, classId, enrollmentDate,
                 previousSchool, parentGuardianName,
-                normalizedRelationship, phoneNumber, email,
+                normalizedRelationship, phoneNumber, email || accountEmail,
                 status,
             ]
         );
@@ -320,9 +383,9 @@ const createStudent = async (req, res) => {
         // Audit log
         await _auditLog(
             req.user.sub,
-            `Enrolled student ${firstName} ${lastName} (${admissionNumber})`,
+            `Enrolled student ${firstName} ${lastName} (${admissionNumber}) with unified account`,
             "student", result.insertId,
-            { admissionNumber }
+            { admissionNumber, userId }
         );
 
         // Notify the enrolling admin/staff that the enrollment succeeded
@@ -457,14 +520,15 @@ const updateStudent = async (req, res) => {
             return res.status(400).json({ error: "No fields provided to update" });
         }
 
-        values.push(id);
+        const schoolId = req.user?.school_id || 1;
+        values.push(id, schoolId);
         const [result] = await pool.execute(
-            `UPDATE students SET ${fields.join(", ")} WHERE id = ?`,
+            `UPDATE students SET ${fields.join(", ")} WHERE id = ? AND school_id = ?`,
             values
         );
 
         if (result.affectedRows === 0) {
-            const [[exists]] = await pool.execute("SELECT id FROM students WHERE id = ?", [id]);
+            const [[exists]] = await pool.execute("SELECT id FROM students WHERE id = ? AND school_id = ?", [id, schoolId]);
             if (!exists) return res.status(404).json({ error: "Student not found" });
             // affectedRows is 0 when the new values match the old ones — not an error
         }
@@ -472,7 +536,7 @@ const updateStudent = async (req, res) => {
         await _auditLog(req.user.sub, `Updated student record`, "student", id, Object.keys(req.body));
 
         const [rows] = await pool.execute(
-            "SELECT * FROM students WHERE id = ? LIMIT 1", [id]
+            "SELECT * FROM students WHERE id = ? AND school_id = ? LIMIT 1", [id, schoolId]
         );
         res.json({ message: "Student updated successfully", student: toApiShape(rows[0]) });
     } catch (err) {
@@ -487,8 +551,9 @@ const updateStudent = async (req, res) => {
 // ─── Delete (soft) ────────────────────────────────────────────────────────────
 const deleteStudent = async (req, res) => {
     try {
+        const schoolId = req.user?.school_id || 1;
         const [result] = await pool.execute(
-            "UPDATE students SET status = 'Inactive' WHERE id = ?", [req.params.id]
+            "UPDATE students SET status = 'Inactive' WHERE id = ? AND school_id = ?", [req.params.id, schoolId]
         );
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: "Student not found" });

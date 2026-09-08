@@ -8,13 +8,49 @@
 
     document.addEventListener('DOMContentLoaded', async () => {
         await loadMeta();
-        await Promise.all([loadSubjects(), loadAssignments()]);
+        
+        const user = (typeof getUser === 'function' && getUser()) || {};
+        const role = user.role || 'user';
+
+        if (role === 'staff') {
+            // Adapt UI for Teacher: Display as "Classes"
+            const titleEl = document.querySelector('.aa-page-header h1');
+            if (titleEl) titleEl.textContent = 'Classes';
+            const kickerEl = document.querySelector('.aa-page-header .aa-kicker');
+            if (kickerEl) kickerEl.textContent = 'Teaching';
+            const subtitleEl = document.querySelector('.aa-page-header .aa-subtitle');
+            if (subtitleEl) subtitleEl.textContent = 'View your assigned classes, student rosters, and subjects.';
+
+            // Hide Admin-only controls
+            const assignBtn = document.getElementById('assignBtn');
+            if (assignBtn) assignBtn.style.display = 'none';
+            const addSubBtn = document.getElementById('addSubjectBtn');
+            if (addSubBtn) addSubBtn.style.display = 'none';
+            const editFocusBtn = document.getElementById('editFocusBtn');
+            if (editFocusBtn) editFocusBtn.style.display = 'none';
+
+            // Hide global subjects management and assignment registry
+            const detailGrid = document.querySelector('.aa-detail-grid');
+            if (detailGrid) detailGrid.style.display = 'none';
+
+            // Auto-select first assigned class
+            if (allClasses.length > 0) {
+                const sel = document.getElementById('recordClassSelect');
+                if (sel) {
+                    sel.value = allClasses[0].id;
+                    loadClassRecord(allClasses[0].id);
+                }
+            }
+        } else {
+            await Promise.all([loadSubjects(), loadAssignments()]);
+        }
+
         bindEvents();
 
         // If URL has teacher_id query param, open Assign Modal with that teacher pre-selected
         const urlParams = new URLSearchParams(window.location.search);
         const preselectTeacherId = urlParams.get('teacher_id') || urlParams.get('teacherId');
-        if (preselectTeacherId) {
+        if (preselectTeacherId && (role === 'admin' || role === 'headmaster')) {
             openAssignModal(preselectTeacherId);
         }
     });
@@ -23,7 +59,7 @@
     async function loadMeta() {
         try {
             const [cr, tr, yrRes, teacherRes] = await Promise.all([
-                apiFetch('/api/attendance/classes').catch(() => null),
+                apiFetch('/api/classes').catch(() => null),
                 apiFetch('/api/attendance/terms').catch(() => null),
                 apiFetch('/api/attendance/academic-years').catch(() => null),
                 apiFetch('/api/teachers?limit=100&status=active').catch(() => null),

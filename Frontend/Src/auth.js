@@ -34,11 +34,34 @@ function getUser() {
 
 /**
  * clearSession()
- * Wipes the in-memory session. Called on logout or token expiry.
+ * Wipes all tokens, cached profiles, and session storage.
+ * Called on logout or token expiry.
  */
 function clearSession() {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("user");
+    try {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("user");
+        localStorage.removeItem("aa_school_name");
+        sessionStorage.clear();
+    } catch (e) {
+        console.warn("clearSession error:", e);
+    }
+}
+
+/**
+ * performLogout()
+ * Explicitly terminates server session, clears local storage,
+ * and navigates to login with history replace.
+ */
+async function performLogout() {
+    try {
+        await apiFetch("/api/auth/logout", { method: "POST" });
+    } catch {
+        // proceed to clear locally even if network fails
+    } finally {
+        clearSession();
+        window.location.replace("login.html");
+    }
 }
 
 /**
@@ -130,7 +153,7 @@ function formatRole(role) {
         admin: "Administrator",
         headmaster: "Headmaster",
         staff: "Staff",
-        user: "User",
+        user: "Student / Parent",
     };
     return labels[role] || (role ? role.charAt(0).toUpperCase() + role.slice(1) : "");
 }

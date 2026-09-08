@@ -15,6 +15,7 @@ const authenticate = (req, res, next) => {
 
     try {
         req.user = jwt.verify(token, process.env.JWT_SECRET);
+        if (!req.user.school_id) req.user.school_id = 1;
         next();
     } catch (err) {
         // Distinguish expired tokens from tampered ones for clearer client errors
@@ -37,6 +38,8 @@ const authorize = (...roles) => (req, res, next) => {
     next();
 };
 
+const getSchoolId = (req) => {
+    return (req.user && req.user.school_id) ? Number(req.user.school_id) : 1;
+};
 
-
-module.exports = { authenticate, authorize };
+module.exports = { authenticate, authorize, getSchoolId };

@@ -129,31 +129,54 @@
     // Run theme initialization immediately
     ThemeManager.init();
 
-    /* ── Navigation config ────────────────────────────────────────────── */
-    var NAV_ITEMS = [
-        { href: 'dashboard.html', label: 'Dashboard', icon: 'dashboard', roles: [] },
-        { href: 'students.html', label: 'Enrollment', icon: 'students', roles: [] },
-        { href: 'teachers.html', label: 'Staff', icon: 'teachers', roles: ['admin', 'headmaster', 'staff'] },
-        { href: 'subject-management.html', label: 'Subjects', icon: 'subjects', roles: ['admin', 'headmaster', 'staff'] },
-        { href: 'attendance-management.html', label: 'Attendance', icon: 'attendance', roles: [] },
-        { href: 'academic-records.html', label: 'Results', icon: 'results', roles: [] },
-        { href: 'reports-dashboard.html', label: 'Reports', icon: 'reports', roles: ['admin', 'headmaster', 'staff'] },
-        { href: 'settings.html', label: 'Settings', icon: 'settings', roles: [] },
-    ];
+    /* ── Role-based Navigation config ────────────────────────────────── */
+    function _getNavItemsForRole(role) {
+        if (role === 'admin' || role === 'headmaster') {
+            return [
+                { href: 'dashboard.html', label: 'Dashboard', icon: 'dashboard' },
+                { href: 'students.html', label: 'Enrollment', icon: 'students' },
+                { href: 'teachers.html', label: 'Staff', icon: 'teachers' },
+                { href: 'subject-management.html', label: 'Subjects', icon: 'subjects' },
+                // ATTENDANCE IS STRICTLY EXCLUDED FROM ADMIN MENU PER REQUIREMENTS
+                { href: 'academic-records.html', label: 'Results', icon: 'results' },
+                { href: 'reports-dashboard.html', label: 'Reports', icon: 'reports' },
+                { href: 'settings.html', label: 'Settings', icon: 'settings' },
+            ];
+        } else if (role === 'staff') {
+            return [
+                { href: 'dashboard.html', label: 'Dashboard', icon: 'dashboard' },
+                { href: 'subject-management.html', label: 'Classes', icon: 'subjects' },
+                { href: 'attendance-management.html', label: 'Attendance', icon: 'attendance' },
+                { href: 'academic-records.html', label: 'Results', icon: 'results' },
+                { href: 'reports-dashboard.html', label: 'Reports', icon: 'reports' },
+                { href: 'settings.html', label: 'Settings', icon: 'settings' },
+            ];
+        } else {
+            // Unified Student / Parent Account ('user')
+            return [
+                { href: 'dashboard.html', label: 'My Dashboard', icon: 'dashboard' },
+                { href: 'student-profile.html', label: 'My Profile', icon: 'students' },
+                { href: 'attendance-history.html', label: 'Attendance', icon: 'attendance' },
+                { href: 'academic-records.html', label: 'Results', icon: 'results' },
+                { href: 'student-transcript.html', label: 'Transcript', icon: 'reports' },
+                { href: 'settings.html', label: 'Account Settings', icon: 'settings' },
+            ];
+        }
+    }
 
     /* ── Page title map ───────────────────────────────────────────────── */
     var PAGE_TITLES = {
         'dashboard.html': 'Dashboard',
         'students.html': 'Enrollment & Students',
-        'teachers.html': 'Teachers',
-        'attendance-management.html': 'Attendance',
+        'teachers.html': 'Staff Management',
+        'attendance-management.html': 'Attendance Management',
         'attendance-history.html': 'Attendance History',
         'attendance-summary.html': 'Attendance Summary',
         'attendance-reports.html': 'Attendance Reports',
         'academic-records.html': 'Academic Results',
         'subject-management.html': 'Subject Management',
         'student-transcript.html': 'Student Transcript',
-        'reports-dashboard.html': 'Reports',
+        'reports-dashboard.html': 'Reports & Analytics',
         'analytics-dashboard.html': 'Analytics',
         'student-search.html': 'Student Search',
         'generate-report.html': 'Report Builder',
@@ -192,10 +215,31 @@
     }
 
     /* ── Build sidebar ────────────────────────────────────────────────── */
+    function _renderNavLinks(role) {
+        var ul = document.querySelector('.sb-nav');
+        if (!ul) return;
+        var items = _getNavItemsForRole(role);
+        ul.innerHTML = items.map(function (item) {
+            return '<li class="sb-item">' +
+                '<a href="' + item.href + '" class="sb-link" data-page="' + item.href + '">' +
+                '<span class="sb-icon">' + ICONS[item.icon] + '</span>' +
+                '<span class="sb-label">' + item.label + '</span>' +
+                '</a>' +
+                '</li>';
+        }).join('');
+        _markActivePage();
+    }
+
     function _buildSidebar() {
         var nav = document.createElement('nav');
         nav.id = 'app-sidebar';
         nav.setAttribute('aria-label', 'Main navigation');
+
+        var initialUser = null;
+        try { initialUser = JSON.parse(localStorage.getItem('user')); } catch (e) {}
+        var initialRole = (initialUser && initialUser.role) ? initialUser.role : 'user';
+        var items = _getNavItemsForRole(initialRole);
+
         nav.innerHTML =
             // Logo area
             '<div class="sb-logo-area">' +
@@ -208,10 +252,8 @@
 
             // Nav items
             '<ul class="sb-nav" role="list">' +
-            NAV_ITEMS.map(function (item) {
-                var roleAttr = item.roles && item.roles.length
-                    ? ' data-roles="' + item.roles.join(' ') + '"' : '';
-                return '<li class="sb-item"' + roleAttr + '>' +
+            items.map(function (item) {
+                return '<li class="sb-item">' +
                     '<a href="' + item.href + '" class="sb-link" data-page="' + item.href + '">' +
                     '<span class="sb-icon">' + ICONS[item.icon] + '</span>' +
                     '<span class="sb-label">' + item.label + '</span>' +
@@ -407,7 +449,10 @@
             if (roleEl) roleEl.textContent = _roleLabel(role);
             if (avatarEl) avatarEl.textContent = initials;
 
-            // Propagate role to sidebar RBAC filter
+            // Dynamically refresh sidebar links for the confirmed role
+            if (role) {
+                _renderNavLinks(role);
+            }
             _filterByRole(role);
         }).catch(function () { });
     }
@@ -418,7 +463,7 @@
             admin: 'Administrator',
             headmaster: 'Headmaster',
             staff: 'Staff',
-            user: 'User',
+            user: 'Student / Parent',
         };
         return labels[role] || _capitalise(role);
     }
@@ -544,12 +589,23 @@
     }
 
     function _doLogout() {
-        if (typeof authFetch === 'function' && typeof API_BASE !== 'undefined') {
-            authFetch(API_BASE + '/auth/logout', { method: 'POST' })
-                .catch(function () { })
-                .finally(function () { window.location.href = 'login.html'; });
+        if (typeof performLogout === 'function') {
+            performLogout();
         } else {
-            window.location.href = 'login.html';
+            if (typeof clearSession === 'function') clearSession();
+            try {
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('user');
+                localStorage.removeItem('aa_school_name');
+                sessionStorage.clear();
+            } catch (e) {}
+            if (typeof authFetch === 'function' && typeof API_BASE !== 'undefined') {
+                authFetch(API_BASE + '/auth/logout', { method: 'POST' })
+                    .catch(function () { })
+                    .finally(function () { window.location.replace('login.html'); });
+            } else {
+                window.location.replace('login.html');
+            }
         }
     }
 

@@ -102,6 +102,7 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
 CREATE TABLE IF NOT EXISTS students (
     id                   INT UNSIGNED  NOT NULL AUTO_INCREMENT,
     school_id            INT UNSIGNED  NOT NULL DEFAULT 1,
+    user_id              INT UNSIGNED           DEFAULT NULL,
     class_id             INT UNSIGNED           DEFAULT NULL,
     admission_number     VARCHAR(20)   NOT NULL,
     first_name           VARCHAR(100)  NOT NULL,
@@ -125,13 +126,16 @@ CREATE TABLE IF NOT EXISTS students (
     updated_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE KEY uq_admission_number (admission_number),
-    FOREIGN KEY (school_id) REFERENCES schools(id)  ON DELETE CASCADE,
+    UNIQUE KEY uq_student_user (user_id),
+    FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE SET NULL,
     -- class_id FK added after classes table is created (see near end of file)
     INDEX idx_grade   (grade),
     INDEX idx_status  (status),
     INDEX idx_name    (last_name, first_name),
     INDEX idx_school  (school_id),
-    INDEX idx_class   (class_id)
+    INDEX idx_class   (class_id),
+    INDEX idx_user    (user_id)
 );
 
 -- ─── 7. Audit Log ─────────────────────────────────────────────────────────────
@@ -405,6 +409,7 @@ CREATE TABLE IF NOT EXISTS attendance_records (
 -- ECZ grading: grade_code 1-9 maps to Distinction/Merit/Credit/Satisfactory/Fail.
 CREATE TABLE IF NOT EXISTS results (
     id                  INT UNSIGNED       NOT NULL AUTO_INCREMENT,
+    school_id           INT UNSIGNED       NOT NULL DEFAULT 1,
     student_id          INT UNSIGNED       NOT NULL,
     subject_id          INT UNSIGNED       NOT NULL,
     teacher_id          INT UNSIGNED       NOT NULL,
@@ -424,6 +429,7 @@ CREATE TABLE IF NOT EXISTS results (
     created_at          TIMESTAMP          NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMP          NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
+    FOREIGN KEY (school_id)        REFERENCES schools(id)        ON DELETE CASCADE,
     FOREIGN KEY (student_id)       REFERENCES students(id)       ON DELETE CASCADE,
     FOREIGN KEY (subject_id)       REFERENCES subjects(id)       ON DELETE CASCADE,
     FOREIGN KEY (teacher_id)       REFERENCES users(id)          ON DELETE CASCADE,
@@ -431,6 +437,7 @@ CREATE TABLE IF NOT EXISTS results (
     FOREIGN KEY (term_id)          REFERENCES terms(id)          ON DELETE CASCADE,
     FOREIGN KEY (academic_year_id) REFERENCES academic_years(id) ON DELETE CASCADE,
     UNIQUE KEY uq_result (student_id, subject_id, term_id, academic_year_id),
+    INDEX idx_result_school  (school_id),
     INDEX idx_result_class   (class_id),
     INDEX idx_result_subject (subject_id),
     INDEX idx_result_term    (term_id)
