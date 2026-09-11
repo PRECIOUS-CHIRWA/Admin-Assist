@@ -6,7 +6,7 @@
  */
 "use strict";
 
-const { test, describe } = require("node:test");
+const { test, describe, after } = require("node:test");
 const assert = require("node:assert/strict");
 const crypto = require("crypto");
 const { promisify } = require("util");
@@ -53,24 +53,24 @@ describe("Admin Assist — API & System Smoke Tests", () => {
             assert.equal(g.classification, "Distinction 1");
         });
 
-        test("65% maps to Grade 3 (Merit - Very Good)", () => {
+        test("65% maps to Grade 3 (Merit 3 - Very Good)", () => {
             const g = getECZGrade(65);
             assert.equal(g.code, 3);
-            assert.equal(g.classification, "Merit");
+            assert.equal(g.classification, "Merit 3");
             assert.equal(g.remarks, "Very Good");
         });
 
-        test("55% maps to Grade 5 (Credit - Credit Pass)", () => {
+        test("55% maps to Grade 5 (Credit 5 - Credit Pass)", () => {
             const g = getECZGrade(55);
             assert.equal(g.code, 5);
-            assert.equal(g.classification, "Credit");
+            assert.equal(g.classification, "Credit 5");
             assert.equal(g.remarks, "Credit Pass");
         });
 
-        test("45% maps to Grade 7 (Satisfactory - Satisfactory)", () => {
+        test("45% maps to Grade 7 (Satisfactory 7 - Satisfactory)", () => {
             const g = getECZGrade(45);
             assert.equal(g.code, 7);
-            assert.equal(g.classification, "Satisfactory");
+            assert.equal(g.classification, "Satisfactory 7");
         });
 
         test("25% maps to Grade 9 (Fail - Fail)", () => {
@@ -101,6 +101,13 @@ describe("Admin Assist — API & System Smoke Tests", () => {
             const wrongMatch = crypto.timingSafeEqual(originalBuf, wrongBuf);
             assert.equal(wrongMatch, false);
         });
+    });
+
+    after(async () => {
+        try {
+            const pool = require("../src/config/db");
+            await pool.end();
+        } catch (_) {}
     });
 
 });

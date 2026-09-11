@@ -54,23 +54,23 @@
 
             _pageLoaderEl.innerHTML =
                 '<div class="aa-loader-card">' +
-                    '<div class="aa-shield-container">' +
-                        '<div class="aa-shield-halo"></div>' +
-                        '<div class="aa-shield-halo-outer"></div>' +
-                        '<div class="aa-shield-glow"></div>' +
-                        '<div class="aa-shield-icon">' +
-                            '<span>AA</span>' +
-                        '</div>' +
-                    '</div>' +
-                    '<div class="aa-loader-brand">Admin Assist</div>' +
-                    '<div class="aa-loader-sub">School Information System</div>' +
-                    '<div class="aa-loader-status-wrap">' +
-                        '<span class="aa-loader-status-text" id="aa-loader-status-msg">Loading workspace</span>' +
-                        '<div class="aa-loader-dots"><span></span><span></span><span></span></div>' +
-                    '</div>' +
-                    '<div class="aa-loader-progress-track">' +
-                        '<div class="aa-loader-progress-fill"></div>' +
-                    '</div>' +
+                '<div class="aa-shield-container">' +
+                '<div class="aa-shield-halo"></div>' +
+                '<div class="aa-shield-halo-outer"></div>' +
+                '<div class="aa-shield-glow"></div>' +
+                '<div class="aa-shield-icon">' +
+                '<span>AA</span>' +
+                '</div>' +
+                '</div>' +
+                '<div class="aa-loader-brand">Admin Assist</div>' +
+                '<div class="aa-loader-sub">School Information System</div>' +
+                '<div class="aa-loader-status-wrap">' +
+                '<span class="aa-loader-status-text" id="aa-loader-status-msg">Loading workspace</span>' +
+                '<div class="aa-loader-dots"><span></span><span></span><span></span></div>' +
+                '</div>' +
+                '<div class="aa-loader-progress-track">' +
+                '<div class="aa-loader-progress-fill"></div>' +
+                '</div>' +
                 '</div>';
 
             var target = document.body || document.documentElement;
@@ -291,11 +291,12 @@
             _startProgress();
         }
 
-        // Failsafe timeout to never leave screen locked
+        // Failsafe: only fires if a real operation never settles (e.g. a
+        // hung connection). This is NOT the normal hide path — it exists
+        // solely so the loader can never get stuck on screen forever.
         _failsafeTimeout = setTimeout(function () {
-            _hidePageLoader();
-            _doneProgress();
-        }, 3500);
+            _dismiss();
+        }, 15000);
 
         function _dismiss() {
             if (_isPageLoaded) return;
@@ -313,14 +314,42 @@
             }, 250);
         }
 
+        // Wait for the DOM to finish parsing, THEN wait for any real
+        // in-flight authFetch()/apiFetch() calls that page scripts fire on
+        // DOMContentLoaded (loadCurrentUser() in navigation.js,
+        // loadDashboardStats()/loadRecentActivity() in dashboard.js, etc.)
+        // to actually finish. This reuses the same _activeRequests counter
+        // that already drives the top progress bar, instead of guessing a
+        // fixed delay that has no relationship to real completion.
+        function _waitForNetworkIdle() {
+            if (_isPageLoaded) return;
+
+            // Small grace window: several scripts' DOMContentLoaded handlers
+            // fire on this same tick and start their fetches a moment later.
+            // This just lets them call reqStart() before we start sampling
+            // _activeRequests, so we don't read "0" before a request has
+            // even begun. It never substitutes for the real completion check
+            // below — dismissal still only happens once _activeRequests is
+            // actually back to 0.
+            setTimeout(function _check() {
+                if (_isPageLoaded) return;
+                if (_activeRequests > 0) {
+                    setTimeout(_check, 100);
+                    return;
+                }
+                _dismiss();
+            }, 150);
+        }
+
         if (document.readyState === 'complete') {
-            _dismiss();
+            _waitForNetworkIdle();
         } else {
-            window.addEventListener('load', _dismiss);
+            window.addEventListener('load', _waitForNetworkIdle);
             document.addEventListener('DOMContentLoaded', function () {
-                // Advance progress on DOMContentLoaded
+                // Visual-only progress advance; actual dismissal is still
+                // gated on _waitForNetworkIdle(), not on this.
                 _setProgress(75);
-                setTimeout(_dismiss, 400);
+                _waitForNetworkIdle();
             });
         }
     }
