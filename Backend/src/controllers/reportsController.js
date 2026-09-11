@@ -18,6 +18,8 @@ const toCsv = (rows, columns) => {
     return [header, ...lines].join("\n");
 };
 
+const getSchoolId = (req) => (req.user && req.user.school_id) ? Number(req.user.school_id) : 1;
+
 // ─── ENROLLMENT REPORT ────────────────────────────────────────────────────────
 
 /**
@@ -26,11 +28,12 @@ const toCsv = (rows, columns) => {
  */
 const getEnrollmentReport = async (req, res) => {
     const { format = "json", class_id } = req.query;
+    const schoolId = getSchoolId(req);
 
-    const filters = [];
-    const values = [];
+    const filters = ["st.school_id = ?"];
+    const values = [schoolId];
     if (class_id) { filters.push("st.class_id = ?"); values.push(class_id); }
-    const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
+    const where = `WHERE ${filters.join(" AND ")}`;
 
     try {
         const [rows] = await pool.execute(
@@ -72,14 +75,15 @@ const getEnrollmentReport = async (req, res) => {
  */
 const getAttendanceReport = async (req, res) => {
     const { format = "json", class_id, term_id, academic_year_id, student_id } = req.query;
+    const schoolId = getSchoolId(req);
 
-    const filters = [];
-    const values = [];
+    const filters = ["st.school_id = ?"];
+    const values = [schoolId];
     if (student_id)       { filters.push("ar.student_id = ?");       values.push(student_id); }
     if (class_id)         { filters.push("s.class_id = ?");          values.push(class_id); }
     if (term_id)          { filters.push("s.term_id = ?");           values.push(term_id); }
     if (academic_year_id) { filters.push("s.academic_year_id = ?"); values.push(academic_year_id); }
-    const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
+    const where = `WHERE ${filters.join(" AND ")}`;
 
     try {
         const [rows] = await pool.execute(
@@ -133,15 +137,16 @@ const getAttendanceReport = async (req, res) => {
  */
 const getAcademicReport = async (req, res) => {
     const { format = "json", class_id, subject_id, term_id, academic_year_id, student_id } = req.query;
+    const schoolId = getSchoolId(req);
 
-    const filters = [];
-    const values = [];
+    const filters = ["r.school_id = ?"];
+    const values = [schoolId];
     if (student_id)       { filters.push("r.student_id = ?");       values.push(student_id); }
     if (class_id)         { filters.push("r.class_id = ?");         values.push(class_id); }
     if (subject_id)       { filters.push("r.subject_id = ?");       values.push(subject_id); }
     if (term_id)          { filters.push("r.term_id = ?");          values.push(term_id); }
     if (academic_year_id) { filters.push("r.academic_year_id = ?"); values.push(academic_year_id); }
-    const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
+    const where = `WHERE ${filters.join(" AND ")}`;
 
     try {
         const [rows] = await pool.execute(
@@ -186,28 +191,35 @@ const getAcademicReport = async (req, res) => {
 
 /**
  * GET /api/reports/summary
- * High-level counts for the reports landing page.
+ * High-level counts for the reports landing page, scoped to school.
  */
 const getSummaryReport = async (req, res) => {
+    const schoolId = getSchoolId(req);
     try {
         const [[studentTotals]] = await pool.execute(
-            "SELECT COUNT(*) AS total_students FROM students"
+            "SELECT COUNT(*) AS total_students FROM students WHERE school_id = ?",
+            [schoolId]
         );
 
         const [[classTotals]] = await pool.execute(
-            "SELECT COUNT(*) AS total_classes FROM classes"
+            "SELECT COUNT(*) AS total_classes FROM classes WHERE school_id = ?",
+            [schoolId]
         );
 
         const [[attendanceTotals]] = await pool.execute(
-            `SELECT ROUND(SUM(status = 'present') / COUNT(*) * 100, 1) AS overall_attendance_rate
-       FROM   attendance_records
-       WHERE  created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)`
+            `SELECT ROUND(SUM(ar.status = 'present') / COUNT(*) * 100, 1) AS overall_attendance_rate
+       FROM   attendance_records ar
+       JOIN   attendance_sessions s ON s.id = ar.session_id
+       WHERE  s.school_id = ? AND ar.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)`,
+            [schoolId]
         );
 
         const [[resultsTotals]] = await pool.execute(
             `SELECT ROUND(AVG(percentage), 1) AS overall_average,
               ROUND(SUM(grade_code <= 6) / COUNT(*) * 100, 1) AS pass_rate
-       FROM   results`
+       FROM   results
+       WHERE  school_id = ?`,
+            [schoolId]
         );
 
         res.json({
@@ -231,12 +243,13 @@ const getSummaryReport = async (req, res) => {
  */
 const getSubjectPerformanceReport = async (req, res) => {
     const { format = 'json', term_id, academic_year_id } = req.query;
+    const schoolId = getSchoolId(req);
 
-    const filters = [];
-    const values = [];
+    const filters = ['r.school_id = ?'];
+    const values = [schoolId];
     if (term_id)          { filters.push('r.term_id = ?');           values.push(term_id); }
     if (academic_year_id) { filters.push('r.academic_year_id = ?'); values.push(academic_year_id); }
-    const where = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
+    const where = `WHERE ${filters.join(' AND ')}`;
 
     try {
         const [rows] = await pool.execute(
@@ -288,12 +301,13 @@ const getSubjectPerformanceReport = async (req, res) => {
  */
 const getTopPerformersReport = async (req, res) => {
     const { format = 'json', term_id, academic_year_id, limit = 20 } = req.query;
+    const schoolId = getSchoolId(req);
 
-    const filters = [];
-    const values = [];
+    const filters = ['r.school_id = ?'];
+    const values = [schoolId];
     if (term_id)          { filters.push('r.term_id = ?');           values.push(term_id); }
     if (academic_year_id) { filters.push('r.academic_year_id = ?'); values.push(academic_year_id); }
-    const where = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
+    const where = `WHERE ${filters.join(' AND ')}`;
 
     try {
         const [rows] = await pool.execute(
@@ -340,12 +354,13 @@ const getTopPerformersReport = async (req, res) => {
  */
 const getInterventionReport = async (req, res) => {
     const { format = 'json', term_id, academic_year_id, threshold = 50 } = req.query;
+    const schoolId = getSchoolId(req);
 
-    const filters = [];
-    const values = [];
+    const filters = ['r.school_id = ?'];
+    const values = [schoolId];
     if (term_id)          { filters.push('r.term_id = ?');           values.push(term_id); }
     if (academic_year_id) { filters.push('r.academic_year_id = ?'); values.push(academic_year_id); }
-    const where = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
+    const where = `WHERE ${filters.join(' AND ')}`;
 
     try {
         const [rows] = await pool.execute(

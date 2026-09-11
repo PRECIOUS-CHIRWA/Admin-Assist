@@ -6,10 +6,36 @@
     let allTerms = [];
     let allStudents = [];   // full list, used as fallback when no class selected
 
+    // ── Role detection ───────────────────────────────────────────────────────
+    let _userRole = 'user';
+    let _userStudentId = null;
+    try {
+        var _u = JSON.parse(localStorage.getItem('user'));
+        _userRole = (_u && _u.role) ? _u.role : 'user';
+        _userStudentId = (_u && _u.student_id) ? _u.student_id : null;
+    } catch (e) {}
+
     document.addEventListener('DOMContentLoaded', async () => {
         await loadMeta();
         await loadResults();
-        await loadStats();
+
+        // Stats are only meaningful for admin / headmaster
+        if (_userRole === 'admin' || _userRole === 'headmaster') {
+            await loadStats();
+        } else {
+            // Hide stats section for staff and student accounts
+            var statsGrid = document.querySelector('.stats-grid') || document.querySelector('.kpi-grid');
+            if (statsGrid) statsGrid.style.display = 'none';
+        }
+
+        // Hide Add/Edit/Delete buttons for student accounts
+        if (_userRole === 'user') {
+            var addBtn = document.getElementById('addResultBtn');
+            if (addBtn) addBtn.style.display = 'none';
+            var addBtnEmpty = document.getElementById('addResultBtnEmpty');
+            if (addBtnEmpty) addBtnEmpty.style.display = 'none';
+        }
+
         bindEvents();
     });
 
@@ -17,12 +43,12 @@
     function eczGrade(pct) {
         if (pct >= 75) return 'Distinction 1';
         if (pct >= 70) return 'Distinction 2';
-        if (pct >= 64) return 'Merit';
-        if (pct >= 60) return 'Merit (B)';
-        if (pct >= 54) return 'Credit';
-        if (pct >= 50) return 'Credit (6)';
-        if (pct >= 40) return 'Satisfactory';
-        if (pct >= 30) return 'Satisfactory (8)';
+        if (pct >= 64) return 'Merit 3';
+        if (pct >= 60) return 'B Merit 4';
+        if (pct >= 54) return 'Credit 5';
+        if (pct >= 50) return 'Credit 6';
+        if (pct >= 40) return 'Satisfactory 7';
+        if (pct >= 30) return 'Satisfactory 8';
         return 'Fail';
     }
 
@@ -111,6 +137,8 @@
         }
         if (empty) empty.hidden = true;
 
+        const canEdit = (_userRole === 'admin' || _userRole === 'headmaster' || _userRole === 'staff');
+
         tbody.innerHTML = rows.map(r => `
             <tr>
                 <td>${_esc(r.first_name)} ${_esc(r.last_name)}</td>
@@ -125,17 +153,19 @@
                 <td><span class="aa-grade-pill">${_esc(r.grade_classification)}</span></td>
                 <td>${r.class_position || '—'}</td>
                 <td class="aa-table-actions">
-                    <button class="aa-link-btn" data-edit='${JSON.stringify(r).replace(/'/g, "&#39;")}'>Edit</button>
-                    <button class="aa-link-btn aa-link-danger" data-del="${r.id}">Delete</button>
+                    ${canEdit ? `<button class="aa-link-btn" data-edit='${JSON.stringify(r).replace(/'/g, "&#39;")}'>Edit</button>
+                    <button class="aa-link-btn aa-link-danger" data-del="${r.id}">Delete</button>` : '—'}
                 </td>
             </tr>`).join('');
 
-        tbody.querySelectorAll('[data-edit]').forEach(btn =>
-            btn.addEventListener('click', () => openEdit(JSON.parse(btn.dataset.edit)))
-        );
-        tbody.querySelectorAll('[data-del]').forEach(btn =>
-            btn.addEventListener('click', () => deleteResult(btn.dataset.del))
-        );
+        if (canEdit) {
+            tbody.querySelectorAll('[data-edit]').forEach(btn =>
+                btn.addEventListener('click', () => openEdit(JSON.parse(btn.dataset.edit)))
+            );
+            tbody.querySelectorAll('[data-del]').forEach(btn =>
+                btn.addEventListener('click', () => deleteResult(btn.dataset.del))
+            );
+        }
     }
 
     async function loadStats() {

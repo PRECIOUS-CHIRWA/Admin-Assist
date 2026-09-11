@@ -34,9 +34,11 @@ router.post("/sessions/:id/submit", authenticate, authorize("admin", "headmaster
 router.patch("/records/:id",        authenticate, authorize("admin", "headmaster", "staff"), updateAttendanceRecord);
 router.delete("/records/:id",       authenticate, authorize("admin", "headmaster", "staff"), deleteAttendanceRecord);
 
-// ─── Aggregate queries ────────────────────────────────────────────────────────
-router.get("/student/:studentId",   authenticate, authorize("admin", "headmaster", "staff"), getStudentAttendance);
+// ─── Student attendance — user role allowed (IDOR enforced in controller) ────
+router.get("/student/:studentId",   authenticate, authorize("admin", "headmaster", "staff", "user"), getStudentAttendance);
+
+// ─── Aggregate queries (admin/headmaster/staff only) ──────────────────────────
 router.get("/summary",              authenticate, authorize("admin", "headmaster", "staff"), getAttendanceSummary);
 router.get("/analytics",            authenticate, authorize("admin", "headmaster", "staff"), getAttendanceAnalytics);
 
-module.exports = router;
+module.exports = router;

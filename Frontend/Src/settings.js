@@ -7,7 +7,38 @@
 (function () {
     "use strict";
 
-    /* ── Tab switching ────────────────────────────────────── */
+    /* ── Role-based tab visibility ────────────────────────────────── */
+    function _applyRoleTabVisibility() {
+        var user = null;
+        try { user = JSON.parse(localStorage.getItem("user")); } catch (e) {}
+        var role = user && user.role ? user.role : "user";
+
+        // Only admin and headmaster can see General, System, and Notifications tabs
+        if (role !== "admin" && role !== "headmaster") {
+            var adminOnlyTargets = ["general-settings", "system-settings", "notifications-settings"];
+            document.querySelectorAll(".settings-nav-item").forEach(function (btn) {
+                var target = btn.dataset.target;
+                if (adminOnlyTargets.indexOf(target) !== -1) {
+                    btn.style.display = "none";
+                }
+            });
+            document.querySelectorAll(".settings-section").forEach(function (s) {
+                if (adminOnlyTargets.indexOf(s.id) !== -1) {
+                    s.style.display = "none";
+                }
+            });
+
+            // Activate Profile tab as the default active tab
+            document.querySelectorAll(".settings-nav-item").forEach(function (b) { b.classList.remove("is-active"); });
+            document.querySelectorAll(".settings-section").forEach(function (s) { s.classList.remove("is-active"); });
+            var profileBtn = document.querySelector(".settings-nav-item[data-target='profile-settings']");
+            var profileSection = document.getElementById("profile-settings");
+            if (profileBtn) profileBtn.classList.add("is-active");
+            if (profileSection) profileSection.classList.add("is-active");
+        }
+    }
+
+    /* ── Tab switching ────────────────────────────────────────────── */
     document.querySelectorAll(".settings-nav-item").forEach(function (btn) {
         btn.addEventListener("click", function () {
             var target = this.dataset.target;
@@ -299,6 +330,7 @@
 
     /* ── Event binding ────────────────────────────────────── */
     document.addEventListener("DOMContentLoaded", function () {
+        _applyRoleTabVisibility();
         loadProfile();
         loadSettings();
         initThemeControls();

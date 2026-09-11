@@ -78,15 +78,18 @@ const ensureSettingsTable = async () => {
 
 // ─── GET /api/settings ────────────────────────────────────────────────────────
 const getSettings = async (req, res) => {
+    const schoolId = (req.user && req.user.school_id) ? Number(req.user.school_id) : 1;
     try {
         let [rows] = await pool.execute(
-            "SELECT * FROM school_settings WHERE school_id = 1 LIMIT 1"
+            "SELECT * FROM school_settings WHERE school_id = ? LIMIT 1",
+            [schoolId]
         );
 
         if (!rows.length) {
             await ensureSettingsTable();
             let [retryRows] = await pool.execute(
-                "SELECT * FROM school_settings WHERE school_id = 1 LIMIT 1"
+                "SELECT * FROM school_settings WHERE school_id = ? LIMIT 1",
+                [schoolId]
             );
             const row = retryRows.length ? retryRows[0] : {};
             return res.json({ settings: { ...DEFAULTS, ...row } });
@@ -106,6 +109,7 @@ const getSettings = async (req, res) => {
 
 // ─── PUT /api/settings ────────────────────────────────────────────────────────
 const updateSettings = async (req, res) => {
+    const schoolId = (req.user && req.user.school_id) ? Number(req.user.school_id) : 1;
     const allowed = [
         "school_name", "school_code", "department", "country", "academic_year_label", "address", "phone", "email",
         "logo_url", "timezone", "date_format", "max_students_per_class", "grading_system",
@@ -128,15 +132,16 @@ const updateSettings = async (req, res) => {
     try {
         await ensureSettingsTable();
 
-        values.push(1);
+        values.push(schoolId);
         await pool.execute(
-            `UPDATE school_settings SET ${fields.join(", ")} WHERE school_id = 1`,
+            `UPDATE school_settings SET ${fields.join(", ")} WHERE school_id = ?`,
             values
         );
 
         // Return updated settings
         const [updatedRows] = await pool.execute(
-            "SELECT * FROM school_settings WHERE school_id = 1 LIMIT 1"
+            "SELECT * FROM school_settings WHERE school_id = ? LIMIT 1",
+            [schoolId]
         );
         const updated = updatedRows.length ? { ...DEFAULTS, ...updatedRows[0] } : DEFAULTS;
 

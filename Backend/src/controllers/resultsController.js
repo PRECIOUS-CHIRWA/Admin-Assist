@@ -6,12 +6,12 @@ const { sendNotification } = require("./notificationController");
 const getECZGrade = (percentage) => {
     if (percentage >= 75) return { code: 1, classification: "Distinction 1", remarks: "Outstanding" };
     if (percentage >= 70) return { code: 2, classification: "Distinction 2", remarks: "Excellent" };
-    if (percentage >= 64) return { code: 3, classification: "Merit", remarks: "Very Good" };
-    if (percentage >= 60) return { code: 4, classification: "Merit", remarks: "Good" };
-    if (percentage >= 54) return { code: 5, classification: "Credit", remarks: "Credit Pass" };
-    if (percentage >= 50) return { code: 6, classification: "Credit", remarks: "Credit Pass" };
-    if (percentage >= 40) return { code: 7, classification: "Satisfactory", remarks: "Satisfactory" };
-    if (percentage >= 30) return { code: 8, classification: "Satisfactory", remarks: "Satisfactory" };
+    if (percentage >= 64) return { code: 3, classification: "Merit 3",       remarks: "Very Good" };
+    if (percentage >= 60) return { code: 4, classification: "B Merit 4",     remarks: "Good" };
+    if (percentage >= 54) return { code: 5, classification: "Credit 5",      remarks: "Credit Pass" };
+    if (percentage >= 50) return { code: 6, classification: "Credit 6",      remarks: "Credit Pass" };
+    if (percentage >= 40) return { code: 7, classification: "Satisfactory 7",remarks: "Satisfactory" };
+    if (percentage >= 30) return { code: 8, classification: "Satisfactory 8",remarks: "Satisfactory" };
     return { code: 9, classification: "Fail", remarks: "Fail" };
 };
 
@@ -99,6 +99,7 @@ const getResultById = async (req, res) => {
  * Body: { student_id, subject_id, class_id, term_id, academic_year_id,
  *         test_mark, assignment_mark, exam_mark, teacher_comment? }
  * Backend calculates total, percentage, and ECZ grade automatically.
+ * Staff can only enter results for subjects/classes they are assigned to.
  */
 const createResult = async (req, res) => {
     const {
@@ -111,6 +112,32 @@ const createResult = async (req, res) => {
 
     // JWT payload uses `sub` (not `id`) — req.user.sub is the authenticated user's DB id
     const teacher_id = req.user.sub;
+    const schoolId = (req.user && req.user.school_id) ? Number(req.user.school_id) : 1;
+
+    // Staff: must be assigned to this class/subject
+    if (req.user.role === "staff") {
+        try {
+            const [[assigned]] = await pool.execute(
+                `SELECT id FROM teacher_subjects
+                 WHERE teacher_id = ? AND subject_id = ? AND class_id = ?
+                 LIMIT 1`,
+                [teacher_id, subject_id, class_id]
+            );
+            if (!assigned) {
+                // Also allow if they are class teacher
+                const [[isClassTeacher]] = await pool.execute(
+                    "SELECT id FROM classes WHERE id = ? AND class_teacher_id = ? LIMIT 1",
+                    [class_id, teacher_id]
+                );
+                if (!isClassTeacher) {
+                    return res.status(403).json({ error: "You are not assigned to teach this subject in this class" });
+                }
+            }
+        } catch (err) {
+            console.error("createResult teacher check:", err.message);
+        }
+    }
+
     const total_marks = Number(test_mark) + Number(assignment_mark) + Number(exam_mark);
 
     // Default full marks: test=30, assignment=20, exam=50 (total 100)
@@ -121,11 +148,12 @@ const createResult = async (req, res) => {
     try {
         const [result] = await pool.execute(
             `INSERT INTO results
-         (student_id, subject_id, teacher_id, class_id, term_id, academic_year_id,
+         (school_id, student_id, subject_id, teacher_id, class_id, term_id, academic_year_id,
           test_mark, assignment_mark, exam_mark, total_marks, percentage,
           grade_code, grade_classification, remarks, teacher_comment)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
+                schoolId,
                 student_id, subject_id, teacher_id, class_id, term_id, academic_year_id,
                 test_mark, assignment_mark, exam_mark,
                 total_marks.toFixed(2), percentage.toFixed(2),
@@ -165,6 +193,7 @@ const createResult = async (req, res) => {
  * PUT /api/results/:id
  * Body: { test_mark?, assignment_mark?, exam_mark?, teacher_comment? }
  * Recalculates grade automatically on update.
+ * Staff: can only update results for subjects/classes they are assigned to.
  */
 const updateResult = async (req, res) => {
     const { id } = req.params;
@@ -176,6 +205,26 @@ const updateResult = async (req, res) => {
             [id]
         );
         if (!existing) return res.status(404).json({ error: "Result not found" });
+
+        // Staff: must be assigned to this class/subject
+        if (req.user.role === "staff") {
+            const teacher_id = req.user.sub;
+            const [[assigned]] = await pool.execute(
+                `SELECT id FROM teacher_subjects
+                 WHERE teacher_id = ? AND subject_id = ? AND class_id = ?
+                 LIMIT 1`,
+                [teacher_id, existing.subject_id, existing.class_id]
+            ).catch(() => [[null]]);
+            if (!assigned) {
+                const [[isClassTeacher]] = await pool.execute(
+                    "SELECT id FROM classes WHERE id = ? AND class_teacher_id = ? LIMIT 1",
+                    [existing.class_id, teacher_id]
+                ).catch(() => [[null]]);
+                if (!isClassTeacher) {
+                    return res.status(403).json({ error: "You are not authorized to update this result" });
+                }
+            }
+        }
 
         const newTest = test_mark !== undefined ? Number(test_mark) : existing.test_mark;
         const newAssign = assignment_mark !== undefined ? Number(assignment_mark) : existing.assignment_mark;
@@ -264,22 +313,37 @@ const recalculatePositions = async (subject_id, class_id, term_id, academic_year
 /**
  * GET /api/results/student/:studentId
  * Query: term_id?, academic_year_id?
+ * Role: user = only own results (IDOR check). staff/admin = any student in school.
  */
 const getStudentResults = async (req, res) => {
     const { studentId } = req.params;
     const { term_id, academic_year_id } = req.query;
-
-    const filters = ["r.student_id = ?"];
-    const values = [studentId];
-    if (term_id) { filters.push("r.term_id = ?"); values.push(term_id); }
-    if (academic_year_id) { filters.push("r.academic_year_id = ?"); values.push(academic_year_id); }
+    const schoolId = (req.user && req.user.school_id) ? Number(req.user.school_id) : 1;
+    const role = req.user.role;
+    const userId = req.user.sub || req.user.id;
 
     try {
+        // IDOR: user may only view their own results
+        if (role === "user") {
+            const [[linked]] = await pool.execute(
+                "SELECT id FROM students WHERE user_id = ? AND id = ? AND school_id = ? LIMIT 1",
+                [userId, studentId, schoolId]
+            );
+            if (!linked) {
+                return res.status(403).json({ error: "Access denied" });
+            }
+        }
+
         const [[student]] = await pool.execute(
-            "SELECT id, first_name, last_name, admission_number, class_id FROM students WHERE id = ?",
-            [studentId]
+            "SELECT id, first_name, last_name, admission_number, class_id FROM students WHERE id = ? AND school_id = ?",
+            [studentId, schoolId]
         );
         if (!student) return res.status(404).json({ error: "Student not found" });
+
+        const filters = ["r.student_id = ?"];
+        const values = [studentId];
+        if (term_id) { filters.push("r.term_id = ?"); values.push(term_id); }
+        if (academic_year_id) { filters.push("r.academic_year_id = ?"); values.push(academic_year_id); }
 
         const [results] = await pool.execute(
             `SELECT r.*,
@@ -350,16 +414,31 @@ const getClassResults = async (req, res) => {
  * GET /api/results/transcript/:studentId
  * Query: academic_year_id?
  * Returns structured transcript data grouped by term.
+ * Role: user = only own transcript (IDOR protection).
  */
 const generateTranscript = async (req, res) => {
     const { studentId } = req.params;
     const { academic_year_id } = req.query;
-
-    const filters = ["r.student_id = ?"];
-    const values = [studentId];
-    if (academic_year_id) { filters.push("r.academic_year_id = ?"); values.push(academic_year_id); }
+    const schoolId = (req.user && req.user.school_id) ? Number(req.user.school_id) : 1;
+    const role = req.user.role;
+    const userId = req.user.sub || req.user.id;
 
     try {
+        // IDOR: user may only view their own transcript
+        if (role === "user") {
+            const [[linked]] = await pool.execute(
+                "SELECT id FROM students WHERE user_id = ? AND id = ? AND school_id = ? LIMIT 1",
+                [userId, studentId, schoolId]
+            );
+            if (!linked) {
+                return res.status(403).json({ error: "Access denied" });
+            }
+        }
+
+        const filters = ["r.student_id = ?"];
+        const values = [studentId];
+        if (academic_year_id) { filters.push("r.academic_year_id = ?"); values.push(academic_year_id); }
+
         const [[student]] = await pool.execute(
             `SELECT st.*,
                     COALESCE(
@@ -369,8 +448,8 @@ const generateTranscript = async (req, res) => {
                     ) AS class_name
        FROM   students st
        LEFT JOIN classes c ON c.id = st.class_id
-       WHERE  st.id = ?`,
-            [studentId]
+       WHERE  st.id = ? AND st.school_id = ?`,
+            [studentId, schoolId]
         );
         if (!student) return res.status(404).json({ error: "Student not found" });
 

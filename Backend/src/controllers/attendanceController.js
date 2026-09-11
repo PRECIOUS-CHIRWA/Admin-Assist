@@ -25,18 +25,53 @@ const isValidDateStr = (dateStr) => {
     return d instanceof Date && !isNaN(d.getTime());
 };
 
+/**
+ * Helper: get school_id from req.user (never trust frontend)
+ */
+const getSchoolId = (req) => (req.user && req.user.school_id) ? Number(req.user.school_id) : 1;
+
+/**
+ * Helper: verify a staff/teacher is assigned to a class (or is admin/headmaster)
+ * Returns true if authorized to take attendance for this class.
+ */
+const isTeacherAuthorizedForClass = async (req, classId) => {
+    const role = req.user.role;
+    if (role === "admin" || role === "headmaster") return true;
+    if (role !== "staff") return false;
+
+    const teacherId = req.user.sub || req.user.id;
+    const schoolId  = getSchoolId(req);
+
+    // Check 1: class teacher assignment
+    const [[cls]] = await pool.execute(
+        "SELECT id FROM classes WHERE id = ? AND school_id = ? AND class_teacher_id = ?",
+        [classId, schoolId, teacherId]
+    );
+    if (cls) return true;
+
+    // Check 2: any teacher_subjects assignment for this class
+    const [[ts]] = await pool.execute(
+        "SELECT id FROM teacher_subjects WHERE teacher_id = ? AND class_id = ? LIMIT 1",
+        [teacherId, classId]
+    );
+    return !!ts;
+};
+
 // ─── META — Academic Years, Terms, Classes, Subjects ───────────────────────────
 
 /**
  * GET /api/attendance/academic-years (or /api/attendance/years)
- * Returns all academic years ordered newest first.
+ * Returns all academic years ordered newest first, scoped to caller's school.
  */
 const getAcademicYears = async (req, res) => {
+    const schoolId = getSchoolId(req);
     try {
         const [rows] = await pool.execute(
             `SELECT id, year_label, start_date, end_date, is_current
              FROM   academic_years
-             ORDER BY year_label DESC`
+             WHERE  school_id = ?
+             ORDER BY year_label DESC`,
+            [schoolId]
         );
         res.json(rows);
     } catch (err) {
@@ -54,20 +89,21 @@ const getAcademicYears = async (req, res) => {
 /**
  * GET /api/attendance/terms
  * Query params: academicYearId or academic_year_id (optional)
- * Returns all terms, filtered by academic year if supplied.
+ * Returns all terms, filtered by academic year if supplied, scoped to school.
  */
 const getTerms = async (req, res) => {
     const academic_year_id = req.query.academicYearId || req.query.academic_year_id;
+    const schoolId = getSchoolId(req);
 
-    const filters = [];
-    const values = [];
+    const filters = ["t.school_id = ?"];
+    const values = [schoolId];
 
     if (academic_year_id) {
         filters.push("t.academic_year_id = ?");
         values.push(academic_year_id);
     }
 
-    const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
+    const where = `WHERE ${filters.join(" AND ")}`;
 
     try {
         const [rows] = await pool.execute(
@@ -95,13 +131,44 @@ const getTerms = async (req, res) => {
 
 /**
  * GET /api/attendance/classes
- * Query params: academicYearId or academic_year_id (optional)
- * Lists all class sections with student count.
+ * Lists class sections with student count, scoped to school.
+ * If role=staff, restricts to classes the teacher is assigned to.
  */
 const getClasses = async (req, res) => {
+    const schoolId = getSchoolId(req);
+    const role = req.user.role;
+    const teacherId = req.user.sub || req.user.id;
+
     try {
-        const [rows] = await pool.execute(
-            `SELECT c.id, c.grade_level, c.stream,
+        let sql;
+        let params;
+
+        if (role === "staff") {
+            // Only classes where this teacher is class teacher OR has a teacher_subjects assignment
+            sql = `SELECT DISTINCT c.id, c.grade_level, c.stream,
+                    CONCAT(c.grade_level, IF(c.stream != '' AND c.stream IS NOT NULL, CONCAT(' ', c.stream), '')) AS class_name,
+                    c.capacity,
+                    u.name AS class_teacher_name,
+                    COUNT(DISTINCT s.id) AS student_count
+             FROM   classes c
+             LEFT JOIN users u ON u.id = c.class_teacher_id
+             LEFT JOIN students s ON (
+                 s.class_id = c.id 
+                 OR (s.grade = c.grade_level AND (
+                     s.section = c.stream 
+                     OR s.section = CONCAT(REPLACE(c.grade_level, 'Grade ', ''), c.stream)
+                     OR CONCAT(s.grade, IF(s.section != '' AND s.section IS NOT NULL, CONCAT(' ', s.section), '')) = CONCAT(c.grade_level, IF(c.stream != '' AND c.stream IS NOT NULL, CONCAT(' ', c.stream), ''))
+                 ))
+             ) AND s.status = 'Active'
+             WHERE  c.school_id = ?
+               AND  (c.class_teacher_id = ? OR c.id IN (
+                        SELECT DISTINCT ts.class_id FROM teacher_subjects ts WHERE ts.teacher_id = ?
+                    ))
+             GROUP BY c.id
+             ORDER BY c.grade_level, c.stream`;
+            params = [schoolId, teacherId, teacherId];
+        } else {
+            sql = `SELECT c.id, c.grade_level, c.stream,
                     CONCAT(c.grade_level, IF(c.stream != '' AND c.stream IS NOT NULL, CONCAT(' ', c.stream), '')) AS class_name,
                     c.capacity,
                     u.name AS class_teacher_name,
@@ -116,9 +183,13 @@ const getClasses = async (req, res) => {
                      OR CONCAT(s.grade, IF(s.section != '' AND s.section IS NOT NULL, CONCAT(' ', s.section), '')) = CONCAT(c.grade_level, IF(c.stream != '' AND c.stream IS NOT NULL, CONCAT(' ', c.stream), ''))
                  ))
              ) AND s.status = 'Active'
+             WHERE  c.school_id = ?
              GROUP BY c.id
-             ORDER BY c.grade_level, c.stream`
-        );
+             ORDER BY c.grade_level, c.stream`;
+            params = [schoolId];
+        }
+
+        const [rows] = await pool.execute(sql, params);
         res.json(rows);
     } catch (err) {
         if (err.code === "ER_NO_SUCH_TABLE") {
@@ -181,6 +252,7 @@ const getSubjects = async (req, res) => {
  * GET /api/attendance/register (or /api/attendance/roster)
  * Query: class_id (required), term_id, academic_year_id, date / attendance_date, period, subject_id
  * Returns active enrolled students in the class, class metadata, and existing session details if present.
+ * Role: admin/headmaster = any class; staff = must be assigned to class; user = forbidden.
  */
 const getRegister = async (req, res) => {
     const class_id = req.query.class_id || req.query.classId;
@@ -189,34 +261,49 @@ const getRegister = async (req, res) => {
     const attendance_date = req.query.date || req.query.attendance_date || req.query.attendanceDate;
     const period = req.query.period || "General";
     const subject_id = req.query.subject_id || req.query.subjectId || null;
+    const schoolId = getSchoolId(req);
 
     if (!class_id) {
         return res.status(400).json({ error: "class_id parameter is required" });
     }
 
+    // Role guard: students cannot access registers
+    if (req.user.role === "user") {
+        return res.status(403).json({ error: "Access denied" });
+    }
+
     try {
-        // 1. Fetch Class metadata
+        // 1. Fetch Class metadata — scoped to school
         const [[classInfo]] = await pool.execute(
-            `SELECT c.id, c.grade_level, c.stream, c.capacity,
+            `SELECT c.id, c.grade_level, c.stream, c.capacity, c.school_id,
                     CONCAT(c.grade_level, IF(c.stream != '' AND c.stream IS NOT NULL, CONCAT(' ', c.stream), '')) AS class_name,
                     u.name AS class_teacher_name
              FROM   classes c
              LEFT JOIN users u ON u.id = c.class_teacher_id
-             WHERE  c.id = ?`,
-            [class_id]
+             WHERE  c.id = ? AND c.school_id = ?`,
+            [class_id, schoolId]
         );
 
         if (!classInfo) {
             return res.status(404).json({ error: "Class not found" });
         }
 
+        // 2. Teacher authorization check
+        if (req.user.role === "staff") {
+            const authorized = await isTeacherAuthorizedForClass(req, class_id);
+            if (!authorized) {
+                return res.status(403).json({ error: "You are not assigned to this class" });
+            }
+        }
+
         const shortSection = (classInfo.grade_level.replace(/^Grade\s*/i, '') + (classInfo.stream || '')).trim();
 
-        // 2. Fetch Active students enrolled in this class
+        // 3. Fetch Active students enrolled in this class — scoped to school
         const [students] = await pool.execute(
             `SELECT s.id, s.admission_number, s.first_name, s.last_name, s.gender, s.status AS student_status
              FROM   students s
-             WHERE  (
+             WHERE  s.school_id = ?
+               AND  (
                  s.class_id = ? 
                  OR (s.grade = ? AND (
                      s.section = ? 
@@ -226,10 +313,10 @@ const getRegister = async (req, res) => {
              )
                AND  s.status = 'Active'
              ORDER BY s.last_name, s.first_name`,
-            [class_id, classInfo.grade_level, classInfo.stream, shortSection, classInfo.class_name]
+            [schoolId, class_id, classInfo.grade_level, classInfo.stream, shortSection, classInfo.class_name]
         );
 
-        // 3. Check for an existing session matching this class, date, period, and optional subject
+        // 4. Check for an existing session matching this class, date, period, and optional subject
         let existing_session = null;
         let records_map = {};
 
@@ -287,6 +374,7 @@ const getRegister = async (req, res) => {
     } catch (err) {
         console.error("getRegister error:", err.message);
         res.status(500).json({ error: "Failed to load class register" });
+
     }
 };
 
@@ -296,9 +384,16 @@ const getRegister = async (req, res) => {
  * POST /api/attendance/sessions
  * Body: { class_id, term_id, academic_year_id, attendance_date, period?, subject_id?, notes? }
  * Creates or retrieves a session for a class/date/period.
+ * Role: admin/headmaster = any class (with warning); staff = must be assigned to class; user = forbidden.
  */
 const createSession = async (req, res) => {
     const teacher_id = req.user.sub || req.user.id;
+    const schoolId = getSchoolId(req);
+
+    // Students cannot create sessions
+    if (req.user.role === "user") {
+        return res.status(403).json({ error: "Access denied" });
+    }
 
     const {
         class_id,
@@ -318,13 +413,21 @@ const createSession = async (req, res) => {
     }
 
     try {
-        // Verify class exists
+        // Verify class exists and belongs to this school
         const [[cls]] = await pool.execute(
-            "SELECT id FROM classes WHERE id = ?",
-            [class_id]
+            "SELECT id FROM classes WHERE id = ? AND school_id = ?",
+            [class_id, schoolId]
         );
         if (!cls) {
             return res.status(404).json({ error: "Class not found" });
+        }
+
+        // Staff must be assigned to this class
+        if (req.user.role === "staff") {
+            const authorized = await isTeacherAuthorizedForClass(req, class_id);
+            if (!authorized) {
+                return res.status(403).json({ error: "You are not assigned to this class" });
+            }
         }
 
         // Check if session already exists
@@ -363,12 +466,12 @@ const createSession = async (req, res) => {
             return res.status(200).json({ message: "Existing session loaded for edit", session, isExisting: true });
         }
 
-        // Insert new session
+        // Insert new session — include school_id
         const [result] = await pool.execute(
             `INSERT INTO attendance_sessions
-             (class_id, subject_id, teacher_id, term_id, academic_year_id, attendance_date, period, notes)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [class_id, subject_id || null, teacher_id, term_id, academic_year_id, attendance_date, period, notes]
+             (school_id, class_id, subject_id, teacher_id, term_id, academic_year_id, attendance_date, period, notes)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [schoolId, class_id, subject_id || null, teacher_id, term_id, academic_year_id, attendance_date, period, notes]
         );
 
         const [[session]] = await pool.execute(
@@ -399,6 +502,7 @@ const createSession = async (req, res) => {
  * GET /api/attendance/sessions
  * Query filters: class_id, teacher_id, term_id, academic_year_id, from_date, to_date
  * Returns list of sessions with per-session status counts and attendance rate.
+ * Scoped to school. Staff see only their own sessions (or their assigned classes).
  */
 const getSessions = async (req, res) => {
     const {
@@ -410,6 +514,10 @@ const getSessions = async (req, res) => {
         to_date, toDate
     } = req.query;
 
+    const schoolId = getSchoolId(req);
+    const role = req.user.role;
+    const userId = req.user.sub || req.user.id;
+
     const targetClass = class_id || classId;
     const targetTeacher = teacher_id || teacherId;
     const targetTerm = term_id || termId;
@@ -417,17 +525,34 @@ const getSessions = async (req, res) => {
     const targetFrom = from_date || fromDate;
     const targetTo = to_date || toDate;
 
-    const filters = [];
-    const values = [];
+    const filters = ["s.school_id = ?"];
+    const values = [schoolId];
 
     if (targetClass) { filters.push("s.class_id = ?"); values.push(targetClass); }
-    if (targetTeacher) { filters.push("s.teacher_id = ?"); values.push(targetTeacher); }
+
+    // Staff: restrict to classes they are assigned to
+    if (role === "staff") {
+        if (targetTeacher && String(targetTeacher) !== String(userId)) {
+            // Staff cannot query other teachers' sessions
+            return res.status(403).json({ error: "Access denied" });
+        }
+        // Scope to classes where this teacher is assigned
+        filters.push(`(s.teacher_id = ? OR s.class_id IN (
+            SELECT DISTINCT ts.class_id FROM teacher_subjects ts WHERE ts.teacher_id = ?
+            UNION SELECT c2.id FROM classes c2 WHERE c2.class_teacher_id = ?
+        ))`);
+        values.push(userId, userId, userId);
+    } else if (targetTeacher) {
+        filters.push("s.teacher_id = ?");
+        values.push(targetTeacher);
+    }
+
     if (targetTerm) { filters.push("s.term_id = ?"); values.push(targetTerm); }
     if (targetYear) { filters.push("s.academic_year_id = ?"); values.push(targetYear); }
     if (targetFrom) { filters.push("s.attendance_date >= ?"); values.push(targetFrom); }
     if (targetTo) { filters.push("s.attendance_date <= ?"); values.push(targetTo); }
 
-    const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
+    const where = `WHERE ${filters.join(" AND ")}`;
 
     try {
         const [rows] = await pool.execute(
@@ -701,25 +826,40 @@ const deleteAttendanceRecord = async (req, res) => {
 
 /**
  * GET /api/attendance/student/:studentId
+ * Role: user = only own student record; staff = any student in their assigned classes; admin = all.
  */
 const getStudentAttendance = async (req, res) => {
     const { studentId } = req.params;
     const { term_id, academic_year_id, from_date, to_date } = req.query;
-
-    const filters = ["ar.student_id = ?"];
-    const values = [studentId];
-
-    if (term_id) { filters.push("sess.term_id = ?"); values.push(term_id); }
-    if (academic_year_id) { filters.push("sess.academic_year_id = ?"); values.push(academic_year_id); }
-    if (from_date) { filters.push("sess.attendance_date >= ?"); values.push(from_date); }
-    if (to_date) { filters.push("sess.attendance_date <= ?"); values.push(to_date); }
+    const schoolId = getSchoolId(req);
+    const role = req.user.role;
+    const userId = req.user.sub || req.user.id;
 
     try {
+        // IDOR: if role is 'user', they can only view their own student record
+        if (role === "user") {
+            const [[linked]] = await pool.execute(
+                "SELECT id FROM students WHERE user_id = ? AND id = ? AND school_id = ? LIMIT 1",
+                [userId, studentId, schoolId]
+            );
+            if (!linked) {
+                return res.status(403).json({ error: "Access denied" });
+            }
+        }
+
         const [[student]] = await pool.execute(
-            "SELECT id, first_name, last_name, admission_number FROM students WHERE id = ?",
-            [studentId]
+            "SELECT id, first_name, last_name, admission_number FROM students WHERE id = ? AND school_id = ?",
+            [studentId, schoolId]
         );
         if (!student) return res.status(404).json({ error: "Student not found" });
+
+        const filters = ["ar.student_id = ?"];
+        const values = [studentId];
+
+        if (term_id) { filters.push("sess.term_id = ?"); values.push(term_id); }
+        if (academic_year_id) { filters.push("sess.academic_year_id = ?"); values.push(academic_year_id); }
+        if (from_date) { filters.push("sess.attendance_date >= ?"); values.push(from_date); }
+        if (to_date) { filters.push("sess.attendance_date <= ?"); values.push(to_date); }
 
         const [records] = await pool.execute(
             `SELECT ar.id, ar.status, ar.remarks, ar.created_at,

@@ -8,14 +8,52 @@
     let searchTimer  = null;
     let currentData  = null;   // stores the last loaded transcript data object
 
+    // ── Role detection ───────────────────────────────────────────────────────
+    let _userRole = 'user';
+    let _userStudentId = null;
+    try {
+        var _u = JSON.parse(localStorage.getItem('user'));
+        _userRole = (_u && _u.role) ? _u.role : 'user';
+        _userStudentId = (_u && _u.student_id) ? _u.student_id : null;
+    } catch (e) {}
+
     document.addEventListener('DOMContentLoaded', async () => {
         await loadYears();
-        bindEvents();
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const sid = urlParams.get('id') || urlParams.get('studentId');
-        if (sid) {
-            loadTranscript(sid);
+        if (_userRole === 'user') {
+            // Student/parent account: hide search bar, auto-load own transcript
+            var searchSection = document.getElementById('studentSearch')?.closest('.search-section') ||
+                                document.getElementById('studentSearch')?.parentElement;
+            if (searchSection) searchSection.style.display = 'none';
+            var searchInput = document.getElementById('studentSearch');
+            if (searchInput) searchInput.style.display = 'none';
+
+            // Try using student_id stored in user session
+            if (_userStudentId) {
+                await loadTranscript(_userStudentId);
+            } else {
+                // Fallback: call getMe to get student_id
+                try {
+                    const meRes = await apiFetch('/api/users/me');
+                    if (meRes && meRes.ok) {
+                        const meData = await meRes.json();
+                        const sid = (meData.user || meData).student_id;
+                        if (sid) {
+                            await loadTranscript(sid);
+                        }
+                    }
+                } catch (err) {
+                    console.warn('student-transcript: could not resolve student_id from /me:', err.message);
+                }
+            }
+        } else {
+            // Staff / admin: expose search and check URL params
+            bindEvents();
+            const urlParams = new URLSearchParams(window.location.search);
+            const sid = urlParams.get('id') || urlParams.get('studentId');
+            if (sid) {
+                loadTranscript(sid);
+            }
         }
     });
 
