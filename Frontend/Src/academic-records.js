@@ -4,42 +4,63 @@
     let allClasses = [];
     let allSubjects = [];
     let allTerms = [];
-    let allStudents = [];   // full list, used as fallback when no class selected
+    let allStudents = [];
+    let assessmentPolicy = {
+        assessment_model: 'MID_TERM_FINAL',
+        mid_term_weight: 20,
+        final_term_weight: 80,
+        continuous_assessment_enabled: 0,
+        continuous_assessment_weight: 0,
+        grading_scheme: 'ECZ_SECONDARY'
+    };
 
     // ── Role detection ───────────────────────────────────────────────────────
     let _userRole = 'user';
     let _userStudentId = null;
     try {
-        var _u = JSON.parse(localStorage.getItem('user'));
+        const _u = JSON.parse(localStorage.getItem('user'));
         _userRole = (_u && _u.role) ? _u.role : 'user';
         _userStudentId = (_u && _u.student_id) ? _u.student_id : null;
     } catch (e) {}
 
     document.addEventListener('DOMContentLoaded', async () => {
+        await loadPolicy();
         await loadMeta();
         await loadResults();
 
-        // Stats are only meaningful for admin / headmaster
-        if (_userRole === 'admin' || _userRole === 'headmaster') {
-            await loadStats();
-        } else {
-            // Hide stats section for staff and student accounts
-            var statsGrid = document.querySelector('.stats-grid') || document.querySelector('.kpi-grid');
-            if (statsGrid) statsGrid.style.display = 'none';
-        }
-
-        // Hide Add/Edit/Delete buttons for student accounts
+        // Student/Parent user scoping
         if (_userRole === 'user') {
-            var addBtn = document.getElementById('addResultBtn');
+            const addBtn = document.getElementById('addResultBtn');
             if (addBtn) addBtn.style.display = 'none';
-            var addBtnEmpty = document.getElementById('addResultBtnEmpty');
+            const addBtnEmpty = document.getElementById('addResultBtnEmpty');
             if (addBtnEmpty) addBtnEmpty.style.display = 'none';
+
+            const subtitle = document.querySelector('.aa-subtitle');
+            if (subtitle) subtitle.textContent = 'View your academic performance and assessment results.';
         }
 
         bindEvents();
     });
 
-    /* ─── ECZ Grade preview (mirrors backend) ─────────────────────────────── */
+    /* ─── Policy Loader ──────────────────────────────────────────────────── */
+    async function loadPolicy() {
+        try {
+            const res = await apiFetch('/api/results/policy');
+            if (res && res.ok) {
+                const data = await res.json();
+                assessmentPolicy = Object.assign(assessmentPolicy, data);
+            }
+        } catch (err) {
+            console.warn('loadPolicy:', err.message);
+        }
+
+        const caGroup = document.getElementById('fCAGroup');
+        if (caGroup) {
+            caGroup.style.display = assessmentPolicy.continuous_assessment_enabled ? 'block' : 'none';
+        }
+    }
+
+    /* ─── ECZ Grade preview helper ───────────────────────────────────────── */
     function eczGrade(pct) {
         if (pct >= 75) return 'Distinction 1';
         if (pct >= 70) return 'Distinction 2';
@@ -49,7 +70,7 @@
         if (pct >= 50) return 'Credit 6';
         if (pct >= 40) return 'Satisfactory 7';
         if (pct >= 30) return 'Satisfactory 8';
-        return 'Fail';
+        return 'Fail 9';
     }
 
     /* ─── Meta loads ─────────────────────────────────────────────────────── */
@@ -139,24 +160,39 @@
 
         const canEdit = (_userRole === 'admin' || _userRole === 'headmaster' || _userRole === 'staff');
 
-        tbody.innerHTML = rows.map(r => `
+        tbody.innerHTML = rows.map(r => {
+            const midVal = (r.mid_term_score != null) ? r.mid_term_score : (r.test_mark != null ? r.test_mark : '—');
+            const finVal = (r.final_term_score != null) ? r.final_term_score : (r.exam_mark != null ? r.exam_mark : '—');
+            const finalMarkText = (r.final_mark != null)
+                ? `${parseFloat(r.final_mark).toFixed(1)}%`
+                : (r.percentage != null && r.status === 'COMPLETE' ? `${parseFloat(r.percentage).toFixed(1)}%` : '—');
+            
+            const isComplete = (r.status === 'COMPLETE') || (r.final_mark != null && r.mid_term_score != null && r.final_term_score != null);
+            const statusBadge = isComplete
+                ? '<span class="aa-badge aa-badge-success" style="font-size:11px;padding:3px 8px">Complete</span>'
+                : '<span class="aa-badge aa-badge-warning" style="font-size:11px;padding:3px 8px">Incomplete</span>';
+
+            const gradeDisplay = r.grade_classification || (isComplete ? '—' : 'Pending');
+
+            return `
             <tr>
-                <td>${_esc(r.first_name)} ${_esc(r.last_name)}</td>
-                <td>${_esc(r.admission_number)}</td>
+                <td><strong>${_esc(r.first_name)} ${_esc(r.last_name)}</strong></td>
+                <td><span style="font-family:monospace;font-size:12px;color:var(--aa-text-muted)">${_esc(r.admission_number)}</span></td>
                 <td>${_esc(r.class_name)}</td>
                 <td>${_esc(r.subject_name)}</td>
-                <td>${r.test_mark}</td>
-                <td>${r.assignment_mark}</td>
-                <td>${r.exam_mark}</td>
-                <td>${r.total_marks}</td>
-                <td>${parseFloat(r.percentage).toFixed(1)}%</td>
-                <td><span class="aa-grade-pill">${_esc(r.grade_classification)}</span></td>
+                <td style="font-weight:600">${midVal}</td>
+                <td style="font-weight:600">${finVal}</td>
+                <td style="font-weight:700;color:var(--aa-primary, #1B2A4A)">${finalMarkText}</td>
+                <td><span class="aa-grade-pill">${_esc(gradeDisplay)}</span></td>
+                <td>${statusBadge}</td>
                 <td>${r.class_position || '—'}</td>
                 <td class="aa-table-actions">
-                    ${canEdit ? `<button class="aa-link-btn" data-edit='${JSON.stringify(r).replace(/'/g, "&#39;")}'>Edit</button>
+                    ${canEdit ? `
+                    <button class="aa-link-btn" data-edit='${JSON.stringify(r).replace(/'/g, "&#39;")}'>Edit</button>
                     <button class="aa-link-btn aa-link-danger" data-del="${r.id}">Delete</button>` : '—'}
                 </td>
-            </tr>`).join('');
+            </tr>`;
+        }).join('');
 
         if (canEdit) {
             tbody.querySelectorAll('[data-edit]').forEach(btn =>
@@ -168,25 +204,16 @@
         }
     }
 
-    async function loadStats() {
-        try {
-            const res = await apiFetch('/api/results/analytics/summary');
-            if (!res || !res.ok) return;
-            const data = await res.json();
-            _setText('statTotal', data.overall?.total_entries || 0);
-            _setText('statAvg', `${parseFloat(data.overall?.overall_average || 0).toFixed(1)}%`);
-            _setText('statPass', `${data.overall?.pass_rate || 0}%`);
-            _setText('statFail', data.overall?.failures || 0);
-        } catch { /* non-critical */ }
-    }
-
     /* ─── Modal: Add / Edit ──────────────────────────────────────────────── */
     function openAdd() {
         _setText('modalTitle', 'Add Result');
         document.getElementById('editingId').value = '';
-        ['fStudent', 'fSubject', 'fClass', 'fTerm', 'fTest', 'fAssign', 'fExam', 'fComment']
+        ['fStudent', 'fSubject', 'fClass', 'fTerm', 'fMidTerm', 'fFinalTerm', 'fCAScore', 'fComment']
             .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-        _setText('fTotalPreview', '');
+        
+        const preview = document.getElementById('fTotalPreview');
+        if (preview) preview.value = '';
+
         document.getElementById('resultModal').hidden = false;
     }
 
@@ -196,9 +223,16 @@
         document.getElementById('fSubject').value = r.subject_id;
         document.getElementById('fClass').value = r.class_id;
         document.getElementById('fTerm').value = r.term_id;
-        document.getElementById('fTest').value = r.test_mark;
-        document.getElementById('fAssign').value = r.assignment_mark;
-        document.getElementById('fExam').value = r.exam_mark;
+
+        const midVal = (r.mid_term_score != null) ? r.mid_term_score : (r.test_mark != null ? r.test_mark : '');
+        const finVal = (r.final_term_score != null) ? r.final_term_score : (r.exam_mark != null ? r.exam_mark : '');
+        const caVal = (r.continuous_assessment_score != null) ? r.continuous_assessment_score : (r.assignment_mark != null ? r.assignment_mark : '');
+
+        document.getElementById('fMidTerm').value = midVal;
+        document.getElementById('fFinalTerm').value = finVal;
+        if (document.getElementById('fCAScore')) {
+            document.getElementById('fCAScore').value = caVal;
+        }
         document.getElementById('fComment').value = r.teacher_comment || '';
 
         // Reload students for this class, then set selected student
@@ -211,13 +245,46 @@
     }
 
     function updatePreview() {
-        const t = parseFloat(document.getElementById('fTest')?.value || 0);
-        const a = parseFloat(document.getElementById('fAssign')?.value || 0);
-        const e = parseFloat(document.getElementById('fExam')?.value || 0);
-        const total = t + a + e;
-        const pct = Math.min(total, 100);
-        const el = document.getElementById('fTotalPreview');
-        if (el) el.value = `${total.toFixed(1)} / 100 → ${pct.toFixed(1)}% → ${eczGrade(pct)}`;
+        const midStr = document.getElementById('fMidTerm')?.value?.trim();
+        const finStr = document.getElementById('fFinalTerm')?.value?.trim();
+        const caStr = document.getElementById('fCAScore')?.value?.trim();
+        const preview = document.getElementById('fTotalPreview');
+        if (!preview) return;
+
+        const hasMid = (midStr !== '' && !isNaN(midStr));
+        const hasFin = (finStr !== '' && !isNaN(finStr));
+        const hasCA = (caStr !== '' && !isNaN(caStr));
+
+        if (!hasMid && !hasFin) {
+            preview.value = 'Enter Mid-Term and Final Term marks (0–100)';
+            return;
+        }
+
+        const mid = hasMid ? parseFloat(midStr) : null;
+        const fin = hasFin ? parseFloat(finStr) : null;
+        const ca = hasCA ? parseFloat(caStr) : null;
+
+        const midW = (assessmentPolicy.mid_term_weight || 20) / 100;
+        const finW = (assessmentPolicy.final_term_weight || 80) / 100;
+        const caEnabled = !!assessmentPolicy.continuous_assessment_enabled;
+        const caW = caEnabled ? ((assessmentPolicy.continuous_assessment_weight || 0) / 100) : 0;
+
+        if (mid === null || fin === null || (caEnabled && ca === null)) {
+            const enteredParts = [];
+            if (mid !== null) enteredParts.push(`Mid: ${mid}`);
+            if (fin !== null) enteredParts.push(`Final: ${fin}`);
+            if (caEnabled && ca !== null) enteredParts.push(`CA: ${ca}`);
+            preview.value = `${enteredParts.join(', ')} → Incomplete (Pending Final Assessment)`;
+            return;
+        }
+
+        let mark = (mid * midW) + (fin * finW);
+        if (caEnabled && ca !== null) {
+            mark += (ca * caW);
+        }
+        mark = Math.round(mark * 10) / 10;
+        const grade = eczGrade(mark);
+        preview.value = `${mark}% — ${grade} (${midW * 100}% Mid-Term + ${finW * 100}% Final)`;
     }
 
     function closeModal() {
@@ -227,14 +294,19 @@
     async function saveResult() {
         const id = document.getElementById('editingId').value;
         const isEdit = !!id;
+
+        const midStr = document.getElementById('fMidTerm')?.value?.trim();
+        const finStr = document.getElementById('fFinalTerm')?.value?.trim();
+        const caStr = document.getElementById('fCAScore')?.value?.trim();
+
         const payload = {
             student_id: document.getElementById('fStudent').value,
             subject_id: document.getElementById('fSubject').value,
             class_id: document.getElementById('fClass').value,
             term_id: document.getElementById('fTerm').value,
-            test_mark: parseFloat(document.getElementById('fTest').value || 0),
-            assignment_mark: parseFloat(document.getElementById('fAssign').value || 0),
-            exam_mark: parseFloat(document.getElementById('fExam').value || 0),
+            mid_term_score: (midStr !== '' && !isNaN(midStr)) ? parseFloat(midStr) : null,
+            final_term_score: (finStr !== '' && !isNaN(finStr)) ? parseFloat(finStr) : null,
+            continuous_assessment_score: (caStr !== '' && !isNaN(caStr)) ? parseFloat(caStr) : null,
             teacher_comment: document.getElementById('fComment').value || null,
         };
 
@@ -242,7 +314,7 @@
         if (term) payload.academic_year_id = term.academic_year_id;
 
         if (!payload.student_id || !payload.subject_id || !payload.class_id || !payload.term_id) {
-            return alert('Please fill in all required fields.');
+            return alert('Please fill in all required fields (Student, Subject, Class, Term).');
         }
 
         const btn = document.getElementById('saveResultBtn');
@@ -253,10 +325,10 @@
                 method: isEdit ? 'PUT' : 'POST',
                 body: JSON.stringify(payload),
             });
-            if (!res || !res.ok) { const d = await res.json(); throw new Error(d.error); }
+            const d = await res.json().catch(() => ({}));
+            if (!res || !res.ok) { throw new Error(d.error || 'Failed to save result'); }
             closeModal();
             await loadResults();
-            await loadStats();
         } catch (err) {
             alert(err.message || 'Failed to save result.');
         } finally {
@@ -265,13 +337,17 @@
     }
 
     async function deleteResult(id) {
-        if (!confirm('Delete this result? This cannot be undone.')) return;
+        if (!confirm('Delete this result record? This cannot be undone.')) return;
         try {
             const res = await apiFetch(`/api/results/${id}`, { method: 'DELETE' });
-            if (!res || !res.ok) throw new Error('Delete failed');
+            if (!res || !res.ok) {
+                const d = await res.json().catch(() => ({}));
+                throw new Error(d.error || 'Delete failed');
+            }
             await loadResults();
-            await loadStats();
-        } catch { alert('Unable to delete result.'); }
+        } catch (err) {
+            alert(err.message || 'Unable to delete result.');
+        }
     }
 
     /* ─── Event wiring ───────────────────────────────────────────────────── */
@@ -285,12 +361,12 @@
             if (e.target.id === 'resultModal') closeModal();
         });
 
-        // Live grade preview
-        ['fTest', 'fAssign', 'fExam'].forEach(id =>
+        // Live calculation preview
+        ['fMidTerm', 'fFinalTerm', 'fCAScore'].forEach(id =>
             document.getElementById(id)?.addEventListener('input', updatePreview)
         );
 
-        // ── KEY FIX: cascade class → students dropdown ──────────────────────
+        // Cascade class → students dropdown
         document.getElementById('fClass')?.addEventListener('change', e => {
             reloadStudentsForClass(e.target.value);
         });

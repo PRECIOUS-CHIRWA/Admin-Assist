@@ -137,6 +137,20 @@
               <option value="Suspended">Suspended</option>
             </select>
           </div>
+          <div class="pg-form-group pg-form-full" id="portalAccountSection" style="border-top:1px solid var(--aa-border, #e5e7eb);padding-top:16px;margin-top:8px">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+              <div>
+                <strong style="font-size:13.5px;color:var(--aa-text, #1e293b)">Portal Access (Parent / Student Account)</strong>
+                <p style="font-size:12px;color:var(--aa-text-muted, #64748b);margin:2px 0 0">
+                  Generate login credentials and email sign-in info to the parent/student.
+                </p>
+              </div>
+              <button class="pg-btn-secondary" id="createAccountBtn" type="button" style="white-space:nowrap;font-size:12.5px;padding:6px 14px">
+                🔑 Create / Send Login Info
+              </button>
+            </div>
+            <div id="accountStatusMsg" style="margin-top:10px;font-size:12.5px;padding:8px 12px;border-radius:6px" hidden></div>
+          </div>
         </div>
       </div>
       <div class="pg-modal-footer">

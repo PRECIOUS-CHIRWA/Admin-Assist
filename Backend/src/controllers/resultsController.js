@@ -1,19 +1,12 @@
 const pool = require("../config/db");
 const { sendNotification } = require("./notificationController");
-
-// ─── ECZ Grading Scale ────────────────────────────────────────────────────────
-
-const getECZGrade = (percentage) => {
-    if (percentage >= 75) return { code: 1, classification: "Distinction 1", remarks: "Outstanding" };
-    if (percentage >= 70) return { code: 2, classification: "Distinction 2", remarks: "Excellent" };
-    if (percentage >= 64) return { code: 3, classification: "Merit 3",       remarks: "Very Good" };
-    if (percentage >= 60) return { code: 4, classification: "B Merit 4",     remarks: "Good" };
-    if (percentage >= 54) return { code: 5, classification: "Credit 5",      remarks: "Credit Pass" };
-    if (percentage >= 50) return { code: 6, classification: "Credit 6",      remarks: "Credit Pass" };
-    if (percentage >= 40) return { code: 7, classification: "Satisfactory 7",remarks: "Satisfactory" };
-    if (percentage >= 30) return { code: 8, classification: "Satisfactory 8",remarks: "Satisfactory" };
-    return { code: 9, classification: "Fail", remarks: "Fail" };
-};
+const {
+    DEFAULT_POLICY,
+    getECZGrade,
+    validatePolicyWeights,
+    isScoreProvided,
+    calculateFinalMark,
+} = require("../services/assessmentCalculationService");
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -22,23 +15,141 @@ const requireFields = (body, fields) => {
     return missing.length ? `${missing.join(", ")} ${missing.length > 1 ? "are" : "is"} required` : null;
 };
 
+const getSchoolPolicy = async (schoolId) => {
+    try {
+        const [[row]] = await pool.execute(
+            `SELECT assessment_model, mid_term_weight, final_term_weight,
+                    continuous_assessment_enabled, continuous_assessment_weight,
+                    grading_scheme
+             FROM school_settings WHERE school_id = ? LIMIT 1`,
+            [schoolId]
+        );
+        return row ? { ...DEFAULT_POLICY, ...row } : DEFAULT_POLICY;
+    } catch {
+        return DEFAULT_POLICY;
+    }
+};
+
+// ─── POLICY ENDPOINTS ─────────────────────────────────────────────────────────
+
+/**
+ * GET /api/results/policy
+ * Retrieve school's active assessment policy
+ */
+const getAssessmentPolicy = async (req, res) => {
+    const schoolId = (req.user && req.user.school_id) ? Number(req.user.school_id) : 1;
+    try {
+        const policy = await getSchoolPolicy(schoolId);
+        res.json({ policy });
+    } catch (err) {
+        console.error("getAssessmentPolicy error:", err.message);
+        res.status(500).json({ error: "Failed to load assessment policy" });
+    }
+};
+
+/**
+ * PUT /api/results/policy
+ * Update school's assessment policy (admin / headmaster only)
+ */
+const updateAssessmentPolicy = async (req, res) => {
+    const schoolId = (req.user && req.user.school_id) ? Number(req.user.school_id) : 1;
+    const {
+        assessment_model = "MID_TERM_FINAL",
+        mid_term_weight = 20.0,
+        final_term_weight = 80.0,
+        continuous_assessment_enabled = 0,
+        continuous_assessment_weight = 0.0,
+        grading_scheme = "ADMIN_ASSIST_ECZ",
+    } = req.body;
+
+    try {
+        validatePolicyWeights({
+            mid_term_weight,
+            final_term_weight,
+            continuous_assessment_enabled,
+            continuous_assessment_weight,
+        });
+
+        await pool.execute(
+            `UPDATE school_settings 
+             SET assessment_model = ?, 
+                 mid_term_weight = ?, 
+                 final_term_weight = ?, 
+                 continuous_assessment_enabled = ?, 
+                 continuous_assessment_weight = ?, 
+                 grading_scheme = ?
+             WHERE school_id = ?`,
+            [
+                assessment_model,
+                Number(mid_term_weight),
+                Number(final_term_weight),
+                continuous_assessment_enabled ? 1 : 0,
+                Number(continuous_assessment_weight || 0),
+                grading_scheme,
+                schoolId,
+            ]
+        );
+
+        const updated = await getSchoolPolicy(schoolId);
+        res.json({ message: "Assessment policy updated successfully", policy: updated });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+};
+
+/**
+ * POST /api/results/calculate-preview
+ * Authoritative preview calculation for frontend live editing
+ */
+const calculatePreview = async (req, res) => {
+    const schoolId = (req.user && req.user.school_id) ? Number(req.user.school_id) : 1;
+    const { mid_term_score, final_term_score, continuous_assessment_score } = req.body;
+
+    try {
+        const policy = await getSchoolPolicy(schoolId);
+        const result = calculateFinalMark({
+            midTermScore: mid_term_score,
+            finalTermScore: final_term_score,
+            continuousAssessmentScore: continuous_assessment_score,
+            policy,
+        });
+        res.json(result);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+};
+
 // ─── RESULTS CRUD ─────────────────────────────────────────────────────────────
 
 /**
  * GET /api/results
  * Query: class_id?, subject_id?, term_id?, academic_year_id?
+ * Note: Staff can ONLY view results of classes/subjects they are assigned to teach!
  */
 const getResults = async (req, res) => {
     const { class_id, subject_id, term_id, academic_year_id } = req.query;
+    const schoolId = (req.user && req.user.school_id) ? Number(req.user.school_id) : 1;
+    const role = req.user?.role || "user";
+    const teacherId = req.user?.sub || req.user?.id;
 
-    const filters = [];
-    const values = [];
+    const filters = ["r.school_id = ?"];
+    const values = [schoolId];
+
+    // Staff scoping: only classes and subjects assigned to this teacher
+    if (role === "staff") {
+        filters.push(`(
+            r.class_id IN (SELECT id FROM classes WHERE class_teacher_id = ? AND school_id = ?)
+            OR (r.class_id, r.subject_id) IN (SELECT class_id, subject_id FROM teacher_subjects WHERE teacher_id = ?)
+        )`);
+        values.push(teacherId, schoolId, teacherId);
+    }
+
     if (class_id) { filters.push("r.class_id = ?"); values.push(class_id); }
     if (subject_id) { filters.push("r.subject_id = ?"); values.push(subject_id); }
     if (term_id) { filters.push("r.term_id = ?"); values.push(term_id); }
     if (academic_year_id) { filters.push("r.academic_year_id = ?"); values.push(academic_year_id); }
 
-    const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
+    const where = `WHERE ${filters.join(" AND ")}`;
 
     try {
         const [rows] = await pool.execute(
@@ -54,7 +165,7 @@ const getResults = async (req, res) => {
        JOIN   terms         t   ON t.id   = r.term_id
        JOIN   academic_years ay ON ay.id  = r.academic_year_id
        JOIN   classes       c   ON c.id   = r.class_id
-       JOIN   users         u   ON u.id   = r.teacher_id
+       LEFT JOIN users      u   ON u.id   = r.teacher_id
        ${where}
        ORDER BY st.last_name, st.first_name, sub.subject_name`,
             values
@@ -70,6 +181,7 @@ const getResults = async (req, res) => {
  */
 const getResultById = async (req, res) => {
     const { id } = req.params;
+    const schoolId = (req.user && req.user.school_id) ? Number(req.user.school_id) : 1;
 
     try {
         const [[result]] = await pool.execute(
@@ -84,8 +196,8 @@ const getResultById = async (req, res) => {
        JOIN   terms         t   ON t.id   = r.term_id
        JOIN   academic_years ay ON ay.id  = r.academic_year_id
        JOIN   classes       c   ON c.id   = r.class_id
-       WHERE  r.id = ?`,
-            [id]
+       WHERE  r.id = ? AND r.school_id = ?`,
+            [id, schoolId]
         );
         if (!result) return res.status(404).json({ error: "Result not found" });
         res.json(result);
@@ -97,24 +209,24 @@ const getResultById = async (req, res) => {
 /**
  * POST /api/results
  * Body: { student_id, subject_id, class_id, term_id, academic_year_id,
- *         test_mark, assignment_mark, exam_mark, teacher_comment? }
- * Backend calculates total, percentage, and ECZ grade automatically.
+ *         mid_term_score, final_term_score, continuous_assessment_score?, teacher_comment? }
+ * Authoritative backend calculation using school assessment policy.
  * Staff can only enter results for subjects/classes they are assigned to.
  */
 const createResult = async (req, res) => {
     const {
         student_id, subject_id, class_id, term_id, academic_year_id,
-        test_mark = 0, assignment_mark = 0, exam_mark = 0, teacher_comment = null,
+        mid_term_score, final_term_score, continuous_assessment_score,
+        test_mark, assignment_mark, exam_mark, teacher_comment = null,
     } = req.body;
 
     const fieldErr = requireFields(req.body, ["student_id", "subject_id", "class_id", "term_id", "academic_year_id"]);
     if (fieldErr) return res.status(400).json({ error: fieldErr });
 
-    // JWT payload uses `sub` (not `id`) — req.user.sub is the authenticated user's DB id
-    const teacher_id = req.user.sub;
+    const teacher_id = req.user.sub || req.user.id;
     const schoolId = (req.user && req.user.school_id) ? Number(req.user.school_id) : 1;
 
-    // Staff: must be assigned to this class/subject
+    // Staff: must be assigned to teach this class/subject or be class teacher
     if (req.user.role === "staff") {
         try {
             const [[assigned]] = await pool.execute(
@@ -124,7 +236,6 @@ const createResult = async (req, res) => {
                 [teacher_id, subject_id, class_id]
             );
             if (!assigned) {
-                // Also allow if they are class teacher
                 const [[isClassTeacher]] = await pool.execute(
                     "SELECT id FROM classes WHERE id = ? AND class_teacher_id = ? LIMIT 1",
                     [class_id, teacher_id]
@@ -138,26 +249,42 @@ const createResult = async (req, res) => {
         }
     }
 
-    const total_marks = Number(test_mark) + Number(assignment_mark) + Number(exam_mark);
-
-    // Default full marks: test=30, assignment=20, exam=50 (total 100)
-    const full_marks = 100;
-    const percentage = Math.min((total_marks / full_marks) * 100, 100);
-    const { code, classification, remarks } = getECZGrade(percentage);
-
     try {
+        const policy = await getSchoolPolicy(schoolId);
+
+        // Support both mid_term_score / final_term_score and legacy test_mark / exam_mark
+        const midScoreInput = mid_term_score !== undefined ? mid_term_score : (test_mark !== undefined ? test_mark : null);
+        const finScoreInput = final_term_score !== undefined ? final_term_score : (exam_mark !== undefined ? exam_mark : null);
+        const caScoreInput = continuous_assessment_score !== undefined ? continuous_assessment_score : (assignment_mark !== undefined ? assignment_mark : null);
+
+        const calc = calculateFinalMark({
+            midTermScore: midScoreInput,
+            finalTermScore: finScoreInput,
+            continuousAssessmentScore: caScoreInput,
+            policy,
+        });
+
+        const legacyTotal = calc.finalMark !== null 
+            ? calc.finalMark 
+            : (Number(calc.midTermScore || 0) + Number(calc.finalTermScore || 0));
+        const legacyPercentage = calc.percentage !== null ? calc.percentage : 0;
+        const legacyGradeCode = calc.gradeCode !== null ? calc.gradeCode : 9;
+
         const [result] = await pool.execute(
             `INSERT INTO results
          (school_id, student_id, subject_id, teacher_id, class_id, term_id, academic_year_id,
+          mid_term_score, final_term_score, continuous_assessment_score, final_mark,
           test_mark, assignment_mark, exam_mark, total_marks, percentage,
-          grade_code, grade_classification, remarks, teacher_comment)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          grade_code, grade_classification, remarks, status, assessment_policy_snapshot, teacher_comment)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 schoolId,
                 student_id, subject_id, teacher_id, class_id, term_id, academic_year_id,
-                test_mark, assignment_mark, exam_mark,
-                total_marks.toFixed(2), percentage.toFixed(2),
-                code, classification, remarks, teacher_comment,
+                calc.midTermScore, calc.finalTermScore, calc.continuousAssessmentScore, calc.finalMark,
+                calc.midTermScore || 0, calc.continuousAssessmentScore || 0, calc.finalTermScore || 0,
+                legacyTotal, legacyPercentage,
+                legacyGradeCode, calc.gradeClassification, calc.remarks, calc.status,
+                JSON.stringify(calc.policySnapshot), teacher_comment,
             ]
         );
 
@@ -166,7 +293,7 @@ const createResult = async (req, res) => {
 
         const [[created]] = await pool.execute("SELECT * FROM results WHERE id = ?", [result.insertId]);
 
-        // Notify the submitting teacher that their result was recorded (non-fatal)
+        // Notify teacher of recorded result (non-fatal)
         try {
             const [[sub]] = await pool.execute("SELECT subject_name FROM subjects WHERE id = ? LIMIT 1", [subject_id]);
             const subName = sub ? sub.subject_name : "a subject";
@@ -174,7 +301,7 @@ const createResult = async (req, res) => {
                 userId: teacher_id,
                 type: "academics",
                 title: "Result Recorded",
-                description: `Result for ${subName} was saved successfully (${classification}, ${percentage.toFixed(1)}%).`,
+                description: `Result for ${subName} was saved successfully (${calc.gradeClassification}, ${calc.finalMark !== null ? calc.finalMark + '%' : 'Pending'}).`,
                 entityType: "result",
                 entityId: result.insertId,
             });
@@ -191,24 +318,35 @@ const createResult = async (req, res) => {
 
 /**
  * PUT /api/results/:id
- * Body: { test_mark?, assignment_mark?, exam_mark?, teacher_comment? }
+ * Body: { mid_term_score?, final_term_score?, continuous_assessment_score?, teacher_comment? }
  * Recalculates grade automatically on update.
  * Staff: can only update results for subjects/classes they are assigned to.
+ * Cannot modify approved results unless admin.
  */
 const updateResult = async (req, res) => {
     const { id } = req.params;
-    const { test_mark, assignment_mark, exam_mark, teacher_comment } = req.body;
+    const {
+        mid_term_score, final_term_score, continuous_assessment_score,
+        test_mark, assignment_mark, exam_mark, teacher_comment, status
+    } = req.body;
+    const schoolId = (req.user && req.user.school_id) ? Number(req.user.school_id) : 1;
+    const role = req.user.role;
+    const teacher_id = req.user.sub || req.user.id;
 
     try {
         const [[existing]] = await pool.execute(
-            "SELECT * FROM results WHERE id = ?",
-            [id]
+            "SELECT * FROM results WHERE id = ? AND school_id = ?",
+            [id, schoolId]
         );
         if (!existing) return res.status(404).json({ error: "Result not found" });
 
+        // Locked/approved check
+        if (existing.status === "APPROVED" && role === "staff") {
+            return res.status(403).json({ error: "This result has been approved and cannot be modified by staff without administrator review." });
+        }
+
         // Staff: must be assigned to this class/subject
-        if (req.user.role === "staff") {
-            const teacher_id = req.user.sub;
+        if (role === "staff") {
             const [[assigned]] = await pool.execute(
                 `SELECT id FROM teacher_subjects
                  WHERE teacher_id = ? AND subject_id = ? AND class_id = ?
@@ -226,24 +364,41 @@ const updateResult = async (req, res) => {
             }
         }
 
-        const newTest = test_mark !== undefined ? Number(test_mark) : existing.test_mark;
-        const newAssign = assignment_mark !== undefined ? Number(assignment_mark) : existing.assignment_mark;
-        const newExam = exam_mark !== undefined ? Number(exam_mark) : existing.exam_mark;
+        const policy = await getSchoolPolicy(schoolId);
 
-        const total_marks = newTest + newAssign + newExam;
-        const percentage = Math.min((total_marks / 100) * 100, 100);
-        const { code, classification, remarks } = getECZGrade(percentage);
+        // Resolve input or keep existing
+        const newMid = mid_term_score !== undefined ? mid_term_score : (test_mark !== undefined ? test_mark : existing.mid_term_score);
+        const newFin = final_term_score !== undefined ? final_term_score : (exam_mark !== undefined ? exam_mark : existing.final_term_score);
+        const newCa = continuous_assessment_score !== undefined ? continuous_assessment_score : (assignment_mark !== undefined ? assignment_mark : existing.continuous_assessment_score);
+
+        const calc = calculateFinalMark({
+            midTermScore: newMid,
+            finalTermScore: newFin,
+            continuousAssessmentScore: newCa,
+            policy,
+        });
+
+        const newLegacyTotal = calc.finalMark !== null 
+            ? calc.finalMark 
+            : (Number(calc.midTermScore || 0) + Number(calc.finalTermScore || 0));
+        const newLegacyPct = calc.percentage !== null ? calc.percentage : 0;
+        const newGradeCode = calc.gradeCode !== null ? calc.gradeCode : 9;
+        const resultStatus = (status && (role === "admin" || role === "headmaster")) ? status : calc.status;
 
         const fields = [
-            "test_mark = ?", "assignment_mark = ?", "exam_mark = ?",
+            "mid_term_score = ?", "final_term_score = ?", "continuous_assessment_score = ?",
+            "final_mark = ?", "test_mark = ?", "assignment_mark = ?", "exam_mark = ?",
             "total_marks = ?", "percentage = ?",
             "grade_code = ?", "grade_classification = ?", "remarks = ?",
+            "status = ?", "assessment_policy_snapshot = ?",
             "updated_at = CURRENT_TIMESTAMP",
         ];
         const values = [
-            newTest, newAssign, newExam,
-            total_marks.toFixed(2), percentage.toFixed(2),
-            code, classification, remarks,
+            calc.midTermScore, calc.finalTermScore, calc.continuousAssessmentScore,
+            calc.finalMark, calc.midTermScore || 0, calc.continuousAssessmentScore || 0, calc.finalTermScore || 0,
+            newLegacyTotal, newLegacyPct,
+            newGradeCode, calc.gradeClassification, calc.remarks,
+            resultStatus, JSON.stringify(calc.policySnapshot),
         ];
 
         if (teacher_comment !== undefined) {
@@ -251,8 +406,8 @@ const updateResult = async (req, res) => {
             values.splice(-1, 0, teacher_comment);
         }
 
-        values.push(id);
-        await pool.execute(`UPDATE results SET ${fields.join(", ")} WHERE id = ?`, values);
+        values.push(id, schoolId);
+        await pool.execute(`UPDATE results SET ${fields.join(", ")} WHERE id = ? AND school_id = ?`, values);
 
         // Recalculate positions
         await recalculatePositions(
@@ -480,12 +635,12 @@ const generateTranscript = async (req, res) => {
             byTerm[key].subjects.push(r);
         }
 
-        // Compute term averages
+        // Compute term averages (only completed subjects count)
         const terms = Object.values(byTerm).map((term) => {
-            const avg =
-                term.subjects.length
-                    ? (term.subjects.reduce((s, r) => s + parseFloat(r.percentage), 0) / term.subjects.length).toFixed(1)
-                    : 0;
+            const completeSubs = term.subjects.filter((r) => (r.final_mark != null || (r.percentage != null && r.status === "COMPLETE")));
+            const avg = completeSubs.length
+                ? (completeSubs.reduce((s, r) => s + parseFloat(r.final_mark != null ? r.final_mark : r.percentage), 0) / completeSubs.length).toFixed(1)
+                : 0;
             return { ...term, average_percentage: avg };
         });
 
@@ -549,23 +704,34 @@ const generateTranscript = async (req, res) => {
 /**
  * GET /api/results/analytics
  * Query: academic_year_id?, term_id?
+ * Distinguishes Mid-Term, Final, and completed term calculations.
+ * Incomplete results are reported separately and do not distort pass rates.
  */
 const getResultsAnalytics = async (req, res) => {
     const { academic_year_id, term_id } = req.query;
+    const schoolId = (req.user && req.user.school_id) ? Number(req.user.school_id) : 1;
 
-    const filters = [];
-    const values = [];
+    const filters = ["r.school_id = ?"];
+    const values = [schoolId];
     if (academic_year_id) { filters.push("r.academic_year_id = ?"); values.push(academic_year_id); }
     if (term_id) { filters.push("r.term_id = ?"); values.push(term_id); }
-    const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
+    const where = `WHERE ${filters.join(" AND ")}`;
 
     try {
         const [[overall]] = await pool.execute(
-            `SELECT COUNT(*)                                                   AS total_entries,
-              AVG(r.percentage)                                          AS overall_average,
-              SUM(r.grade_code <= 6)                                    AS passes,
-              SUM(r.grade_code = 9)                                     AS failures,
-              ROUND(SUM(r.grade_code <= 6) / COUNT(*) * 100, 1)        AS pass_rate
+            `SELECT COUNT(*)                                                           AS total_entries,
+              SUM(r.status = 'COMPLETE')                                               AS completed_entries,
+              SUM(r.status = 'INCOMPLETE')                                             AS pending_entries,
+              ROUND(AVG(IF(r.status = 'COMPLETE', r.final_mark, NULL)), 1)             AS overall_average,
+              ROUND(AVG(r.mid_term_score), 1)                                          AS mid_term_average,
+              ROUND(AVG(r.final_term_score), 1)                                        AS final_term_average,
+              SUM(IF(r.status = 'COMPLETE', r.grade_code <= 6, 0))                    AS passes,
+              SUM(IF(r.status = 'COMPLETE', r.grade_code = 9, 0))                     AS failures,
+              ROUND(
+                CASE WHEN SUM(r.status = 'COMPLETE') = 0 THEN 0
+                     ELSE SUM(IF(r.status = 'COMPLETE', r.grade_code <= 6, 0)) / SUM(r.status = 'COMPLETE') * 100
+                END, 1
+              ) AS pass_rate
        FROM   results r
        ${where}`,
             values
@@ -573,10 +739,18 @@ const getResultsAnalytics = async (req, res) => {
 
         const [bySubject] = await pool.execute(
             `SELECT sub.subject_name,
-              COUNT(r.id)             AS total,
-              ROUND(AVG(r.percentage), 1)  AS avg_percentage,
-              SUM(r.grade_code <= 6)  AS passes,
-              ROUND(SUM(r.grade_code <= 6) / COUNT(r.id) * 100, 1) AS pass_rate
+              COUNT(r.id)                                                           AS total,
+              SUM(r.status = 'COMPLETE')                                            AS completed,
+              SUM(r.status = 'INCOMPLETE')                                          AS pending,
+              ROUND(AVG(r.mid_term_score), 1)                                       AS avg_mid_term,
+              ROUND(AVG(r.final_term_score), 1)                                     AS avg_final_term,
+              ROUND(AVG(IF(r.status = 'COMPLETE', r.final_mark, NULL)), 1)          AS avg_percentage,
+              SUM(IF(r.status = 'COMPLETE', r.grade_code <= 6, 0))                 AS passes,
+              ROUND(
+                CASE WHEN SUM(r.status = 'COMPLETE') = 0 THEN 0
+                     ELSE SUM(IF(r.status = 'COMPLETE', r.grade_code <= 6, 0)) / SUM(r.status = 'COMPLETE') * 100
+                END, 1
+              ) AS pass_rate
        FROM   results r
        JOIN   subjects sub ON sub.id = r.subject_id
        ${where}
@@ -590,7 +764,7 @@ const getResultsAnalytics = async (req, res) => {
               r.grade_classification,
               COUNT(*) AS count
        FROM   results r
-       ${where}
+       ${where} AND r.status = 'COMPLETE'
        GROUP BY r.grade_code, r.grade_classification
        ORDER BY r.grade_code`,
             values
@@ -605,5 +779,6 @@ const getResultsAnalytics = async (req, res) => {
 module.exports = {
     getResults, getResultById, createResult, updateResult, deleteResult,
     getStudentResults, getClassResults, generateTranscript, getResultsAnalytics,
-    getECZGrade, // exported so reports controller can import it
-};
+    getAssessmentPolicy, updateAssessmentPolicy, calculatePreview,
+    getECZGrade,
+};

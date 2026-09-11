@@ -588,22 +588,24 @@
                 <div class="rt-table-wrap">
                     <table class="rt-table">
                         <thead><tr>
-                            <th>Subject</th><th>Test</th><th>Assignment</th>
-                            <th>Exam</th><th>Total</th><th>%</th>
-                            <th>Grade</th><th>Position</th><th>Remarks</th>
+                            <th>Subject</th><th>Mid-Term</th><th>Final Term</th>
+                            <th>Final Mark</th><th>Grade</th><th>Position</th><th>Remarks</th>
                         </tr></thead>
                         <tbody>
-                            ${(t.subjects || []).map(r => `<tr>
-                                <td>${esc(r.subject_name)}</td>
-                                <td>${r.test_mark}</td>
-                                <td>${r.assignment_mark}</td>
-                                <td>${r.exam_mark}</td>
-                                <td>${r.total_marks}</td>
-                                <td>${parseFloat(r.percentage).toFixed(1)}%</td>
-                                <td>${esc(r.grade_classification)}</td>
-                                <td>${r.class_position || '—'}</td>
-                                <td>${esc(r.remarks || '')}</td>
-                            </tr>`).join('')}
+                            ${(t.subjects || []).map(r => {
+                                const midVal = (r.mid_term_score != null) ? r.mid_term_score : (r.test_mark != null ? r.test_mark : '—');
+                                const finVal = (r.final_term_score != null) ? r.final_term_score : (r.exam_mark != null ? r.exam_mark : '—');
+                                const finalMark = (r.final_mark != null) ? `${parseFloat(r.final_mark).toFixed(1)}%` : (r.percentage != null && r.status === 'COMPLETE' ? `${parseFloat(r.percentage).toFixed(1)}%` : '—');
+                                return `<tr>
+                                    <td><strong>${esc(r.subject_name)}</strong></td>
+                                    <td>${midVal}</td>
+                                    <td>${finVal}</td>
+                                    <td style="font-weight:700">${finalMark}</td>
+                                    <td><span class="aa-grade-pill">${esc(r.grade_classification || 'Pending')}</span></td>
+                                    <td>${r.class_position || '—'}</td>
+                                    <td>${esc(r.remarks || r.teacher_comment || '')}</td>
+                                </tr>`;
+                            }).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -664,11 +666,15 @@
             doc.autoTable({
                 startY: y,
                 margin: { left: margin, right: margin },
-                head: [['Subject', 'Test', 'Assign', 'Exam', 'Total', '%', 'Grade', 'Pos', 'Remarks']],
+                head: [['Subject', 'Mid-Term', 'Final Term', 'Final Mark', 'Grade', 'Pos', 'Remarks']],
                 body: (t.subjects || []).map(r => [
-                    r.subject_name, r.test_mark, r.assignment_mark, r.exam_mark,
-                    r.total_marks, `${parseFloat(r.percentage).toFixed(1)}%`,
-                    r.grade_classification, r.class_position || '—', r.remarks || ''
+                    r.subject_name,
+                    r.mid_term_score != null ? r.mid_term_score : (r.test_mark != null ? r.test_mark : '—'),
+                    r.final_term_score != null ? r.final_term_score : (r.exam_mark != null ? r.exam_mark : '—'),
+                    r.final_mark != null ? `${parseFloat(r.final_mark).toFixed(1)}%` : (r.percentage != null && r.status === 'COMPLETE' ? `${parseFloat(r.percentage).toFixed(1)}%` : '—'),
+                    r.grade_classification || 'Pending',
+                    r.class_position || '—',
+                    r.remarks || r.teacher_comment || ''
                 ]),
                 styles: { fontSize: 7.5, cellPadding: 2 },
                 headStyles: { fillColor: [30, 58, 138], textColor: 255, fontStyle: 'bold' },
@@ -691,14 +697,17 @@
         rows.push(['Admission No', student ? `"${student.admission_number}"` : '""']);
         rows.push(['Class', student ? `"${student.class_name || 'Not assigned'}"` : '""']);
         rows.push([]);
-        rows.push(['Term,Year,Subject,Test,Assignment,Exam,Total,%,Grade,Position,Remarks']);
+        rows.push(['Term,Year,Subject,Mid-Term,Final Term,Final Mark,Grade,Position,Remarks']);
         (terms || []).forEach(t => {
             (t.subjects || []).forEach(r => {
                 rows.push([
                     t.term_name, t.year_label, r.subject_name,
-                    r.test_mark, r.assignment_mark, r.exam_mark,
-                    r.total_marks, parseFloat(r.percentage).toFixed(1),
-                    r.grade_classification, r.class_position || '', r.remarks || ''
+                    r.mid_term_score != null ? r.mid_term_score : (r.test_mark != null ? r.test_mark : ''),
+                    r.final_term_score != null ? r.final_term_score : (r.exam_mark != null ? r.exam_mark : ''),
+                    r.final_mark != null ? `${parseFloat(r.final_mark).toFixed(1)}%` : (r.percentage != null && r.status === 'COMPLETE' ? `${parseFloat(r.percentage).toFixed(1)}%` : ''),
+                    r.grade_classification || 'Pending',
+                    r.class_position || '',
+                    r.remarks || r.teacher_comment || ''
                 ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
             });
         });

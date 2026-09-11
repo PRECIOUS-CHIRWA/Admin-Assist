@@ -15,7 +15,7 @@
 
         // Only admin and headmaster can see General, System, and Notifications tabs
         if (role !== "admin" && role !== "headmaster") {
-            var adminOnlyTargets = ["general-settings", "system-settings", "notifications-settings"];
+            var adminOnlyTargets = ["general", "system", "notifications"];
             document.querySelectorAll(".settings-nav-item").forEach(function (btn) {
                 var target = btn.dataset.target;
                 if (adminOnlyTargets.indexOf(target) !== -1) {
@@ -31,8 +31,8 @@
             // Activate Profile tab as the default active tab
             document.querySelectorAll(".settings-nav-item").forEach(function (b) { b.classList.remove("is-active"); });
             document.querySelectorAll(".settings-section").forEach(function (s) { s.classList.remove("is-active"); });
-            var profileBtn = document.querySelector(".settings-nav-item[data-target='profile-settings']");
-            var profileSection = document.getElementById("profile-settings");
+            var profileBtn = document.querySelector(".settings-nav-item[data-target='profile']");
+            var profileSection = document.getElementById("profile");
             if (profileBtn) profileBtn.classList.add("is-active");
             if (profileSection) profileSection.classList.add("is-active");
         }

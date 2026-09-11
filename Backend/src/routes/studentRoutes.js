@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const {
     listStudents, getStudentById, getNextAdmissionNumber,
-    createStudent, updateStudent, deleteStudent,
+    createStudent, updateStudent, deleteStudent, createStudentAccount,
 } = require("../controllers/studentController");
 
 const { authenticate, authorize } = require("../middleware/auth");
@@ -19,7 +19,8 @@ router.get("/",    authenticate, listStudents);
 router.get("/:id", authenticate, getStudentById);
 
 // ─── Modifications ────────────────────────────────────────────────────────────
-router.put("/:id",    authenticate, authorize("admin", "headmaster", "staff"), updateStudent);
-router.delete("/:id", authenticate, authorize("admin", "headmaster"), deleteStudent);
+router.put("/:id",          authenticate, authorize("admin", "headmaster", "staff"), updateStudent);
+router.post("/:id/account", authenticate, authorize("admin", "headmaster"), createStudentAccount);
+router.delete("/:id",       authenticate, authorize("admin", "headmaster"), deleteStudent);
 
 module.exports = router;

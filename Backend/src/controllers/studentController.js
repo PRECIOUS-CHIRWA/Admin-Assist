@@ -2,6 +2,7 @@ const crypto = require("crypto");
 const { promisify } = require("util");
 const pool = require("../config/db");
 const { sendNotification } = require("./notificationController");
+const { sendNewAccountEmail } = require("../services/emailService");
 
 const scrypt = promisify(crypto.scrypt);
 
@@ -9,6 +10,10 @@ const _hashPassword = async (password) => {
     const salt = crypto.randomBytes(16).toString("hex");
     const hash = await scrypt(password, salt, 64);
     return `scrypt$${salt}$${hash.toString("hex")}`;
+};
+
+const _generateTempPassword = () => {
+    return crypto.randomBytes(9).toString("base64url").slice(0, 12);
 };
 
 // ─── Audit logging helper ─────────────────────────────────────────────────────
@@ -566,6 +571,97 @@ const deleteStudent = async (req, res) => {
     }
 };
 
+// ─── Create or Reset Parent/Student User Account (Admin / Headmaster) ─────────
+const createStudentAccount = async (req, res) => {
+    const studentId = req.params.id;
+    const schoolId = req.user?.school_id || 1;
+    const customEmail = req.body.email ? req.body.email.trim().toLowerCase() : null;
+
+    try {
+        const [[student]] = await pool.execute(
+            `SELECT s.*, u.email as user_email
+             FROM students s
+             LEFT JOIN users u ON u.id = s.user_id
+             WHERE s.id = ? AND s.school_id = ? LIMIT 1`,
+            [studentId, schoolId]
+        );
+        if (!student) return res.status(404).json({ error: "Student not found" });
+
+        const recipientEmail = customEmail || (student.email && student.email.trim()) || (student.user_email) ||
+            `${student.admission_number.toLowerCase().replace(/[^a-z0-9]/g, '')}@student.school.local`;
+        const studentFullName = `${student.first_name} ${student.last_name}`.trim();
+
+        const tempPassword = _generateTempPassword();
+        const passwordHash = await _hashPassword(tempPassword);
+
+        let userId = student.user_id;
+
+        if (userId) {
+            // Update existing user password and email
+            await pool.execute(
+                `UPDATE users SET email = ?, password_hash = ?, is_active = 1 WHERE id = ?`,
+                [recipientEmail, passwordHash, userId]
+            );
+        } else {
+            // Check if user with this email exists
+            const [[existingUser]] = await pool.execute(
+                "SELECT id FROM users WHERE email = ? LIMIT 1",
+                [recipientEmail]
+            );
+            if (existingUser) {
+                userId = existingUser.id;
+                await pool.execute(
+                    `UPDATE users SET password_hash = ?, is_active = 1 WHERE id = ?`,
+                    [passwordHash, userId]
+                );
+            } else {
+                const [newUser] = await pool.execute(
+                    `INSERT INTO users (school_id, name, email, password_hash, role, is_active, email_verified)
+                     VALUES (?, ?, ?, ?, 'user', 1, 1)`,
+                    [schoolId, studentFullName, recipientEmail, passwordHash]
+                );
+                userId = newUser.insertId;
+            }
+            await pool.execute("UPDATE students SET user_id = ? WHERE id = ?", [userId, studentId]);
+        }
+
+        const loginUrl = (process.env.PUBLIC_APP_URL && process.env.PUBLIC_APP_URL.includes("Admin-Assist"))
+            ? `${process.env.PUBLIC_APP_URL.replace(/\/$/, "")}/login.html`
+            : "https://precious-chirwa.github.io/Admin-Assist/Frontend/Src/login.html";
+
+        let emailSent = false;
+        try {
+            await sendNewAccountEmail({
+                to: { name: student.parent_guardian_name || studentFullName, email: recipientEmail },
+                tempPassword,
+                loginUrl,
+            });
+            emailSent = true;
+        } catch (mailErr) {
+            console.warn("createStudentAccount email send note:", mailErr.message);
+        }
+
+        await _auditLog(req.user.sub, "CREATE_STUDENT_ACCOUNT", "student", studentId, {
+            email: recipientEmail,
+            userId,
+            emailSent,
+        });
+
+        res.json({
+            message: emailSent 
+                ? "Parent/Student account created and login details sent via email."
+                : "Parent/Student account created successfully.",
+            userId,
+            email: recipientEmail,
+            tempPassword,
+            emailSent,
+        });
+    } catch (err) {
+        console.error("createStudentAccount error:", err.message);
+        res.status(500).json({ error: "Failed to create student/parent account" });
+    }
+};
+
 module.exports = {
     listStudents,
     getStudentById,
@@ -574,4 +670,5 @@ module.exports = {
     createStudent,
     updateStudent,
     deleteStudent,
+    createStudentAccount,
 };

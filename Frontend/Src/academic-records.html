@@ -27,17 +27,6 @@
       </div>
     </header>
 
-    <div class="aa-stats-grid">
-      <div class="aa-stat-card aa-accent"><span class="aa-stat-label">Total Entries</span><span class="aa-stat-value"
-          id="statTotal">—</span></div>
-      <div class="aa-stat-card aa-accent"><span class="aa-stat-label">Class Average</span><span class="aa-stat-value"
-          id="statAvg">—</span></div>
-      <div class="aa-stat-card aa-accent"><span class="aa-stat-label">Pass Rate</span><span class="aa-stat-value"
-          id="statPass">—</span></div>
-      <div class="aa-stat-card aa-accent"><span class="aa-stat-label">Failures</span><span class="aa-stat-value"
-          id="statFail">—</span></div>
-    </div>
-
     <section class="aa-filter-bar">
       <div class="aa-filter-field">
         <label for="filterClass">Class</label>
@@ -80,12 +69,11 @@
               <th>Adm No</th>
               <th>Class</th>
               <th>Subject</th>
-              <th>Test</th>
-              <th>Assign</th>
-              <th>Exam</th>
-              <th>Total</th>
-              <th>%</th>
+              <th>Mid-Term</th>
+              <th>Final Term</th>
+              <th>Final Mark</th>
               <th>Grade</th>
+              <th>Status</th>
               <th>Position</th>
               <th>Actions</th>
             </tr>
@@ -131,20 +119,20 @@
             </select>
           </div>
           <div class="aa-form-field">
-            <label for="fTest">Test Mark (max 30)</label>
-            <input type="number" id="fTest" min="0" max="30" step="0.5" placeholder="0" />
+            <label for="fMidTerm">Mid-Term Test (max 100)</label>
+            <input type="number" id="fMidTerm" min="0" max="100" step="0.5" placeholder="e.g. 75" />
           </div>
           <div class="aa-form-field">
-            <label for="fAssign">Assignment Mark (max 20)</label>
-            <input type="number" id="fAssign" min="0" max="20" step="0.5" placeholder="0" />
+            <label for="fFinalTerm">Final / End-of-Term Test (max 100)</label>
+            <input type="number" id="fFinalTerm" min="0" max="100" step="0.5" placeholder="e.g. 82" />
           </div>
-          <div class="aa-form-field">
-            <label for="fExam">Exam Mark (max 50)</label>
-            <input type="number" id="fExam" min="0" max="50" step="0.5" placeholder="0" />
+          <div class="aa-form-field" id="fCAGroup" style="display:none">
+            <label for="fCAScore">Continuous Assessment / SBA (max 100)</label>
+            <input type="number" id="fCAScore" min="0" max="100" step="0.5" placeholder="Optional" />
           </div>
-          <div class="aa-form-field">
-            <label>Auto-Calculated Total</label>
-            <input type="text" id="fTotalPreview" readonly style="background:var(--aa-bg)" placeholder="—" />
+          <div class="aa-form-field aa-form-field-full">
+            <label>Calculated Assessment Summary</label>
+            <input type="text" id="fTotalPreview" readonly style="background:var(--aa-bg);font-weight:600" placeholder="Enter scores above" />
           </div>
           <div class="aa-form-field aa-form-field-full">
             <label for="fComment">Teacher Comment (optional)</label>

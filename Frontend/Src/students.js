@@ -157,10 +157,13 @@
   }
 
   /* ── View / Edit Modal ─────────────────────────────────────────── */
+  let _currentStudentId = null;
+
   async function openViewModal(id) {
     const student = allStudents.find(function (s) { return String(s.id) === String(id); });
     if (!student) return;
 
+    _currentStudentId = student.id;
     document.getElementById('modalTitle').textContent = 'Edit Student';
     document.getElementById('editStudentId').value = student.id;
     document.getElementById('fFirstName').value = student.first_name || '';
@@ -172,7 +175,65 @@
     document.getElementById('fGuardian').value = student.guardian_name || '';
     document.getElementById('fGuardianPhone').value = student.guardian_phone || '';
     document.getElementById('fStatus').value = student.status || 'Active';
+
+    // Role-based visibility for portal account generation
+    const accountSection = document.getElementById('portalAccountSection');
+    const statusMsg = document.getElementById('accountStatusMsg');
+    if (statusMsg) { statusMsg.hidden = true; statusMsg.textContent = ''; }
+
+    let userRole = 'user';
+    try {
+      const u = JSON.parse(localStorage.getItem('user'));
+      if (u && u.role) userRole = u.role;
+    } catch (e) {}
+
+    const isAdmin = (userRole === 'admin' || userRole === 'headmaster');
+    if (accountSection) {
+      accountSection.style.display = isAdmin ? 'block' : 'none';
+    }
+
     document.getElementById('studentModal').hidden = false;
+  }
+
+  async function createStudentAccount() {
+    if (!_currentStudentId) return;
+    const btn = document.getElementById('createAccountBtn');
+    const statusMsg = document.getElementById('accountStatusMsg');
+    if (!confirm('Generate and email portal login credentials for this student / parent?')) return;
+
+    if (btn) { btn.disabled = true; btn.textContent = 'Generating…'; }
+    if (statusMsg) { statusMsg.hidden = true; }
+
+    try {
+      const res = await apiFetch('/api/students/' + _currentStudentId + '/account', {
+        method: 'POST',
+        body: JSON.stringify({})
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res || !res.ok) {
+        throw new Error(data.error || 'Failed to create account');
+      }
+
+      if (statusMsg) {
+        statusMsg.hidden = false;
+        statusMsg.style.background = '#ecfdf5';
+        statusMsg.style.color = '#065f46';
+        statusMsg.style.border = '1px solid #a7f3d0';
+        statusMsg.innerHTML = `<strong>Account Ready:</strong> Login email: <code>${_esc(data.email)}</code><br/>Temporary Password: <code>${_esc(data.tempPassword)}</code><br/><em>${data.emailSent ? 'Login credentials sent via email.' : 'Email service pending, credentials generated.'}</em>`;
+      }
+      _toast(data.message || 'Account generated successfully.', 'success');
+    } catch (err) {
+      if (statusMsg) {
+        statusMsg.hidden = false;
+        statusMsg.style.background = '#fef2f2';
+        statusMsg.style.color = '#991b1b';
+        statusMsg.style.border = '1px solid #fecaca';
+        statusMsg.textContent = 'Error: ' + err.message;
+      }
+      _toast(err.message || 'Account creation failed.', 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '🔑 Create / Send Login Info'; }
+    }
   }
 
   async function saveStudent() {
@@ -247,6 +308,7 @@
     document.getElementById('closeModalBtn').addEventListener('click', function () { document.getElementById('studentModal').hidden = true; });
     document.getElementById('cancelModalBtn').addEventListener('click', function () { document.getElementById('studentModal').hidden = true; });
     document.getElementById('saveStudentBtn').addEventListener('click', saveStudent);
+    document.getElementById('createAccountBtn')?.addEventListener('click', createStudentAccount);
     document.getElementById('studentModal').addEventListener('click', function (e) { if (e.target.id === 'studentModal') document.getElementById('studentModal').hidden = true; });
 
     document.getElementById('closeDeleteBtn').addEventListener('click', function () { document.getElementById('deleteModal').hidden = true; });

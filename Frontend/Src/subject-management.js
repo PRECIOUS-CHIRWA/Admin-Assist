@@ -380,13 +380,12 @@
         const overview = document.getElementById('classOverviewCard');
         const empty = document.getElementById('classRecordEmpty');
         const tableWrap = document.getElementById('classRecordTableWrap');
-        const editBtn = document.getElementById('editFocusBtn');
-
+        const user = (typeof getUser === 'function' && getUser()) || {};
+        const isAdmin = (user.role === 'admin' || user.role === 'headmaster');
         const { class: cls, subjects, students } = data;
-
         if (placeholder) placeholder.hidden = true;
         if (overview) overview.style.display = 'block';
-        if (editBtn) editBtn.style.display = 'inline-flex';
+        if (editBtn) editBtn.style.display = isAdmin ? 'inline-flex' : 'none';
 
         // Title and teacher
         const titleEl = document.getElementById('classTitle');

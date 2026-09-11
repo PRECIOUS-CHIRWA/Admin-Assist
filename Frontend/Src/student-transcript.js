@@ -223,21 +223,26 @@
         <div class="aa-table-wrap">
           <table class="aa-table">
             <thead>
-              <tr><th>Subject</th><th>Test</th><th>Assignment</th><th>Exam</th><th>Total</th><th>%</th><th>Grade</th><th>Position</th><th>Remarks</th></tr>
+              <tr><th>Subject</th><th>Mid-Term</th><th>Final Term</th><th>Final Mark</th><th>Grade</th><th>Position</th><th>Remarks</th></tr>
             </thead>
             <tbody>
-              ${t.subjects.map(r => `
+              ${t.subjects.map(r => {
+                const midVal = (r.mid_term_score != null) ? r.mid_term_score : (r.test_mark != null ? r.test_mark : '—');
+                const finVal = (r.final_term_score != null) ? r.final_term_score : (r.exam_mark != null ? r.exam_mark : '—');
+                const finalMark = (r.final_mark != null)
+                    ? `${parseFloat(r.final_mark).toFixed(1)}%`
+                    : (r.percentage != null && r.status === 'COMPLETE' ? `${parseFloat(r.percentage).toFixed(1)}%` : '—');
+                return `
                 <tr>
-                  <td>${esc(r.subject_name)}</td>
-                  <td>${r.test_mark}</td>
-                  <td>${r.assignment_mark}</td>
-                  <td>${r.exam_mark}</td>
-                  <td>${r.total_marks}</td>
-                  <td>${parseFloat(r.percentage).toFixed(1)}%</td>
-                  <td><span class="aa-grade-pill">${esc(r.grade_classification)}</span></td>
+                  <td><strong>${esc(r.subject_name)}</strong></td>
+                  <td>${midVal}</td>
+                  <td>${finVal}</td>
+                  <td style="font-weight:700">${finalMark}</td>
+                  <td><span class="aa-grade-pill">${esc(r.grade_classification || 'Pending')}</span></td>
                   <td>${r.class_position || '—'}</td>
-                  <td>${esc(r.remarks)}</td>
-                </tr>`).join('')}
+                  <td>${esc(r.remarks || r.teacher_comment || '—')}</td>
+                </tr>`;
+              }).join('')}
             </tbody>
           </table>
         </div>
@@ -371,24 +376,22 @@
             doc.autoTable({
                 startY        : y,
                 margin        : { left: margin, right: margin },
-                head          : [['Subject', 'Test', 'Assign.', 'Exam', 'Total', '%', 'Grade', 'Position', 'Remarks']],
+                head          : [['Subject', 'Mid-Term', 'Final Term', 'Final Mark', 'Grade', 'Position', 'Remarks']],
                 body          : term.subjects.map(s => [
                     s.subject_name,
-                    s.test_mark,
-                    s.assignment_mark,
-                    s.exam_mark,
-                    s.total_marks,
-                    `${parseFloat(s.percentage).toFixed(1)}%`,
-                    s.grade_classification,
+                    s.mid_term_score != null ? s.mid_term_score : (s.test_mark != null ? s.test_mark : '—'),
+                    s.final_term_score != null ? s.final_term_score : (s.exam_mark != null ? s.exam_mark : '—'),
+                    s.final_mark != null ? `${parseFloat(s.final_mark).toFixed(1)}%` : (s.percentage != null && s.status === 'COMPLETE' ? `${parseFloat(s.percentage).toFixed(1)}%` : '—'),
+                    s.grade_classification || 'Pending',
                     s.class_position || '—',
-                    s.remarks || '—',
+                    s.remarks || s.teacher_comment || '—',
                 ]),
-                foot          : [[`Term Average`, '', '', '', '', `${term.average_percentage}%`, '', '', '']],
+                foot          : [[`Term Average`, '', '', `${term.average_percentage}%`, '', '', '']],
                 styles        : { fontSize: 7.5, cellPadding: 2 },
                 headStyles    : { fillColor: [30, 58, 138], textColor: 255, fontStyle: 'bold', fontSize: 7.5 },
                 footStyles    : { fillColor: [229, 231, 235], textColor: [50, 50, 50], fontStyle: 'bold' },
                 alternateRowStyles: { fillColor: [249, 250, 251] },
-                columnStyles  : { 0: { cellWidth: 38 }, 8: { cellWidth: 28 } },
+                columnStyles  : { 0: { cellWidth: 42 }, 6: { cellWidth: 30 } },
             });
 
             y = doc.lastAutoTable.finalY + 10;
@@ -442,21 +445,19 @@
         for (const term of terms) {
             rows.push([]);
             rows.push([`${term.term_name} — ${term.year_label}`]);
-            rows.push(['Subject', 'Test', 'Assignment', 'Exam', 'Total', 'Percentage', 'Grade', 'Position', 'Remarks']);
+            rows.push(['Subject', 'Mid-Term', 'Final Term', 'Final Mark', 'Grade', 'Position', 'Remarks']);
             for (const s of term.subjects) {
                 rows.push([
                     s.subject_name,
-                    s.test_mark,
-                    s.assignment_mark,
-                    s.exam_mark,
-                    s.total_marks,
-                    `${parseFloat(s.percentage).toFixed(1)}%`,
-                    s.grade_classification,
+                    s.mid_term_score != null ? s.mid_term_score : (s.test_mark != null ? s.test_mark : ''),
+                    s.final_term_score != null ? s.final_term_score : (s.exam_mark != null ? s.exam_mark : ''),
+                    s.final_mark != null ? `${parseFloat(s.final_mark).toFixed(1)}%` : (s.percentage != null && s.status === 'COMPLETE' ? `${parseFloat(s.percentage).toFixed(1)}%` : ''),
+                    s.grade_classification || 'Pending',
                     s.class_position || '',
-                    s.remarks || '',
+                    s.remarks || s.teacher_comment || '',
                 ]);
             }
-            rows.push(['Term Average', '', '', '', '', `${term.average_percentage}%`, '', '', '']);
+            rows.push(['Term Average', '', '', `${term.average_percentage}%`, '', '', '']);
         }
 
         const csvContent = rows.map(row =>

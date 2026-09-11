@@ -57,25 +57,88 @@ async function runMigration() {
     await addColumnIfNotExists('students', 'school_id', 'INT UNSIGNED NOT NULL DEFAULT 1 AFTER id');
     await addColumnIfNotExists('students', 'user_id', 'INT UNSIGNED DEFAULT NULL AFTER school_id');
 
-    // 4. Add missing columns to results
-    await addColumnIfNotExists('results', 'school_id', 'INT UNSIGNED NOT NULL DEFAULT 1 AFTER id');
+    // 4. Add assessment policy columns to school_settings
+    await addColumnIfNotExists('school_settings', 'assessment_model', "VARCHAR(50) NOT NULL DEFAULT 'MID_TERM_FINAL'");
+    await addColumnIfNotExists('school_settings', 'mid_term_weight', "DECIMAL(5,2) NOT NULL DEFAULT 20.00");
+    await addColumnIfNotExists('school_settings', 'final_term_weight', "DECIMAL(5,2) NOT NULL DEFAULT 80.00");
+    await addColumnIfNotExists('school_settings', 'continuous_assessment_enabled', "TINYINT(1) NOT NULL DEFAULT 0");
+    await addColumnIfNotExists('school_settings', 'continuous_assessment_weight', "DECIMAL(5,2) NOT NULL DEFAULT 0.00");
+    await addColumnIfNotExists('school_settings', 'grading_scheme', "VARCHAR(50) NOT NULL DEFAULT 'ADMIN_ASSIST_ECZ'");
 
-    // 5. Add missing columns to attendance_sessions
+    // 5. Add assessment columns to results
+    await addColumnIfNotExists('results', 'school_id', 'INT UNSIGNED NOT NULL DEFAULT 1 AFTER id');
+    await addColumnIfNotExists('results', 'mid_term_score', 'DECIMAL(5,2) DEFAULT NULL AFTER academic_year_id');
+    await addColumnIfNotExists('results', 'final_term_score', 'DECIMAL(5,2) DEFAULT NULL AFTER mid_term_score');
+    await addColumnIfNotExists('results', 'continuous_assessment_score', 'DECIMAL(5,2) DEFAULT NULL AFTER final_term_score');
+    await addColumnIfNotExists('results', 'final_mark', 'DECIMAL(5,2) DEFAULT NULL AFTER continuous_assessment_score');
+    await addColumnIfNotExists('results', 'status', "VARCHAR(30) NOT NULL DEFAULT 'INCOMPLETE' AFTER remarks");
+    await addColumnIfNotExists('results', 'assessment_policy_snapshot', 'TEXT DEFAULT NULL AFTER status');
+
+    // 6. Add missing columns to attendance_sessions
     await addColumnIfNotExists('attendance_sessions', 'school_id', 'INT UNSIGNED NOT NULL DEFAULT 1 AFTER id');
 
-    // 6. Add missing columns to terms
+    // 7. Add missing columns to terms
     await addColumnIfNotExists('terms', 'school_id', 'INT UNSIGNED NOT NULL DEFAULT 1 AFTER id');
 
-    // 7. Add missing columns to classes
+    // 8. Add missing columns to classes
     await addColumnIfNotExists('classes', 'school_id', 'INT UNSIGNED NOT NULL DEFAULT 1 AFTER id');
 
-    // 8. Add missing columns to academic_years
+    // 9. Add missing columns to academic_years
     await addColumnIfNotExists('academic_years', 'school_id', 'INT UNSIGNED NOT NULL DEFAULT 1 AFTER id');
 
-    // 9. Add missing columns to subjects
+    // 10. Add missing columns to subjects
     await addColumnIfNotExists('subjects', 'school_id', 'INT UNSIGNED NOT NULL DEFAULT 1 AFTER id');
 
-    // 10. Update existing rows where school_id is 0 or NULL
+    // 11. Update system year to 2026 across academic_years, terms, and settings
+    try {
+        await pool.query(`
+            UPDATE academic_years 
+            SET year_label = '2026', 
+                start_date = '2026-01-12', 
+                end_date = '2026-12-04', 
+                is_current = 1 
+            WHERE id = 1 OR year_label = '2025'
+        `);
+        await pool.query(`
+            UPDATE terms 
+            SET start_date = '2026-01-12', end_date = '2026-04-10', is_current = 1 
+            WHERE id = 1
+        `);
+        await pool.query(`
+            UPDATE terms 
+            SET start_date = '2026-05-11', end_date = '2026-08-07', is_current = 0 
+            WHERE id = 2
+        `);
+        await pool.query(`
+            UPDATE terms 
+            SET start_date = '2026-09-07', end_date = '2026-12-04', is_current = 0 
+            WHERE id = 3
+        `);
+        await pool.query(`
+            UPDATE school_settings 
+            SET academic_year_label = '2026' 
+            WHERE school_id = 1
+        `);
+        console.log('[Migration] System academic year synchronized to 2026.');
+    } catch (err) {
+        console.warn('[Migration] Academic year 2026 update notice:', err.message);
+    }
+
+    // 12. Backfill existing results table records to populate mid_term_score and final_term_score
+    try {
+        await pool.query(`
+            UPDATE results 
+            SET mid_term_score = test_mark,
+                final_term_score = exam_mark,
+                final_mark = total_marks,
+                status = 'COMPLETE'
+            WHERE mid_term_score IS NULL AND (test_mark > 0 OR exam_mark > 0 OR total_marks > 0)
+        `);
+    } catch (err) {
+        console.warn('[Migration] Results backfill notice:', err.message);
+    }
+
+    // 13. Update existing rows where school_id is 0 or NULL
     const tablesToBackfill = [
         'users', 'students', 'results', 'attendance_sessions',
         'terms', 'classes', 'academic_years', 'subjects'
@@ -88,7 +151,7 @@ async function runMigration() {
         }
     }
 
-    // 11. Backfill unified student accounts for any student lacking user_id
+    // 14. Backfill unified student accounts for any student lacking user_id
     try {
         const [unlinked] = await pool.query(
             `SELECT s.id, s.admission_number, s.first_name, s.last_name, s.email, s.school_id

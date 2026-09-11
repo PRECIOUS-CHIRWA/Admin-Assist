@@ -4,12 +4,17 @@ const router = express.Router();
 const {
     getResults, getResultById, createResult, updateResult, deleteResult,
     getStudentResults, getClassResults, generateTranscript, getResultsAnalytics,
+    getAssessmentPolicy, updateAssessmentPolicy, calculatePreview,
 } = require("../controllers/resultsController");
 
 const { authenticate, authorize } = require("../middleware/auth");
 
 // ─── Named sub-routes MUST come before /:id to prevent Express matching
-// "student", "class", "transcript", "analytics" as the :id param ────────────
+// "student", "class", "transcript", "analytics", "policy" as the :id param ───
+router.get("/policy", authenticate, getAssessmentPolicy);
+router.put("/policy", authenticate, authorize("admin", "headmaster"), updateAssessmentPolicy);
+router.post("/calculate-preview", authenticate, calculatePreview);
+
 router.get("/student/:studentId", authenticate, getStudentResults);
 router.get("/class/:classId", authenticate, getClassResults);
 router.get("/transcript/:studentId", authenticate, generateTranscript);

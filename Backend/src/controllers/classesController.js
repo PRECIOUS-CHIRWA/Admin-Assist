@@ -237,6 +237,8 @@ const updateClass = async (req, res) => {
         const fields = [];
         const values = [];
 
+        const isAdmin = req.user && (req.user.role === "admin" || req.user.role === "headmaster");
+
         if (grade_level !== undefined || gradeLevel !== undefined) {
             fields.push("grade_level = ?");
             values.push((grade_level || gradeLevel || "").trim());
@@ -250,10 +252,16 @@ const updateClass = async (req, res) => {
             values.push(parseInt(capacity, 10) || 40);
         }
         if (core_focus !== undefined || coreFocus !== undefined) {
+            if (!isAdmin) {
+                return res.status(403).json({ error: "Only administrators can edit the core focus for a class." });
+            }
             fields.push("core_focus = ?");
             values.push(String(core_focus || coreFocus || "").trim() || null);
         }
         if (class_teacher_id !== undefined || classTeacherId !== undefined) {
+            if (!isAdmin) {
+                return res.status(403).json({ error: "Only administrators can assign a class teacher." });
+            }
             fields.push("class_teacher_id = ?");
             values.push(class_teacher_id || classTeacherId || null);
         }
