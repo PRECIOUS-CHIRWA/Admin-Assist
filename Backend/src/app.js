@@ -20,6 +20,7 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const teacherRoutes = require("./routes/teacherRoutes");
 const settingsRoutes = require("./routes/settingsRoutes");
 const classesRoutes = require("./routes/classesRoutes");
+const timetableRoutes = require("./routes/timetableRoutes");
 
 const app = express();
 
@@ -109,6 +110,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/teachers", teacherRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/classes", classesRoutes);
+app.use("/api/timetable", timetableRoutes);
 app.use("/api", panelRoutes);
 
 // Health check

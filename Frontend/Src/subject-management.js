@@ -380,6 +380,7 @@
         const overview = document.getElementById('classOverviewCard');
         const empty = document.getElementById('classRecordEmpty');
         const tableWrap = document.getElementById('classRecordTableWrap');
+        const editBtn = document.getElementById('editFocusBtn');
         const user = (typeof getUser === 'function' && getUser()) || {};
         const isAdmin = (user.role === 'admin' || user.role === 'headmaster');
         const { class: cls, subjects, students } = data;

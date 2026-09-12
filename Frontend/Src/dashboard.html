@@ -321,18 +321,17 @@
           </div>
         </div>
 
-        <div class="dash-stat-card">
+        <div class="dash-stat-card" id="staffTimetableCard" style="cursor:pointer;" title="Click to view today's teaching timetable">
           <div class="dash-stat-icon dash-stat-icon-blue">
             <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
             </svg>
           </div>
           <div class="dash-stat-body">
-            <div class="dash-stat-value" id="staffStatStudents">—</div>
-            <div class="dash-stat-label">Students in My Classes</div>
-            <span class="dash-stat-link" style="color:var(--aa-text-muted)">Active learners</span>
+            <div class="dash-stat-value" id="staffStatTimetable">—</div>
+            <div class="dash-stat-label">Today's Timetable</div>
+            <button type="button" class="dash-stat-link" id="viewTodayScheduleBtn" style="background:none;border:none;padding:0;color:var(--aa-blue,#2563EB);cursor:pointer;font-weight:600;font-size:12.5px;text-align:left;">View schedule &rarr;</button>
           </div>
         </div>
 
@@ -527,6 +526,58 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Timetable Modal (Staff & Admin) ─── -->
+    <div class="aa-modal-backdrop" id="timetableModal" hidden>
+      <div class="aa-modal aa-modal-lg">
+        <div class="aa-modal-header">
+          <div>
+            <h2 id="timetableModalTitle">Today's Teaching Schedule</h2>
+            <div id="timetableModalSubtitle" style="font-size:12.5px;color:var(--aa-text-muted);margin-top:2px;">—</div>
+          </div>
+          <button type="button" class="aa-modal-close" id="closeTimetableModalBtn" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="aa-modal-body" style="padding:1.25rem 1.5rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:10px;">
+            <div style="display:inline-flex;background:var(--aa-surface-2,#F1F5F9);padding:3px;border-radius:8px;border:1px solid var(--aa-border,#E2E8F0);">
+              <button type="button" id="ttTabToday" class="aa-btn aa-btn-sm" style="background:#fff;color:var(--aa-blue,#2563EB);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,0.05);border-radius:6px;padding:6px 14px;border:1px solid var(--aa-border,#E2E8F0);">Today's Classes</button>
+              <button type="button" id="ttTabWeek" class="aa-btn aa-btn-sm" style="background:transparent;color:var(--aa-text-muted);border:none;box-shadow:none;border-radius:6px;padding:6px 14px;">View Full Week</button>
+            </div>
+            <span class="aa-badge" id="ttModalCountBadge">0 classes</span>
+          </div>
+
+          <div id="ttModalLoading" style="text-align:center;padding:2rem;color:var(--aa-text-muted);" hidden>
+            Loading schedule…
+          </div>
+
+          <div id="ttModalEmpty" class="aa-empty-state" style="padding:2.5rem 1rem;text-align:center;" hidden>
+            <div style="font-size:32px;margin-bottom:8px;">📅</div>
+            <h3 style="font-size:15px;font-weight:600;margin:0 0 6px;">No classes scheduled</h3>
+            <p style="font-size:13px;color:var(--aa-text-muted);margin:0;">There are no teaching periods scheduled for this period.</p>
+          </div>
+
+          <div class="aa-table-wrap" id="ttModalTableWrap">
+            <table class="aa-table" id="ttModalTable">
+              <thead>
+                <tr>
+                  <th style="width:120px;">Time</th>
+                  <th id="ttColDay" style="display:none;width:120px;">Day</th>
+                  <th>Class</th>
+                  <th>Subject</th>
+                  <th>Room</th>
+                </tr>
+              </thead>
+              <tbody id="ttModalBody">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="aa-modal-footer" style="display:flex;justify-content:flex-end;padding:1rem 1.5rem;border-top:1px solid var(--aa-border,#E2E8F0);">
+          <button type="button" class="aa-btn aa-btn-secondary" id="closeTimetableModalFooterBtn">Close</button>
         </div>
       </div>
     </div>

@@ -324,7 +324,11 @@ body.dark-theme {
 }
 
 /* ─── Tables ─────────────────────────────────────────────────── */
-.aa-table-wrap { overflow-x: auto; }
+.aa-table-wrap {
+    overflow-x: auto;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+}
 
 .aa-table {
     width: 100%;
@@ -775,11 +779,19 @@ body.dark-theme {
 /* ─── Two-column Detail Layout ───────────────────────────────── */
 .aa-detail-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 1.5rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
-@media (max-width: 720px) {
+.aa-detail-grid > * {
+    min-width: 0;
+    max-width: 100%;
+}
+
+@media (max-width: 900px) {
     .aa-detail-grid { grid-template-columns: 1fr; }
 }
 

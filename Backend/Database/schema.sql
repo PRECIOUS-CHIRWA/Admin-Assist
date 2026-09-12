@@ -502,6 +502,36 @@ CREATE TABLE IF NOT EXISTS notifications (
     INDEX idx_notif_user    (user_id),
     INDEX idx_notif_read    (user_id, is_read),
     INDEX idx_notif_created (created_at)
+-- ─── 22. Timetables ──────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS timetables (
+    id               INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    school_id        INT UNSIGNED NOT NULL DEFAULT 1,
+    academic_year_id INT UNSIGNED NOT NULL DEFAULT 1,
+    term_id          INT UNSIGNED DEFAULT NULL,
+    teacher_id       INT UNSIGNED NOT NULL,
+    class_id         INT UNSIGNED NOT NULL,
+    subject_id       INT UNSIGNED NOT NULL,
+    day_of_week      ENUM('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday') NOT NULL,
+    start_time       TIME NOT NULL,
+    end_time         TIME NOT NULL,
+    room             VARCHAR(50) DEFAULT NULL,
+    is_active        TINYINT(1) NOT NULL DEFAULT 1,
+    created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE,
+    FOREIGN KEY (academic_year_id) REFERENCES academic_years(id) ON DELETE CASCADE,
+    FOREIGN KEY (term_id) REFERENCES terms(id) ON DELETE SET NULL,
+    FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
+    INDEX idx_tt_school (school_id),
+    INDEX idx_tt_teacher (teacher_id),
+    INDEX idx_tt_class (class_id),
+    INDEX idx_tt_subject (subject_id),
+    INDEX idx_tt_day (day_of_week),
+    INDEX idx_tt_times (day_of_week, start_time, end_time)
 );
 
 SELECT 'Admin Assist schema applied successfully.' AS status;
+

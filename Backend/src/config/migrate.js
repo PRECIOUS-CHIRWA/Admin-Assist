@@ -186,6 +186,86 @@ async function runMigration() {
         console.warn('[Migration] Unified account backfill note:', err.message);
     }
 
+    // 15. Create timetables table and seed initial entries
+    try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS timetables (
+                id               INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                school_id        INT UNSIGNED NOT NULL DEFAULT 1,
+                academic_year_id INT UNSIGNED NOT NULL DEFAULT 1,
+                term_id          INT UNSIGNED DEFAULT NULL,
+                teacher_id       INT UNSIGNED NOT NULL,
+                class_id         INT UNSIGNED NOT NULL,
+                subject_id       INT UNSIGNED NOT NULL,
+                day_of_week      ENUM('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday') NOT NULL,
+                start_time       TIME NOT NULL,
+                end_time         TIME NOT NULL,
+                room             VARCHAR(50) DEFAULT NULL,
+                is_active        TINYINT(1) NOT NULL DEFAULT 1,
+                created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE,
+                FOREIGN KEY (academic_year_id) REFERENCES academic_years(id) ON DELETE CASCADE,
+                FOREIGN KEY (term_id) REFERENCES terms(id) ON DELETE SET NULL,
+                FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+                FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
+                INDEX idx_tt_school (school_id),
+                INDEX idx_tt_teacher (teacher_id),
+                INDEX idx_tt_class (class_id),
+                INDEX idx_tt_subject (subject_id),
+                INDEX idx_tt_day (day_of_week),
+                INDEX idx_tt_times (day_of_week, start_time, end_time)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `);
+        console.log('[Migration] Ensured timetables table exists.');
+
+        // Seed sample timetable entries if none exist
+        const [ttCount] = await pool.query('SELECT COUNT(*) as cnt FROM timetables');
+        if (ttCount[0].cnt === 0) {
+            const [assignments] = await pool.query(`
+                SELECT ts.teacher_id, ts.class_id, ts.subject_id, ts.academic_year_id,
+                       u.school_id
+                FROM teacher_subjects ts
+                JOIN users u ON u.id = ts.teacher_id
+                LIMIT 10
+            `);
+
+            if (assignments.length > 0) {
+                const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+                const slots = [
+                    { start: '08:00:00', end: '08:50:00', room: 'Room 1' },
+                    { start: '09:00:00', end: '09:50:00', room: 'Room 2' },
+                    { start: '10:20:00', end: '11:10:00', room: 'Lab 1' },
+                    { start: '11:20:00', end: '12:10:00', room: 'Room 3' },
+                    { start: '13:00:00', end: '13:50:00', room: 'Room 4' }
+                ];
+
+                for (let i = 0; i < assignments.length; i++) {
+                    const asgn = assignments[i];
+                    // Spread across days
+                    const day1 = days[i % days.length];
+                    const day2 = days[(i + 2) % days.length];
+                    const slot = slots[i % slots.length];
+                    const slot2 = slots[(i + 1) % slots.length];
+
+                    await pool.query(`
+                        INSERT INTO timetables (school_id, academic_year_id, teacher_id, class_id, subject_id, day_of_week, start_time, end_time, room)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?),
+                               (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    `, [
+                        asgn.school_id || 1, asgn.academic_year_id || 1, asgn.teacher_id, asgn.class_id, asgn.subject_id, day1, slot.start, slot.end, slot.room,
+                        asgn.school_id || 1, asgn.academic_year_id || 1, asgn.teacher_id, asgn.class_id, asgn.subject_id, day2, slot2.start, slot2.end, slot2.room
+                    ]);
+                }
+                console.log('[Migration] Seeded baseline timetable entries for active teachers.');
+            }
+        }
+    } catch (err) {
+        console.warn('[Migration] Timetables table migration notice:', err.message);
+    }
+
     console.log('[Migration] Database migration completed successfully!');
 }
 

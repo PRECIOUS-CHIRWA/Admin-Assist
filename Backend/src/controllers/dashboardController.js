@@ -94,11 +94,30 @@ const getDashboardStats = async (req, res) => {
                 [userId]
             );
 
+            // Today's timetable periods for teacher
+            let todayClassesCount = 0;
+            let todayDayName = "Monday";
+            try {
+                const dayFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "Africa/Lusaka", weekday: "long" });
+                todayDayName = dayFormatter.format(new Date());
+                const [[ttToday]] = await pool.execute(
+                    `SELECT COUNT(*) AS todayClassesCount
+                     FROM timetables
+                     WHERE teacher_id = ? AND school_id = ? AND day_of_week = ? AND is_active = 1`,
+                    [userId, schoolId, todayDayName]
+                );
+                todayClassesCount = Number(ttToday?.todayClassesCount) || 0;
+            } catch (ttErr) {
+                console.warn("dashboard staff timetable query note:", ttErr.message);
+            }
+
             return res.json({
                 role: "staff",
                 assignedClassesCount: assignedClassesList.length,
                 assignedSubjectsCount: assignedSubjectsList.length,
                 studentsCount: totalStudentsInClasses,
+                todayClassesCount,
+                todayDayName,
                 assignedClasses: assignedClassesList,
                 assignedSubjects: assignedSubjectsList,
                 todayAttendance,
