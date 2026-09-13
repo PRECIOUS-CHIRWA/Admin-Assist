@@ -18,9 +18,9 @@ const {
 // All timetable endpoints require authentication
 router.use(authenticate);
 
-// Teacher-scoped timetable endpoints (accessible by staff, admin, headmaster)
-router.get("/my/today", authorize("staff", "admin", "headmaster"), getMyTodayTimetable);
-router.get("/my/week", authorize("staff", "admin", "headmaster"), getMyWeekTimetable);
+// Scoped timetable endpoints: Staff/Teacher (personal teaching schedule) and Student/Parent (class schedule)
+router.get("/my/today", authorize("staff", "admin", "headmaster", "user"), getMyTodayTimetable);
+router.get("/my/week", authorize("staff", "admin", "headmaster", "user"), getMyWeekTimetable);
 
 // Administrative management endpoints
 router.get("/", authorize("admin", "headmaster"), listTimetables);

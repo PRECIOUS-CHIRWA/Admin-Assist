@@ -40,47 +40,61 @@ const formatDate = (value) => {
     return date.toISOString().split("T")[0];
 };
 
-const toApiShape = (row) => ({
-    id: row.id,
-    school_id: row.school_id,
-    user_id: row.user_id || null,
-    admissionNumber: row.admission_number,
-    admission_number: row.admission_number,
-    firstName: row.first_name,
-    first_name: row.first_name,
-    lastName: row.last_name,
-    last_name: row.last_name,
-    dateOfBirth: formatDate(row.date_of_birth),
-    date_of_birth: formatDate(row.date_of_birth),
-    gender: row.gender,
-    nrcNumber: row.nrc_number,
-    nrc_number: row.nrc_number,
-    homeAddress: row.home_address,
-    home_address: row.home_address,
-    district: row.district,
-    province: row.province,
-    grade: row.grade,
-    section: row.section,
-    class_id: row.class_id || null,
-    class_name: row.class_name || (row.grade ? `${row.grade} ${row.section || ''}`.trim() : '—'),
-    enrollmentDate: formatDate(row.enrollment_date),
-    enrollment_date: formatDate(row.enrollment_date),
-    previousSchool: row.previous_school,
-    previous_school: row.previous_school,
-    parentGuardianName: row.parent_guardian_name,
-    parent_guardian_name: row.parent_guardian_name,
-    guardian_name: row.parent_guardian_name,
-    relationship: row.relationship,
-    guardian_relationship: row.relationship,
-    phoneNumber: row.phone_number,
-    phone_number: row.phone_number,
-    guardian_phone: row.phone_number,
-    email: row.email,
-    guardian_email: row.email,
-    status: row.status || 'Active',
-    createdAt: row.created_at,
-    created_at: row.created_at,
-});
+const toApiShape = (row) => {
+    let accountStatus = "Not Created";
+    if (row.status === "Archived") {
+        accountStatus = "Archived";
+    } else if (row.user_id && (row.user_email || row.account_email)) {
+        accountStatus = (row.user_is_active === 0) ? "Disabled" : "Active";
+    } else if (row.user_id) {
+        accountStatus = (row.user_is_active === 0) ? "Disabled" : "Active";
+    }
+
+    return {
+        id: row.id,
+        school_id: row.school_id,
+        user_id: row.user_id || null,
+        account_status: accountStatus,
+        account_email: row.user_email || row.account_email || row.email || null,
+        account_is_active: row.user_is_active !== undefined ? Number(row.user_is_active) : (row.user_id ? 1 : 0),
+        admissionNumber: row.admission_number,
+        admission_number: row.admission_number,
+        firstName: row.first_name,
+        first_name: row.first_name,
+        lastName: row.last_name,
+        last_name: row.last_name,
+        dateOfBirth: formatDate(row.date_of_birth),
+        date_of_birth: formatDate(row.date_of_birth),
+        gender: row.gender,
+        nrcNumber: row.nrc_number,
+        nrc_number: row.nrc_number,
+        homeAddress: row.home_address,
+        home_address: row.home_address,
+        district: row.district,
+        province: row.province,
+        grade: row.grade,
+        section: row.section,
+        class_id: row.class_id || null,
+        class_name: row.class_name || (row.grade ? `${row.grade} ${row.section || ''}`.trim() : '—'),
+        enrollmentDate: formatDate(row.enrollment_date),
+        enrollment_date: formatDate(row.enrollment_date),
+        previousSchool: row.previous_school,
+        previous_school: row.previous_school,
+        parentGuardianName: row.parent_guardian_name,
+        parent_guardian_name: row.parent_guardian_name,
+        guardian_name: row.parent_guardian_name,
+        relationship: row.relationship,
+        guardian_relationship: row.relationship,
+        phoneNumber: row.phone_number,
+        phone_number: row.phone_number,
+        guardian_phone: row.phone_number,
+        email: row.email,
+        guardian_email: row.email,
+        status: row.status || 'Active',
+        createdAt: row.created_at,
+        created_at: row.created_at,
+    };
+};
 
 const REQUIRED_FIELDS = [
     "admissionNumber", "firstName", "lastName", "dateOfBirth", "gender",
@@ -100,6 +114,8 @@ const listStudents = async (req, res) => {
         const search = String(req.query.search || "").trim();
         const grade = String(req.query.grade || "").trim();
         const status = String(req.query.status || "").trim();
+        const classId = req.query.class_id || req.query.classId;
+        const includeArchived = req.query.include_archived === "true" || req.query.include_archived === "1";
 
         const conditions = ["s.school_id = ?"];
         const params = [schoolId];
@@ -116,7 +132,15 @@ const listStudents = async (req, res) => {
             params.push(term, term, term, term);
         }
         if (grade) { conditions.push("s.grade = ?"); params.push(grade); }
-        if (status) { conditions.push("s.status = ?"); params.push(status); }
+        if (classId) { conditions.push("s.class_id = ?"); params.push(classId); }
+
+        if (status) {
+            conditions.push("s.status = ?");
+            params.push(status);
+        } else if (!includeArchived) {
+            // By default, hide archived students from normal active lists
+            conditions.push("s.status != 'Archived'");
+        }
 
         const where = `WHERE ${conditions.join(" AND ")}`;
 
@@ -127,9 +151,12 @@ const listStudents = async (req, res) => {
 
         const [rows] = await pool.execute(
             `SELECT s.*,
+                    u.email AS user_email,
+                    u.is_active AS user_is_active,
                     CONCAT(c.grade_level, IF(c.stream != '', CONCAT(' ', c.stream), '')) AS class_name
              FROM students s
              LEFT JOIN classes c ON c.id = s.class_id
+             LEFT JOIN users u ON u.id = s.user_id
              ${where}
              ORDER BY s.id DESC LIMIT ${limit} OFFSET ${offset}`,
             params
@@ -148,9 +175,12 @@ const getStudentById = async (req, res) => {
         const schoolId = req.user?.school_id || 1;
         const [rows] = await pool.execute(
             `SELECT s.*,
+                    u.email AS user_email,
+                    u.is_active AS user_is_active,
                     CONCAT(c.grade_level, IF(c.stream != '', CONCAT(' ', c.stream), '')) AS class_name
              FROM students s
              LEFT JOIN classes c ON c.id = s.class_id
+             LEFT JOIN users u ON u.id = s.user_id
              WHERE s.id = ? AND s.school_id = ?
              LIMIT 1`,
             [req.params.id, schoolId]

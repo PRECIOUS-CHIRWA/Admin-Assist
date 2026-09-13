@@ -266,6 +266,59 @@ async function runMigration() {
         console.warn('[Migration] Timetables table migration notice:', err.message);
     }
 
+    // 16. Ensure departments table exists and seed defaults
+    try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS departments (
+                id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                school_id  INT UNSIGNED NOT NULL DEFAULT 1,
+                name       VARCHAR(100) NOT NULL,
+                code       VARCHAR(20) DEFAULT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE,
+                INDEX idx_dept_school (school_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `);
+
+        const [deptCount] = await pool.query('SELECT COUNT(*) as cnt FROM departments');
+        if (deptCount[0].cnt === 0) {
+            await pool.query(`
+                INSERT INTO departments (school_id, name, code) VALUES
+                (1, 'Mathematics', 'MATH'),
+                (1, 'Science', 'SCI'),
+                (1, 'Languages', 'LANG'),
+                (1, 'Social Sciences', 'SOC'),
+                (1, 'Business Studies', 'BUS'),
+                (1, 'Information & Communication Technology', 'ICT'),
+                (1, 'Practical Arts & Physical Education', 'PAPE')
+            `);
+            console.log('[Migration] Seeded default secondary school departments.');
+        }
+    } catch (err) {
+        console.warn('[Migration] Departments migration notice:', err.message);
+    }
+
+    // 17. Add staff position and department to users table
+    await addColumnIfNotExists('users', 'school_position', "VARCHAR(100) NOT NULL DEFAULT 'Teacher' AFTER role");
+    await addColumnIfNotExists('users', 'department', "VARCHAR(100) DEFAULT NULL AFTER school_position");
+
+    // 18. Allow 'Archived' status on students table
+    try {
+        await pool.query(`
+            ALTER TABLE students
+            MODIFY COLUMN status ENUM('Active','Inactive','Suspended','Archived') NOT NULL DEFAULT 'Active'
+        `);
+        console.log('[Migration] Updated students status column to support Archived.');
+    } catch (err) {
+        console.warn('[Migration] Students status column update notice:', err.message);
+    }
+
+    // 19. Ensure core_focus and class_teacher_id on classes table
+    await addColumnIfNotExists('classes', 'class_teacher_id', "INT UNSIGNED DEFAULT NULL AFTER stream");
+    await addColumnIfNotExists('classes', 'core_focus', "VARCHAR(100) DEFAULT NULL AFTER capacity");
+
     console.log('[Migration] Database migration completed successfully!');
 }
 
