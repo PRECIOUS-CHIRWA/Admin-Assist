@@ -82,12 +82,21 @@ const searchStudents = async (req, res) => {
 
         const [rows] = await pool.execute(
             `SELECT s.id, s.admission_number, s.first_name, s.last_name, s.gender, s.grade, s.section,
-                    s.enrollment_date, s.date_of_birth, s.status, s.class_id,
+                    s.enrollment_date, s.date_of_birth, s.status, s.class_id, s.user_id,
                     s.parent_guardian_name AS guardian_name,
                     s.phone_number AS guardian_phone,
+                    u.email AS account_email,
+                    u.is_active AS user_is_active,
+                    CASE 
+                        WHEN s.status = 'Archived' THEN 'Archived'
+                        WHEN s.user_id IS NOT NULL AND u.is_active = 0 THEN 'Disabled'
+                        WHEN s.user_id IS NOT NULL THEN 'Active'
+                        ELSE 'Not Created'
+                    END AS account_status,
                     CONCAT(c.grade_level, IF(c.stream != '', CONCAT(' ', c.stream), '')) AS class_name
              FROM students s
              LEFT JOIN classes c ON c.id = s.class_id
+             LEFT JOIN users u ON u.id = s.user_id
              ${where}
              ORDER BY s.id DESC
              LIMIT 500`,

@@ -331,6 +331,20 @@
         // Class record selector
         document.getElementById('recordClassSelect')?.addEventListener('change', (e) => loadClassRecord(e.target.value));
 
+        // Manage Class Timetable button
+        document.getElementById('manageClassTimetableBtn')?.addEventListener('click', () => {
+            if (currentClassRecord && currentClassRecord.class) {
+                window.location.href = `timetable-management.html?classId=${currentClassRecord.class.id}`;
+            }
+        });
+
+        // Assign Class Teacher modal
+        document.getElementById('assignClassTeacherBtn')?.addEventListener('click', openClassTeacherModal);
+        document.getElementById('quickChangeTeacherBtn')?.addEventListener('click', openClassTeacherModal);
+        document.getElementById('closeClassTeacherModalBtn')?.addEventListener('click', closeClassTeacherModal);
+        document.getElementById('cancelClassTeacherBtn')?.addEventListener('click', closeClassTeacherModal);
+        document.getElementById('saveClassTeacherBtn')?.addEventListener('click', saveClassTeacher);
+
         // Focus modal
         document.getElementById('editFocusBtn')?.addEventListener('click', openFocusModal);
         document.getElementById('closeFocusModal')?.addEventListener('click', closeFocusModal);
@@ -381,12 +395,20 @@
         const empty = document.getElementById('classRecordEmpty');
         const tableWrap = document.getElementById('classRecordTableWrap');
         const editBtn = document.getElementById('editFocusBtn');
+        const timetableBtn = document.getElementById('manageClassTimetableBtn');
+        const assignTeacherBtn = document.getElementById('assignClassTeacherBtn');
+        const quickChangeBtn = document.getElementById('quickChangeTeacherBtn');
+
         const user = (typeof getUser === 'function' && getUser()) || {};
         const isAdmin = (user.role === 'admin' || user.role === 'headmaster');
         const { class: cls, subjects, students } = data;
+
         if (placeholder) placeholder.hidden = true;
         if (overview) overview.style.display = 'block';
         if (editBtn) editBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+        if (timetableBtn) timetableBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+        if (assignTeacherBtn) assignTeacherBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+        if (quickChangeBtn) quickChangeBtn.style.display = isAdmin ? 'inline-flex' : 'none';
 
         // Title and teacher
         const titleEl = document.getElementById('classTitle');
@@ -457,6 +479,49 @@
 
     function closeFocusModal() {
         _hideModal('focusModal');
+    }
+
+    function openClassTeacherModal() {
+        if (!currentClassRecord) return;
+        const cls = currentClassRecord.class;
+        document.getElementById('classTeacherClassId').value = cls.id;
+        const nameEl = document.getElementById('classTeacherClassName');
+        if (nameEl) nameEl.textContent = cls.class_name || `${cls.grade_level} ${cls.stream}`.trim();
+
+        // Populate teachers dropdown
+        const select = document.getElementById('classTeacherSelect');
+        if (select) {
+            select.innerHTML = '<option value="">No Class Teacher (Unassigned)</option>' +
+                allTeachers.map(t => `<option value="${t.id}" ${String(t.id) === String(cls.class_teacher_id) ? 'selected' : ''}>${_esc(t.name)}</option>`).join('');
+        }
+        _showModal('classTeacherModal');
+    }
+
+    function closeClassTeacherModal() {
+        _hideModal('classTeacherModal');
+    }
+
+    async function saveClassTeacher() {
+        const classId = document.getElementById('classTeacherClassId').value;
+        const teacherId = document.getElementById('classTeacherSelect').value;
+        const saveBtn = document.getElementById('saveClassTeacherBtn');
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving…';
+
+        try {
+            const res = await apiFetch(`/api/classes/${classId}`, {
+                method: 'PUT',
+                body: JSON.stringify({ class_teacher_id: teacherId ? parseInt(teacherId, 10) : null }),
+            });
+            if (!res || !res.ok) throw new Error('Failed to assign class teacher');
+            closeClassTeacherModal();
+            await loadClassRecord(classId);
+        } catch (err) {
+            alert('Failed to assign class teacher: ' + err.message);
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save Class Teacher';
+        }
     }
 
     async function saveCoreFocus() {

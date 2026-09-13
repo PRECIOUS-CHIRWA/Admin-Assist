@@ -13,10 +13,25 @@
   let currentPage = 1;
   let allClasses = [];
   let deleteTargetId = null;
+  let archiveTargetId = null;
+  let currentUserRole = 'user';
 
   document.addEventListener('DOMContentLoaded', async function () {
+    try {
+      const u = JSON.parse(localStorage.getItem('user'));
+      if (u && u.role) currentUserRole = u.role;
+    } catch (e) {}
+
+    // Show Admin-only controls
+    const isAdmin = (currentUserRole === 'admin' || currentUserRole === 'headmaster');
+    const createAcctBtn = document.getElementById('openCreateAccountModalBtn');
+    if (createAcctBtn) {
+      createAcctBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+    }
+
     await Promise.all([loadClasses(), loadStudents()]);
     bindEvents();
+    bindAccountEvents();
   });
 
   /* ── Data loading ─────────────────────────────────────────────── */
@@ -61,14 +76,24 @@
   function applyFilters() {
     const q = (document.getElementById('studentSearch').value || '').toLowerCase().trim();
     const classId = document.getElementById('classFilter').value;
-    const status = document.getElementById('statusFilter').value;
+    const statusVal = document.getElementById('statusFilter').value;
 
     filtered = allStudents.filter(function (s) {
       const name = (s.first_name + ' ' + s.last_name).toLowerCase();
       const adm = (s.admission_number || '').toLowerCase();
       const matchQ = !q || name.includes(q) || adm.includes(q);
       const matchC = !classId || String(s.class_id) === classId;
-      const matchS = !status || (s.status || 'Active') === status;
+      
+      let matchS = true;
+      const sStatus = s.status || 'Active';
+      if (statusVal === '') {
+        matchS = sStatus !== 'Archived';
+      } else if (statusVal === 'All') {
+        matchS = true;
+      } else {
+        matchS = sStatus.toLowerCase() === statusVal.toLowerCase();
+      }
+
       return matchQ && matchC && matchS;
     });
 
@@ -90,36 +115,82 @@
       return;
     }
 
+    const isAdmin = (currentUserRole === 'admin' || currentUserRole === 'headmaster');
+
     tbody.innerHTML = page.map(function (s, i) {
       const rowNum = start + i + 1;
       const name = _esc(s.first_name) + ' ' + _esc(s.last_name);
-      const initials = (s.first_name[0] || '') + (s.last_name[0] || '');
+      const initials = ((s.first_name[0] || '') + (s.last_name[0] || '')).toUpperCase();
       const cls = _esc(s.class_name || '—');
       const gender = _esc(s.gender || '—');
-      const enrolled = _fmtDate(s.enrollment_date);
       const status = s.status || 'Active';
-      const badgeCls = status === 'Active' ? 'badge-active' : status === 'Suspended' ? 'badge-suspended' : 'badge-inactive';
+      const badgeCls = status === 'Active' ? 'badge-active' : status === 'Suspended' ? 'badge-suspended' : status === 'Archived' ? 'badge-suspended' : 'badge-inactive';
+
+      // Unified Account status badge
+      const acctStatus = s.account_status || (s.user_id ? 'Active' : 'Not Created');
+      let acctBadge = '';
+      if (acctStatus === 'Active') {
+        acctBadge = '<span class="aa-badge" style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;font-size:11.5px;padding:3px 8px;border-radius:12px;font-weight:600">Active</span>';
+      } else if (acctStatus === 'Disabled') {
+        acctBadge = '<span class="aa-badge" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:11.5px;padding:3px 8px;border-radius:12px;font-weight:600">Disabled</span>';
+      } else if (acctStatus === 'Archived') {
+        acctBadge = '<span class="aa-badge" style="background:#fef2f2;color:#991b1b;border:1px solid #fecaca;font-size:11.5px;padding:3px 8px;border-radius:12px;font-weight:600">Archived</span>';
+      } else {
+        acctBadge = '<span class="aa-badge" style="background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;font-size:11.5px;padding:3px 8px;border-radius:12px;font-weight:600">Not Created</span>';
+      }
+
+      // Actions
+      let actionButtons = '<button class="pg-action-btn" data-view="' + s.id + '">View</button>';
+      if (isAdmin) {
+        if (acctStatus === 'Not Created' && status !== 'Archived') {
+          actionButtons += '<button class="pg-action-btn" data-create-acct="' + s.id + '" title="Create Unified Account">+ Account</button>';
+        } else if (acctStatus === 'Active') {
+          actionButtons += '<button class="pg-action-btn" data-toggle-acct="' + s.id + '" data-action="disable" title="Disable account access">Disable</button>';
+        } else if (acctStatus === 'Disabled') {
+          actionButtons += '<button class="pg-action-btn" data-toggle-acct="' + s.id + '" data-action="enable" title="Enable account access">Enable</button>';
+        }
+
+        if (status === 'Archived') {
+          actionButtons += '<button class="pg-action-btn" data-restore="' + s.id + '" data-name="' + name + '" style="color:#059669">Restore</button>';
+        } else {
+          actionButtons += '<button class="pg-action-btn" data-archive="' + s.id + '" data-name="' + name + '" title="Archive student record">Archive</button>';
+        }
+
+        actionButtons += '<button class="pg-action-btn pg-action-btn-danger" data-del="' + s.id + '" data-name="' + name + '">Remove</button>';
+      }
 
       return '<tr>' +
         '<td class="row-num">' + rowNum + '</td>' +
         '<td><div class="pg-student-cell">' +
-        '<div class="pg-student-avatar">' + _esc(initials.toUpperCase()) + '</div>' +
-        '<div><div class="pg-student-name">' + name + '</div></div>' +
+        '<div class="pg-student-avatar">' + initials + '</div>' +
+        '<div>' +
+          '<div class="pg-student-name">' + name + '</div>' +
+          (s.account_email ? '<div style="font-size:11px;color:var(--aa-text-muted);font-family:monospace">' + _esc(s.account_email) + '</div>' : '') +
+        '</div>' +
         '</div></td>' +
-        '<td>' + _esc(s.admission_number || '—') + '</td>' +
+        '<td><span style="font-family:monospace;font-weight:600">' + _esc(s.admission_number || '—') + '</span></td>' +
         '<td>' + cls + '</td>' +
         '<td>' + gender + '</td>' +
-        '<td>' + enrolled + '</td>' +
         '<td><span class="' + badgeCls + '">' + _esc(status) + '</span></td>' +
-        '<td class="pg-actions-cell">' +
-        '<button class="pg-action-btn" data-view="' + s.id + '">View</button>' +
-        '<button class="pg-action-btn pg-action-btn-danger" data-del="' + s.id + '" data-name="' + name + '">Remove</button>' +
-        '</td>' +
+        '<td>' + acctBadge + '</td>' +
+        '<td class="pg-actions-cell">' + actionButtons + '</td>' +
         '</tr>';
     }).join('');
 
     tbody.querySelectorAll('[data-view]').forEach(function (btn) {
       btn.addEventListener('click', function () { openViewModal(btn.dataset.view); });
+    });
+    tbody.querySelectorAll('[data-create-acct]').forEach(function (btn) {
+      btn.addEventListener('click', function () { openCreateAccountModal(btn.dataset.createAcct); });
+    });
+    tbody.querySelectorAll('[data-toggle-acct]').forEach(function (btn) {
+      btn.addEventListener('click', function () { handleToggleAccount(btn.dataset.toggleAcct, btn.dataset.action); });
+    });
+    tbody.querySelectorAll('[data-archive]').forEach(function (btn) {
+      btn.addEventListener('click', function () { openArchiveModal(btn.dataset.archive, btn.dataset.name); });
+    });
+    tbody.querySelectorAll('[data-restore]').forEach(function (btn) {
+      btn.addEventListener('click', function () { handleRestoreStudent(btn.dataset.restore, btn.dataset.name); });
     });
     tbody.querySelectorAll('[data-del]').forEach(function (btn) {
       btn.addEventListener('click', function () { openDeleteModal(btn.dataset.del, btn.dataset.name); });
@@ -315,6 +386,299 @@
     document.getElementById('cancelDeleteBtn').addEventListener('click', function () { document.getElementById('deleteModal').hidden = true; });
     document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
     document.getElementById('deleteModal').addEventListener('click', function (e) { if (e.target.id === 'deleteModal') document.getElementById('deleteModal').hidden = true; });
+  }
+
+  /* ── Unified Student & Guardian Account Management ───────────── */
+  function selectStudentForAccount(student) {
+    if (!student) return;
+    document.getElementById('acctTargetStudentId').value = student.id;
+    document.getElementById('acctStudentName').textContent = (student.first_name || '') + ' ' + (student.last_name || '');
+    document.getElementById('acctStudentClass').textContent = student.class_name || '—';
+    document.getElementById('acctStudentAdm').textContent = student.admission_number || '—';
+    document.getElementById('acctStudentStatus').textContent = student.status || 'Active';
+    document.getElementById('acctSelectedCard').style.display = 'block';
+
+    const hasAccount = student.user_id || (student.account_status && student.account_status !== 'Not Created');
+    const existsAlert = document.getElementById('acctExistsAlert');
+    const formFields = document.getElementById('acctFormFields');
+    const submitBtn = document.getElementById('submitCreateAcctBtn');
+
+    if (hasAccount) {
+      existsAlert.style.display = 'block';
+      document.getElementById('acctExistsEmail').textContent = student.account_email || 'Linked User';
+      submitBtn.textContent = 'Update / Reset Account';
+    } else {
+      existsAlert.style.display = 'none';
+      submitBtn.textContent = 'Create Account';
+    }
+    formFields.style.display = 'block';
+
+    // Suggest email
+    const admClean = (student.admission_number || 'std').toLowerCase().replace(/[^a-z0-9]/g, '.');
+    const fNameClean = (student.first_name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const lNameClean = (student.last_name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const suggestedEmail = student.account_email || (fNameClean && lNameClean ? fNameClean + '.' + lNameClean + '@school.local' : admClean + '@school.local');
+    document.getElementById('acctEmailInput').value = suggestedEmail;
+
+    if (!document.getElementById('acctPasswordInput').value) {
+      document.getElementById('acctPasswordInput').value = generateSecureTempPass();
+    }
+  }
+
+  function openCreateAccountModal(studentId) {
+    const modal = document.getElementById('unifiedAccountModal');
+    if (!modal) return;
+
+    const actionMsg = document.getElementById('acctActionMsg');
+    if (actionMsg) { actionMsg.style.display = 'none'; actionMsg.textContent = ''; }
+    document.getElementById('acctSearchInput').value = '';
+    document.getElementById('acctSearchResults').style.display = 'none';
+    document.getElementById('acctPasswordInput').value = generateSecureTempPass();
+
+    if (studentId) {
+      const s = allStudents.find(function (item) { return String(item.id) === String(studentId); });
+      document.getElementById('acctSearchGroup').style.display = 'none';
+      if (s) selectStudentForAccount(s);
+    } else {
+      document.getElementById('acctSearchGroup').style.display = 'block';
+      document.getElementById('acctSelectedCard').style.display = 'none';
+      document.getElementById('acctExistsAlert').style.display = 'none';
+      document.getElementById('acctFormFields').style.display = 'none';
+      document.getElementById('acctTargetStudentId').value = '';
+      document.getElementById('submitCreateAcctBtn').textContent = 'Create Account';
+    }
+
+    modal.hidden = false;
+  }
+
+  function generateSecureTempPass() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    let p = 'Std#';
+    for (let i = 0; i < 6; i++) {
+      p += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return p;
+  }
+
+  async function submitUnifiedAccount(resetMode) {
+    const studentId = document.getElementById('acctTargetStudentId').value;
+    const email = document.getElementById('acctEmailInput').value.trim();
+    const password = document.getElementById('acctPasswordInput').value.trim();
+    const allowGuardian = document.getElementById('acctGuardianAccess').checked;
+    const btn = document.getElementById('submitCreateAcctBtn');
+    const msgBox = document.getElementById('acctActionMsg');
+
+    if (!studentId) {
+      _toast('Please select a student first.', 'error');
+      return;
+    }
+    if (!email || !email.includes('@')) {
+      _toast('Please provide a valid login email address.', 'error');
+      return;
+    }
+    if (!password || password.length < 6) {
+      _toast('Password must be at least 6 characters.', 'error');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+    if (msgBox) msgBox.style.display = 'none';
+
+    try {
+      const res = await apiFetch('/api/students/' + studentId + '/account', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: email,
+          password: password,
+          allow_guardian: allowGuardian,
+          reset: resetMode === true
+        })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to create student account');
+      }
+
+      _toast(data.message || 'Unified Student & Guardian account established successfully.', 'success');
+      document.getElementById('unifiedAccountModal').hidden = true;
+      await loadStudents();
+    } catch (err) {
+      if (msgBox) {
+        msgBox.style.display = 'block';
+        msgBox.style.background = '#fef2f2';
+        msgBox.style.color = '#991b1b';
+        msgBox.style.border = '1px solid #fecaca';
+        msgBox.textContent = 'Error: ' + err.message;
+      }
+      _toast(err.message || 'Action failed', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Create Account';
+    }
+  }
+
+  async function handleToggleAccount(studentId, action) {
+    const confirmText = action === 'disable'
+      ? 'Disable login access for this student & guardian?'
+      : 'Re-enable login access for this student & guardian?';
+    if (!confirm(confirmText)) return;
+
+    try {
+      const res = await apiFetch('/api/students/' + studentId + '/account/status', {
+        method: 'PUT',
+        body: JSON.stringify({ is_active: action === 'enable' ? 1 : 0 })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Failed to update account status');
+      _toast(data.message || 'Account status updated.', 'success');
+      await loadStudents();
+    } catch (err) {
+      _toast(err.message || 'Failed to update account status', 'error');
+    }
+  }
+
+  /* ── Archive & Restore Lifecycle ───────────────────────────────── */
+  function openArchiveModal(studentId, name) {
+    archiveTargetId = studentId;
+    const txt = document.getElementById('archiveModalText');
+    if (txt) {
+      txt.innerHTML = 'Are you sure you want to archive <strong>' + _esc(name) + '</strong>? Historical academic results, transcripts, and attendance records will be retained, but the student’s portal account will be deactivated and removed from active class rosters.';
+    }
+    document.getElementById('archiveModal').hidden = false;
+  }
+
+  async function confirmArchive() {
+    if (!archiveTargetId) return;
+    const btn = document.getElementById('confirmArchiveBtn');
+    btn.disabled = true;
+    btn.textContent = 'Archiving…';
+
+    try {
+      const res = await apiFetch('/api/students/' + archiveTargetId + '/archive', {
+        method: 'PUT',
+        body: JSON.stringify({ reason: 'Admin lifecycle archive' })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Failed to archive student');
+      _toast('Student archived successfully.', 'success');
+      document.getElementById('archiveModal').hidden = true;
+      archiveTargetId = null;
+      await loadStudents();
+    } catch (err) {
+      _toast(err.message || 'Failed to archive student', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Yes, Archive';
+    }
+  }
+
+  async function handleRestoreStudent(studentId, name) {
+    if (!confirm('Restore active student record for ' + name + '?')) return;
+
+    try {
+      const res = await apiFetch('/api/students/' + studentId + '/restore', {
+        method: 'PUT',
+        body: JSON.stringify({})
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Failed to restore student');
+      _toast('Student record restored to active roster.', 'success');
+      await loadStudents();
+    } catch (err) {
+      _toast(err.message || 'Failed to restore student', 'error');
+    }
+  }
+
+  function bindAccountEvents() {
+    const openBtn = document.getElementById('openCreateAccountModalBtn');
+    if (openBtn) {
+      openBtn.addEventListener('click', function () { openCreateAccountModal(null); });
+    }
+
+    const closeAcctBtn = document.getElementById('closeAcctModalBtn');
+    if (closeAcctBtn) closeAcctBtn.addEventListener('click', function () { document.getElementById('unifiedAccountModal').hidden = true; });
+    const cancelAcctBtn = document.getElementById('cancelAcctModalBtn');
+    if (cancelAcctBtn) cancelAcctBtn.addEventListener('click', function () { document.getElementById('unifiedAccountModal').hidden = true; });
+
+    document.getElementById('acctGenPassBtn')?.addEventListener('click', function () {
+      document.getElementById('acctPasswordInput').value = generateSecureTempPass();
+    });
+
+    document.getElementById('submitCreateAcctBtn')?.addEventListener('click', function () {
+      submitUnifiedAccount(false);
+    });
+
+    document.getElementById('acctResetPassBtn')?.addEventListener('click', function () {
+      submitUnifiedAccount(true);
+    });
+
+    document.getElementById('acctToggleStatusBtn')?.addEventListener('click', async function () {
+      const studentId = document.getElementById('acctTargetStudentId').value;
+      if (!studentId) return;
+      const s = allStudents.find(function (item) { return String(item.id) === String(studentId); });
+      const currentActive = s && s.user_is_active === 1;
+      await handleToggleAccount(studentId, currentActive ? 'disable' : 'enable');
+      document.getElementById('unifiedAccountModal').hidden = true;
+    });
+
+    // Autocomplete search inside modal
+    const acctSearchInput = document.getElementById('acctSearchInput');
+    const acctResults = document.getElementById('acctSearchResults');
+    if (acctSearchInput && acctResults) {
+      acctSearchInput.addEventListener('input', function () {
+        const val = acctSearchInput.value.toLowerCase().trim();
+        if (!val || val.length < 2) {
+          acctResults.style.display = 'none';
+          acctResults.innerHTML = '';
+          return;
+        }
+
+        const matches = allStudents.filter(function (s) {
+          const name = (s.first_name + ' ' + s.last_name).toLowerCase();
+          const adm = (s.admission_number || '').toLowerCase();
+          return name.includes(val) || adm.includes(val);
+        }).slice(0, 8);
+
+        if (!matches.length) {
+          acctResults.innerHTML = '<div style="padding:8px 12px;color:var(--aa-text-muted);font-size:12px">No students found</div>';
+          acctResults.style.display = 'block';
+          return;
+        }
+
+        acctResults.innerHTML = matches.map(function (s) {
+          const name = _esc(s.first_name + ' ' + s.last_name);
+          const adm = _esc(s.admission_number || 'No Adm');
+          const cls = _esc(s.class_name || '—');
+          return '<div class="acct-search-item" data-id="' + s.id + '" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--aa-border,#eee);font-size:13px;display:flex;justify-content:space-between;align-items:center">' +
+            '<div><strong>' + name + '</strong> <span style="font-family:monospace;color:var(--aa-text-muted);font-size:11.5px">(' + adm + ')</span></div>' +
+            '<span class="aa-badge" style="font-size:11px">' + cls + '</span>' +
+            '</div>';
+        }).join('');
+        acctResults.style.display = 'block';
+
+        acctResults.querySelectorAll('.acct-search-item').forEach(function (el) {
+          el.addEventListener('click', function () {
+            const sid = el.dataset.id;
+            const target = allStudents.find(function (item) { return String(item.id) === String(sid); });
+            if (target) {
+              selectStudentForAccount(target);
+              acctResults.style.display = 'none';
+            }
+          });
+        });
+      });
+    }
+
+    // Archive modal events
+    document.getElementById('closeArchiveModalBtn')?.addEventListener('click', function () {
+      document.getElementById('archiveModal').hidden = true;
+    });
+    document.getElementById('cancelArchiveBtn')?.addEventListener('click', function () {
+      document.getElementById('archiveModal').hidden = true;
+    });
+    document.getElementById('confirmArchiveBtn')?.addEventListener('click', confirmArchive);
   }
 
   /* ── Helpers ───────────────────────────────────────────────────── */

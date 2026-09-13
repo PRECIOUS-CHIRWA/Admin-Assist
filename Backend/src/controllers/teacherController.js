@@ -70,6 +70,10 @@ const listTeachers = async (req, res) => {
 
         const [teachers] = await pool.execute(
             `SELECT u.id, u.name, u.email, u.role, u.is_active, u.last_login_at, u.created_at,
+                    COALESCE(u.school_position, 'Teacher') AS school_position,
+                    COALESCE(u.department, 'Unassigned') AS department,
+                    (SELECT GROUP_CONCAT(CONCAT(c.grade_level, IF(c.stream != '', CONCAT(' ', c.stream), '')) SEPARATOR ', ')
+                     FROM classes c WHERE c.class_teacher_id = u.id) AS class_teacher_of,
                     GROUP_CONCAT(DISTINCT sub.subject_name ORDER BY sub.subject_name SEPARATOR ', ') AS subjects
              FROM users u
              LEFT JOIN teacher_subjects ts ON ts.teacher_id = u.id
@@ -88,12 +92,36 @@ const listTeachers = async (req, res) => {
     }
 };
 
+// ─── GET /api/teachers/departments ────────────────────────────────────────────
+const listDepartments = async (req, res) => {
+    try {
+        const [rows] = await pool.execute("SELECT id, name, code FROM departments ORDER BY name ASC");
+        res.json({ departments: rows });
+    } catch (err) {
+        // Fallback standard Zambian secondary departments if table query fails
+        const fallback = [
+            { id: 1, name: "Mathematics", code: "MATH" },
+            { id: 2, name: "Science", code: "SCI" },
+            { id: 3, name: "Languages", code: "LANG" },
+            { id: 4, name: "Social Sciences", code: "SOC" },
+            { id: 5, name: "Business Studies", code: "BUS" },
+            { id: 6, name: "Information & Communication Technology", code: "ICT" },
+            { id: 7, name: "Practical Arts & Physical Education", code: "PAPE" },
+        ];
+        res.json({ departments: fallback });
+    }
+};
+
 // ─── GET /api/teachers/:id ────────────────────────────────────────────────────
 const getTeacherById = async (req, res) => {
     try {
         const [[teacher]] = await pool.execute(
-            `SELECT id, name, email, role, is_active, last_login_at, created_at
-             FROM users WHERE id = ? AND role IN ('staff', 'headmaster') LIMIT 1`,
+            `SELECT u.id, u.name, u.email, u.role, u.is_active, u.last_login_at, u.created_at,
+                    COALESCE(u.school_position, 'Teacher') AS school_position,
+                    COALESCE(u.department, 'Unassigned') AS department,
+                    (SELECT GROUP_CONCAT(CONCAT(c.grade_level, IF(c.stream != '', CONCAT(' ', c.stream), '')) SEPARATOR ', ')
+                     FROM classes c WHERE c.class_teacher_id = u.id) AS class_teacher_of
+             FROM users u WHERE u.id = ? AND u.role IN ('staff', 'headmaster') LIMIT 1`,
             [req.params.id]
         );
         if (!teacher) return res.status(404).json({ error: "Teacher not found" });
@@ -121,7 +149,7 @@ const getTeacherById = async (req, res) => {
 
 // ─── POST /api/teachers ───────────────────────────────────────────────────────
 const createTeacher = async (req, res) => {
-    const { name, email, role = "staff" } = req.body;
+    const { name, email, role = "staff", school_position = "Teacher", department = null } = req.body;
 
     if (!name || !email) return res.status(400).json({ error: "Name and email are required" });
     if (!["staff", "headmaster"].includes(role))
@@ -139,8 +167,8 @@ const createTeacher = async (req, res) => {
         const passwordHash   = await _hashPassword(tempPassword);
 
         const [result] = await pool.execute(
-            "INSERT INTO users (name, email, password_hash, role, is_active) VALUES (?, ?, ?, ?, 1)",
-            [name.trim(), email.trim().toLowerCase(), passwordHash, role]
+            "INSERT INTO users (name, email, password_hash, role, school_position, department, is_active) VALUES (?, ?, ?, ?, ?, ?, 1)",
+            [name.trim(), email.trim().toLowerCase(), passwordHash, role, school_position.trim() || 'Teacher', department ? department.trim() : null]
         );
         const newId = result.insertId;
 
@@ -155,7 +183,7 @@ const createTeacher = async (req, res) => {
             console.warn("sendNewAccountEmail failed (non-fatal):", emailErr.message);
         }
 
-        await _writeAuditLog(req.user.sub, "CREATE_TEACHER", "user", newId, { name, email, role });
+        await _writeAuditLog(req.user.sub, "CREATE_TEACHER", "user", newId, { name, email, role, school_position, department });
 
         // Trigger in-app welcome notification for the newly created teacher
         await sendNotification({
@@ -194,7 +222,7 @@ const createTeacher = async (req, res) => {
 
         res.status(201).json({
             message: "Teacher account created successfully",
-            teacher: { id: newId, name, email, role },
+            teacher: { id: newId, name, email, role, school_position, department },
             tempPassword, // returned so admin can note it; email also sent
         });
     } catch (err) {
@@ -206,7 +234,7 @@ const createTeacher = async (req, res) => {
 // ─── PUT /api/teachers/:id ────────────────────────────────────────────────────
 const updateTeacher = async (req, res) => {
     const { id } = req.params;
-    const { name, email, role } = req.body;
+    const { name, email, role, school_position, department } = req.body;
 
     try {
         const [[teacher]] = await pool.execute(
@@ -223,12 +251,20 @@ const updateTeacher = async (req, res) => {
         if (role && ["staff", "headmaster"].includes(role)) {
             fields.push("role = ?"); values.push(role);
         }
+        if (school_position !== undefined) {
+            fields.push("school_position = ?");
+            values.push(String(school_position || "Teacher").trim());
+        }
+        if (department !== undefined) {
+            fields.push("department = ?");
+            values.push(department ? String(department).trim() : null);
+        }
 
         if (!fields.length) return res.status(400).json({ error: "No valid fields to update" });
 
         values.push(id);
         await pool.execute(`UPDATE users SET ${fields.join(", ")} WHERE id = ?`, values);
-        await _writeAuditLog(req.user.sub, "UPDATE_TEACHER", "user", Number(id), { name, email, role });
+        await _writeAuditLog(req.user.sub, "UPDATE_TEACHER", "user", Number(id), { name, email, role, school_position, department });
 
         res.json({ message: "Teacher updated successfully" });
     } catch (err) {
@@ -238,6 +274,7 @@ const updateTeacher = async (req, res) => {
         res.status(500).json({ error: "Could not update teacher" });
     }
 };
+
 
 // ─── PATCH /api/teachers/:id/status ──────────────────────────────────────────
 const toggleTeacherStatus = async (req, res) => {
@@ -288,5 +325,5 @@ const deleteTeacher = async (req, res) => {
     }
 };
 
-module.exports = { listTeachers, getTeacherById, createTeacher, updateTeacher, toggleTeacherStatus, deleteTeacher };
+module.exports = { listTeachers, listDepartments, getTeacherById, createTeacher, updateTeacher, toggleTeacherStatus, deleteTeacher };
 

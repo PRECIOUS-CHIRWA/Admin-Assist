@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Timetable Management - Admin Assist</title>
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="aa-shared.css">
+  <link rel="stylesheet" href="admin-pages.css">
+  <link rel="stylesheet" href="loader.css">
+  <style>
+    /* ─── Timetable Management Styles ─── */
+    .tt-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .tt-title-group h1 {
+      margin: 0;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--aa-text, #0F172A);
+    }
+    .tt-title-group p {
+      margin: 4px 0 0;
+      font-size: 0.9rem;
+      color: var(--aa-text-muted, #64748B);
+    }
+
+    /* Filters bar */
+    .tt-filter-card {
+      background: var(--aa-surface, #FFFFFF);
+      border: 1px solid var(--aa-border, #E2E8F0);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .tt-filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      align-items: flex-end;
+    }
+    .tt-filter-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--aa-text-muted, #64748B);
+      margin-bottom: 0.35rem;
+    }
+    .tt-filter-group select {
+      width: 100%;
+      padding: 0.55rem 0.75rem;
+      border: 1px solid var(--aa-border, #CBD5E1);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      background: var(--aa-input-bg, #FFFFFF);
+      color: var(--aa-text, #0F172A);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .tt-filter-group select:focus {
+      outline: none;
+      border-color: var(--aa-blue, #2563EB);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    /* Weekly Grid Matrix */
+    .tt-matrix-card {
+      background: var(--aa-surface, #FFFFFF);
+      border: 1px solid var(--aa-border, #E2E8F0);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      overflow-x: auto;
+    }
+    .tt-matrix-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .tt-matrix-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--aa-text, #0F172A);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .tt-badge-count {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: rgba(37, 99, 235, 0.1);
+      color: var(--aa-blue, #2563EB);
+    }
+
+    /* Timetable Table Layout */
+    .tt-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 820px;
+    }
+    .tt-table th, .tt-table td {
+      border: 1px solid var(--aa-border, #E2E8F0);
+      padding: 10px;
+      vertical-align: top;
+    }
+    .tt-table th {
+      background: var(--aa-bg-secondary, #F8FAFC);
+      color: var(--aa-text, #0F172A);
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      text-align: center;
+    }
+    .tt-table th.time-col {
+      width: 130px;
+      text-align: left;
+    }
+    .tt-table td.time-cell {
+      background: var(--aa-bg-secondary, #F8FAFC);
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--aa-text-muted, #475569);
+      white-space: nowrap;
+    }
+
+    /* Timetable Entry Card inside Cell */
+    .tt-entry-card {
+      background: var(--aa-surface, #FFFFFF);
+      border-left: 4px solid var(--aa-blue, #2563EB);
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      transition: transform 0.15s, box-shadow 0.15s;
+      position: relative;
+    }
+    .tt-entry-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+    }
+    .tt-entry-subject {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--aa-text, #0F172A);
+      line-height: 1.2;
+    }
+    .tt-entry-class {
+      display: inline-block;
+      margin-top: 3px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: rgba(37,99,235,0.08);
+      color: var(--aa-blue, #2563EB);
+    }
+    .tt-entry-meta {
+      font-size: 0.78rem;
+      color: var(--aa-text-muted, #64748B);
+      margin-top: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .tt-entry-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed var(--aa-border, #E2E8F0);
+    }
+    .tt-btn-icon {
+      background: transparent;
+      border: none;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      color: var(--aa-text-muted, #64748B);
+      transition: background 0.15s, color 0.15s;
+    }
+    .tt-btn-icon:hover {
+      background: rgba(0,0,0,0.05);
+      color: var(--aa-text, #0F172A);
+    }
+    .tt-btn-icon.delete:hover {
+      background: rgba(220, 38, 38, 0.1);
+      color: #DC2626;
+    }
+
+    /* Modal Form Styling */
+    .tt-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 600px) {
+      .tt-form-grid { grid-template-columns: 1fr; }
+    }
+    .tt-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .tt-form-group.full-width {
+      grid-column: 1 / -1;
+    }
+    .tt-form-group label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--aa-text, #334155);
+    }
+    .tt-form-group input, .tt-form-group select {
+      padding: 0.6rem 0.8rem;
+      border: 1px solid var(--aa-border, #CBD5E1);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      background: var(--aa-input-bg, #FFFFFF);
+      color: var(--aa-text, #0F172A);
+    }
+    .tt-conflict-alert {
+      padding: 10px 14px;
+      background: #FEF2F2;
+      border-left: 4px solid #EF4444;
+      color: #991B1B;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+  </style>
+</head>
+
+<body data-page="timetable-management">
+  <div class="main-container">
+    <div class="breadcrumb">
+      <a href="dashboard.html">Dashboard</a> &gt; <span>Timetable Management</span>
+    </div>
+
+    <!-- ── Header Bar ── -->
+    <div class="tt-header-bar">
+      <div class="tt-title-group">
+        <h1>Timetable Management</h1>
+        <p>Schedule, manage, and validate weekly teaching and class schedules.</p>
+      </div>
+      <div>
+        <button type="button" class="aa-btn aa-btn-primary" id="openCreateEntryBtn">
+          + Create Timetable Entry
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Filters Card ── -->
+    <section class="tt-filter-card" aria-label="Timetable Filters">
+      <div class="tt-filters-grid">
+        <div class="tt-filter-group">
+          <label for="filterClass">Class</label>
+          <select id="filterClass">
+            <option value="">All Classes</option>
+          </select>
+        </div>
+
+        <div class="tt-filter-group">
+          <label for="filterTeacher">Teacher</label>
+          <select id="filterTeacher">
+            <option value="">All Teachers</option>
+          </select>
+        </div>
+
+        <div class="tt-filter-group">
+          <label for="filterDay">Day of Week</label>
+          <select id="filterDay">
+            <option value="">All Week (Mon–Fri)</option>
+            <option value="Monday">Monday</option>
+            <option value="Tuesday">Tuesday</option>
+            <option value="Wednesday">Wednesday</option>
+            <option value="Thursday">Thursday</option>
+            <option value="Friday">Friday</option>
+            <option value="Saturday">Saturday</option>
+          </select>
+        </div>
+
+        <div class="tt-filter-group">
+          <label for="filterYear">Academic Year</label>
+          <select id="filterYear">
+            <option value="">Loading…</option>
+          </select>
+        </div>
+
+        <div class="tt-filter-group">
+          <label for="filterTerm">Term</label>
+          <select id="filterTerm">
+            <option value="">All Terms</option>
+          </select>
+        </div>
+
+        <div class="tt-filter-group" style="display:flex; gap:0.5rem; align-items:flex-end;">
+          <button type="button" class="aa-btn aa-btn-secondary" id="resetFiltersBtn" style="width:100%;">
+            Reset
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Weekly Timetable Matrix ── -->
+    <section class="tt-matrix-card" aria-label="Weekly Timetable Grid">
+      <div class="tt-matrix-header">
+        <div class="tt-matrix-title">
+          <span>Weekly Schedule</span>
+          <span class="tt-badge-count" id="timetableCountBadge">0 Entries</span>
+        </div>
+        <div style="font-size: 0.85rem; color: var(--aa-text-muted);">
+          <span id="currentViewLabel">Showing all classes</span>
+        </div>
+      </div>
+
+      <div id="timetableEmptyState" class="aa-empty-state" style="padding: 3rem 1rem; text-align: center;" hidden>
+        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📅</div>
+        <h3 style="margin: 0 0 6px; font-weight: 700; color: var(--aa-text);">No Timetable Entries Found</h3>
+        <p style="margin: 0; color: var(--aa-text-muted); font-size: 0.9rem;">
+          No schedule matches the selected filters. Click <strong>+ Create Timetable Entry</strong> to add one.
+        </p>
+      </div>
+
+      <div id="timetableTableWrapper" style="overflow-x: auto;">
+        <table class="tt-table" id="timetableGridTable">
+          <thead>
+            <tr>
+              <th class="time-col">Time Slot</th>
+              <th>Monday</th>
+              <th>Tuesday</th>
+              <th>Wednesday</th>
+              <th>Thursday</th>
+              <th>Friday</th>
+            </tr>
+          </thead>
+          <tbody id="timetableGridBody">
+            <!-- Populated dynamically by timetable-management.js -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- ── Create / Edit Timetable Entry Modal ── -->
+  <div class="aa-modal-backdrop" id="entryModal" hidden>
+    <div class="aa-modal" style="max-width: 620px;" role="dialog" aria-labelledby="modalTitle">
+      <div class="aa-modal-header">
+        <h2 id="modalTitle">Create Timetable Entry</h2>
+        <button type="button" class="aa-modal-close" id="closeEntryModalBtn" aria-label="Close modal">&times;</button>
+      </div>
+
+      <div class="aa-modal-body">
+        <div class="tt-conflict-alert" id="modalConflictAlert">
+          <strong>Scheduling Conflict:</strong>
+          <span id="conflictMessage"></span>
+        </div>
+
+        <form id="entryForm" novalidate>
+          <input type="hidden" id="entryId" value="">
+
+          <div class="tt-form-grid">
+            <div class="tt-form-group">
+              <label for="formYear">Academic Year *</label>
+              <select id="formYear" required></select>
+            </div>
+
+            <div class="tt-form-group">
+              <label for="formTerm">Term *</label>
+              <select id="formTerm" required></select>
+            </div>
+
+            <div class="tt-form-group">
+              <label for="formClass">Class *</label>
+              <select id="formClass" required>
+                <option value="">Select Class…</option>
+              </select>
+            </div>
+
+            <div class="tt-form-group">
+              <label for="formSubject">Subject *</label>
+              <select id="formSubject" required>
+                <option value="">Select Subject…</option>
+              </select>
+            </div>
+
+            <div class="tt-form-group full-width">
+              <label for="formTeacher">Teacher *</label>
+              <select id="formTeacher" required>
+                <option value="">Select Teacher…</option>
+              </select>
+            </div>
+
+            <div class="tt-form-group">
+              <label for="formDay">Day of Week *</label>
+              <select id="formDay" required>
+                <option value="Monday">Monday</option>
+                <option value="Tuesday">Tuesday</option>
+                <option value="Wednesday">Wednesday</option>
+                <option value="Thursday">Thursday</option>
+                <option value="Friday">Friday</option>
+                <option value="Saturday">Saturday</option>
+              </select>
+            </div>
+
+            <div class="tt-form-group">
+              <label for="formRoom">Room / Location (Optional)</label>
+              <input type="text" id="formRoom" placeholder="e.g. Room 12, Lab 2" maxlength="50">
+            </div>
+
+            <!-- Editable Time Slots -->
+            <div class="tt-form-group">
+              <label for="formStartTime">Start Time *</label>
+              <input type="time" id="formStartTime" required step="300" value="08:00">
+            </div>
+
+            <div class="tt-form-group">
+              <label for="formEndTime">End Time *</label>
+              <input type="time" id="formEndTime" required step="300" value="09:00">
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="aa-modal-footer">
+        <button type="button" class="aa-btn aa-btn-secondary" id="cancelEntryBtn">Cancel</button>
+        <button type="button" class="aa-btn aa-btn-primary" id="saveEntryBtn">Save Timetable Entry</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Delete Confirmation Modal ── -->
+  <div class="aa-modal-backdrop" id="deleteConfirmModal" hidden>
+    <div class="aa-modal" style="max-width: 440px;" role="dialog" aria-labelledby="delModalTitle">
+      <div class="aa-modal-header">
+        <h2 id="delModalTitle">Confirm Deletion</h2>
+        <button type="button" class="aa-modal-close" id="closeDelModalBtn">&times;</button>
+      </div>
+      <div class="aa-modal-body">
+        <p id="delConfirmText" style="margin:0; font-size: 0.95rem; color: var(--aa-text);">
+          Are you sure you want to delete this timetable entry?
+        </p>
+      </div>
+      <div class="aa-modal-footer">
+        <button type="button" class="aa-btn aa-btn-secondary" id="cancelDelBtn">Cancel</button>
+        <button type="button" class="aa-btn aa-btn-danger" id="confirmDelBtn">Delete Entry</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Scripts ── -->
+  <script src="auth.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="navigation.js"></script>
+  <script src="loader.js"></script>
+  <script src="timetable-management.js"></script>
+</body>
+</html>

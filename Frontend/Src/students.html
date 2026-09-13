@@ -18,11 +18,14 @@
 
     <div class="pg-header">
       <div>
-        <h1>Students</h1>
-        <p>Manage all enrolled students across every class.</p>
+        <h1>Students &amp; Accounts</h1>
+        <p>Manage enrolled students, unified student/guardian accounts, and student records.</p>
       </div>
-      <div class="pg-header-actions">
-        <a href="enroll-student.html" class="pg-btn-primary">+ Add Student</a>
+      <div class="pg-header-actions" style="display:flex;gap:10px;align-items:center;">
+        <button type="button" class="aa-btn aa-btn-secondary" id="openCreateAccountModalBtn">
+          + Create Student Account
+        </button>
+        <a href="enroll-student.html" class="pg-btn-primary">+ Enroll Student</a>
       </div>
     </div>
 
@@ -34,14 +37,15 @@
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <input class="pg-search" type="search" id="studentSearch" placeholder="Search students…" autocomplete="off" />
+          <input class="pg-search" type="search" id="studentSearch" placeholder="Search by name or admission no…" autocomplete="off" />
         </div>
         <select class="pg-filter" id="classFilter">
           <option value="">All Classes</option>
         </select>
         <select class="pg-filter" id="statusFilter">
-          <option value="">All Status</option>
-          <option value="Active">Active</option>
+          <option value="">Active Students</option>
+          <option value="All">All Records (Inc. Archived)</option>
+          <option value="Archived">Archived Students</option>
           <option value="Inactive">Inactive</option>
           <option value="Suspended">Suspended</option>
         </select>
@@ -59,8 +63,8 @@
               <th>Admission No</th>
               <th>Class</th>
               <th>Gender</th>
-              <th>Enrolled</th>
               <th>Status</th>
+              <th>Account</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -173,12 +177,104 @@
       </div>
       <div class="pg-modal-footer">
         <button class="pg-btn-ghost" id="cancelDeleteBtn" type="button">Cancel</button>
-        <button class="pg-btn-danger" id="confirmDeleteBtn" type="button">Yes, Remove</button>
+        <button class="pg-btn-danger" id="confirmDeleteBtn" type="button">Delete</button>
       </div>
     </div>
   </div>
 
-  <div id="toast-container"></div>
+  <!-- ── Create / Manage Unified Student Account Modal ──────────── -->
+  <div class="pg-modal-backdrop" id="unifiedAccountModal" hidden>
+    <div class="pg-modal" style="max-width:520px">
+      <div class="pg-modal-header">
+        <h2 class="pg-modal-title" id="acctModalTitle">Unified Student &amp; Guardian Account</h2>
+        <button class="pg-modal-close" id="closeAcctModalBtn" type="button" aria-label="Close">×</button>
+      </div>
+      <div class="pg-modal-body">
+        <p style="font-size:13px;color:var(--aa-text-muted);margin:0 0 12px">
+          The unified account gives the student and authorized guardians access to view profile, attendance, results, and official transcripts.
+        </p>
+
+        <!-- Search Student (if opening generically) -->
+        <div class="pg-form-group" id="acctSearchGroup">
+          <label class="pg-form-label" for="acctSearchInput">Find Enrolled Student *</label>
+          <input class="pg-form-control" type="text" id="acctSearchInput" placeholder="Search by student name or admission number…" autocomplete="off" />
+          <div id="acctSearchResults" style="max-height:160px;overflow-y:auto;border:1px solid var(--aa-border,#e2e8f0);border-radius:6px;margin-top:4px;display:none;background:var(--aa-surface,#fff);"></div>
+        </div>
+
+        <!-- Selected Student Preview -->
+        <div id="acctSelectedCard" style="display:none;background:var(--aa-surface-2,#F8FAFC);border:1px solid var(--aa-border,#E2E8F0);border-radius:8px;padding:12px 14px;margin-bottom:14px">
+          <input type="hidden" id="acctTargetStudentId" value="" />
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <strong id="acctStudentName" style="font-size:15px;color:var(--aa-text)">—</strong>
+            <span id="acctStudentClass" class="aa-badge" style="background:rgba(37,99,235,.1);color:var(--aa-blue);font-weight:700">—</span>
+          </div>
+          <div style="font-size:12.5px;color:var(--aa-text-muted)">
+            Admission No: <strong id="acctStudentAdm" style="font-family:monospace;color:var(--aa-text)">—</strong> | 
+            Status: <span id="acctStudentStatus">—</span>
+          </div>
+        </div>
+
+        <!-- Notice if account already exists -->
+        <div id="acctExistsAlert" style="display:none;background:#FEF3C7;border-left:4px solid #F59E0B;padding:10px 12px;border-radius:6px;font-size:13px;color:#92400E;margin-bottom:14px">
+          <strong>Account Exists:</strong> This student already has an active or disabled account (<span id="acctExistsEmail"></span>).
+          <div style="margin-top:8px;display:flex;gap:8px">
+            <button type="button" class="aa-btn aa-btn-sm aa-btn-secondary" id="acctResetPassBtn">Reset / Re-generate Password</button>
+            <button type="button" class="aa-btn aa-btn-sm aa-btn-secondary" id="acctToggleStatusBtn">Toggle Status</button>
+          </div>
+        </div>
+
+        <!-- Account Form -->
+        <div id="acctFormFields">
+          <div class="pg-form-group">
+            <label class="pg-form-label" for="acctEmailInput">Username / Login Email *</label>
+            <input class="pg-form-control" type="email" id="acctEmailInput" placeholder="student@school.local" />
+          </div>
+
+          <div class="pg-form-group">
+            <label class="pg-form-label" for="acctPasswordInput">Temporary Password *</label>
+            <div style="display:flex;gap:8px">
+              <input class="pg-form-control" type="text" id="acctPasswordInput" placeholder="Enter or generate temporary password" />
+              <button type="button" class="aa-btn aa-btn-secondary" id="acctGenPassBtn" style="white-space:nowrap">Generate</button>
+            </div>
+            <span style="font-size:11.5px;color:var(--aa-text-muted);margin-top:2px">Min 6 characters. Will be emailed to guardian if email delivery is configured.</span>
+          </div>
+
+          <div class="pg-form-group" style="margin-top:10px">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;color:var(--aa-text)">
+              <input type="checkbox" id="acctGuardianAccess" checked />
+              <span>Enable Guardian Portal Access (shared unified view)</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="acctActionMsg" style="margin-top:12px;font-size:12.5px;padding:8px 12px;border-radius:6px;display:none"></div>
+      </div>
+      <div class="pg-modal-footer">
+        <button class="pg-btn-ghost" id="cancelAcctModalBtn" type="button">Cancel</button>
+        <button class="pg-btn-primary" id="submitCreateAcctBtn" type="button">Create Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Archive / Restore Confirmation Modal ───────────────────────── -->
+  <div class="pg-modal-backdrop" id="archiveModal" hidden>
+    <div class="pg-modal pg-modal-sm">
+      <div class="pg-modal-header">
+        <h2 class="pg-modal-title" id="archiveModalTitle">Archive Student Record</h2>
+        <button class="pg-modal-close" id="closeArchiveModalBtn" type="button" aria-label="Close">×</button>
+      </div>
+      <div class="pg-modal-body">
+        <p class="pg-confirm-text" id="archiveModalText">
+          Are you sure you want to archive this student record? Historical academic results, transcripts, and attendance records will be retained, but the student's account will be deactivated and removed from active rosters.
+        </p>
+      </div>
+      <div class="pg-modal-footer">
+        <button class="pg-btn-ghost" id="cancelArchiveBtn" type="button">Cancel</button>
+        <button class="pg-btn-danger" id="confirmArchiveBtn" type="button">Yes, Archive</button>
+      </div>
+    </div>
+  </div>
+
   <script src="loader.js"></script>
   <script src="auth.js"></script>
   <script src="auth-guard.js"></script>

@@ -27,11 +27,14 @@
 
     /* ── Data loading ─────────────────────────────────────────────── */
 
+    let allDepartments = [];
+
     async function loadSubjects() {
         try {
-            const [subRes, clsRes] = await Promise.all([
+            const [subRes, clsRes, deptRes] = await Promise.all([
                 apiFetch('/api/subjects?is_active=1').catch(() => null),
                 apiFetch('/api/attendance/classes').catch(() => null),
+                apiFetch('/api/teachers/departments').catch(() => null),
             ]);
 
             if (subRes && subRes.ok) {
@@ -60,6 +63,28 @@
                         clsSel.appendChild(opt);
                     });
                 }
+            }
+
+            const deptSel = document.getElementById('fTDepartment');
+            if (deptSel) {
+                deptSel.innerHTML = '<option value="">Select Department (optional)…</option>';
+                let depts = [
+                    'Languages', 'Natural Sciences', 'Social Sciences',
+                    'Mathematics & ICT', 'Practical & Creative Arts',
+                    'Guidance & Counselling', 'Administration'
+                ];
+                if (deptRes && deptRes.ok) {
+                    const data = await deptRes.json();
+                    if (data && data.departments && data.departments.length) {
+                        depts = data.departments.map(function (d) { return d.name || d; });
+                    }
+                }
+                depts.forEach(function (d) {
+                    const opt = document.createElement('option');
+                    opt.value = d;
+                    opt.textContent = d;
+                    deptSel.appendChild(opt);
+                });
             }
         } catch (err) { console.error('loadSubjects:', err); }
     }
@@ -113,7 +138,7 @@
         if (count) count.textContent = totalTeachers + ' teacher' + (totalTeachers !== 1 ? 's' : '');
 
         if (!page.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="pg-empty-cell">No teachers match your search.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="pg-empty-cell">No teachers match your search.</td></tr>';
             return;
         }
 
@@ -125,6 +150,16 @@
             const active = t.is_active !== 0;
             const badgeCls = active ? 'badge-active' : 'badge-inactive';
             const badgeTxt = active ? 'Active' : 'Inactive';
+
+            // School Position & Department
+            const pos = t.school_position || 'Teacher';
+            const dept = t.department || '—';
+            const ctBadge = t.class_teacher_of
+                ? '<div style="margin-top:4px"><span class="aa-badge" style="font-size:11px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;padding:2px 7px;border-radius:10px;font-weight:600">Class Teacher: ' + _esc(t.class_teacher_of) + '</span></div>'
+                : '';
+            const posDeptHtml = '<div><div style="font-weight:600;color:var(--aa-text,#1e293b);font-size:13px">' + _esc(pos) + '</div>' +
+                '<div style="font-size:11.5px;color:var(--aa-text-muted,#64748b)">' + _esc(dept) + '</div>' +
+                ctBadge + '</div>';
 
             // Subject assignments for this teacher
             const teacherAssigns = allAssignments.filter(function (a) { return a.teacher_id === t.id; });
@@ -144,6 +179,7 @@
                 '<div><div class="pg-teacher-name">' + _esc(t.name || '—') + '</div>' +
                 '<div class="pg-teacher-email">' + _esc(t.email || '') + '</div></div>' +
                 '</div></td>' +
+                '<td>' + posDeptHtml + '</td>' +
                 '<td>' + subjectHtml + '</td>' +
                 '<td>' + _esc(t.email || '—') + '</td>' +
                 '<td><span class="' + badgeCls + '">' + badgeTxt + '</span></td>' +
@@ -242,7 +278,9 @@
             '</div>' +
             '</div>' +
             '<div class="pg-view-rows">' +
-            '<div class="pg-view-row"><span>Role</span><strong>Teacher</strong></div>' +
+            '<div class="pg-view-row"><span>Position</span><strong>' + _esc(t.school_position || 'Teacher') + '</strong></div>' +
+            '<div class="pg-view-row"><span>Department</span><strong>' + _esc(t.department || '—') + '</strong></div>' +
+            (t.class_teacher_of ? '<div class="pg-view-row"><span>Class Teacher</span><strong style="color:var(--aa-blue,#2563eb)">' + _esc(t.class_teacher_of) + '</strong></div>' : '') +
             '<div class="pg-view-row"><span>Email</span><strong>' + _esc(t.email) + '</strong></div>' +
             '<div class="pg-view-row"><span>Subjects</span><strong>' +
             (subjectList.length ? subjectList.join(', ') : '—') + '</strong></div>' +
@@ -268,6 +306,10 @@
         document.getElementById('fTSubject').value = '';
         const clsEl = document.getElementById('fTClass');
         if (clsEl) clsEl.value = '';
+        const posEl = document.getElementById('fTPosition');
+        if (posEl) posEl.value = 'Teacher';
+        const deptEl = document.getElementById('fTDepartment');
+        if (deptEl) deptEl.value = '';
         document.getElementById('passwordGroup').style.display = '';
         document.getElementById('teacherModal').hidden = false;
     }
@@ -280,6 +322,10 @@
         document.getElementById('fTName').value = t.name || '';
         document.getElementById('fTEmail').value = t.email || '';
         document.getElementById('fTPhone').value = t.phone || '';
+        const posEl = document.getElementById('fTPosition');
+        if (posEl) posEl.value = t.school_position || 'Teacher';
+        const deptEl = document.getElementById('fTDepartment');
+        if (deptEl) deptEl.value = t.department || '';
         document.getElementById('passwordGroup').style.display = 'none'; // hide on edit
         // Set primary subject from assignments
         const assigns = allAssignments.filter(function (a) { return a.teacher_id === t.id; });
@@ -298,6 +344,8 @@
 
         const name = document.getElementById('fTName').value.trim();
         const email = document.getElementById('fTEmail').value.trim();
+        const school_position = document.getElementById('fTPosition')?.value || 'Teacher';
+        const department = document.getElementById('fTDepartment')?.value || '';
         const subjectId = document.getElementById('fTSubject').value;
         const classId = document.getElementById('fTClass')?.value || '';
 
@@ -308,9 +356,12 @@
         try {
             let res;
             if (isEdit) {
-                res = await apiFetch('/api/teachers/' + id, { method: 'PUT', body: JSON.stringify({ name, email }) });
+                res = await apiFetch('/api/teachers/' + id, {
+                    method: 'PUT',
+                    body: JSON.stringify({ name, email, school_position, department })
+                });
             } else {
-                const payload = { name, email, role: 'staff' };
+                const payload = { name, email, role: 'staff', school_position, department };
                 if (subjectId && classId) {
                     payload.subject_id = subjectId;
                     payload.class_id = classId;

@@ -7,6 +7,7 @@ const router  = express.Router();
 const { authenticate, authorize } = require("../middleware/auth");
 const {
     listTeachers,
+    listDepartments,
     getTeacherById,
     createTeacher,
     updateTeacher,
@@ -18,8 +19,9 @@ const {
 router.use(authenticate);
 
 // Staff can read; only admin/headmaster can write
-router.get("/",    authorize("admin", "headmaster", "staff"), listTeachers);
-router.get("/:id", authorize("admin", "headmaster"),          getTeacherById);
+router.get("/",            authorize("admin", "headmaster", "staff"), listTeachers);
+router.get("/departments", authorize("admin", "headmaster", "staff"), listDepartments);
+router.get("/:id",         authorize("admin", "headmaster", "staff"), getTeacherById);
 router.post("/",   authorize("admin", "headmaster"),          createTeacher);
 router.put("/:id", authorize("admin", "headmaster"),          updateTeacher);
 router.patch("/:id/status", authorize("admin", "headmaster"), toggleTeacherStatus);

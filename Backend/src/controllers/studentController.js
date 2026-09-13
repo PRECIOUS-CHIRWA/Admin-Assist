@@ -606,10 +606,11 @@ const createStudentAccount = async (req, res) => {
     const studentId = req.params.id;
     const schoolId = req.user?.school_id || 1;
     const customEmail = req.body.email ? req.body.email.trim().toLowerCase() : null;
+    const reset = req.body.reset === true || req.body.reset === "true";
 
     try {
         const [[student]] = await pool.execute(
-            `SELECT s.*, u.email as user_email
+            `SELECT s.*, u.email as user_email, u.is_active as user_is_active
              FROM students s
              LEFT JOIN users u ON u.id = s.user_id
              WHERE s.id = ? AND s.school_id = ? LIMIT 1`,
@@ -617,11 +618,24 @@ const createStudentAccount = async (req, res) => {
         );
         if (!student) return res.status(404).json({ error: "Student not found" });
 
+        // Prevent accidental duplicate creation unless explicit reset
+        if (student.user_id && !reset) {
+            return res.status(409).json({
+                error: "This student already has an account.",
+                accountExists: true,
+                userId: student.user_id,
+                email: student.user_email || student.email,
+                isActive: student.user_is_active === 1,
+            });
+        }
+
         const recipientEmail = customEmail || (student.email && student.email.trim()) || (student.user_email) ||
             `${student.admission_number.toLowerCase().replace(/[^a-z0-9]/g, '')}@student.school.local`;
         const studentFullName = `${student.first_name} ${student.last_name}`.trim();
 
-        const tempPassword = _generateTempPassword();
+        const tempPassword = req.body.password && String(req.body.password).trim().length >= 6
+            ? String(req.body.password).trim()
+            : _generateTempPassword();
         const passwordHash = await _hashPassword(tempPassword);
 
         let userId = student.user_id;
@@ -629,7 +643,7 @@ const createStudentAccount = async (req, res) => {
         if (userId) {
             // Update existing user password and email
             await pool.execute(
-                `UPDATE users SET email = ?, password_hash = ?, is_active = 1 WHERE id = ?`,
+                `UPDATE users SET email = ?, password_hash = ?, is_active = 1, school_position = 'Student' WHERE id = ?`,
                 [recipientEmail, passwordHash, userId]
             );
         } else {
@@ -641,13 +655,13 @@ const createStudentAccount = async (req, res) => {
             if (existingUser) {
                 userId = existingUser.id;
                 await pool.execute(
-                    `UPDATE users SET password_hash = ?, is_active = 1 WHERE id = ?`,
+                    `UPDATE users SET password_hash = ?, is_active = 1, school_position = 'Student' WHERE id = ?`,
                     [passwordHash, userId]
                 );
             } else {
                 const [newUser] = await pool.execute(
-                    `INSERT INTO users (school_id, name, email, password_hash, role, is_active, email_verified)
-                     VALUES (?, ?, ?, ?, 'user', 1, 1)`,
+                    `INSERT INTO users (school_id, name, email, password_hash, role, school_position, is_active, email_verified)
+                     VALUES (?, ?, ?, ?, 'user', 'Student', 1, 1)`,
                     [schoolId, studentFullName, recipientEmail, passwordHash]
                 );
                 userId = newUser.insertId;
@@ -679,8 +693,8 @@ const createStudentAccount = async (req, res) => {
 
         res.json({
             message: emailSent 
-                ? "Parent/Student account created and login details sent via email."
-                : "Parent/Student account created successfully.",
+                ? "Unified Student/Guardian account created and login details sent via email."
+                : "Unified Student/Guardian account created successfully.",
             userId,
             email: recipientEmail,
             tempPassword,
@@ -688,7 +702,87 @@ const createStudentAccount = async (req, res) => {
         });
     } catch (err) {
         console.error("createStudentAccount error:", err.message);
-        res.status(500).json({ error: "Failed to create student/parent account" });
+        res.status(500).json({ error: "Failed to create student/guardian account" });
+    }
+};
+
+// ─── Toggle student account status (Enable / Disable) ────────────────────────
+const toggleAccountStatus = async (req, res) => {
+    const studentId = req.params.id;
+    const schoolId = req.user?.school_id || 1;
+    const { is_active } = req.body;
+    const activeVal = (is_active === 1 || is_active === true || is_active === "1") ? 1 : 0;
+
+    try {
+        const [[student]] = await pool.execute(
+            "SELECT id, user_id FROM students WHERE id = ? AND school_id = ? LIMIT 1",
+            [studentId, schoolId]
+        );
+        if (!student) return res.status(404).json({ error: "Student not found" });
+        if (!student.user_id) {
+            return res.status(400).json({ error: "This student does not have an account yet." });
+        }
+
+        await pool.execute("UPDATE users SET is_active = ? WHERE id = ?", [activeVal, student.user_id]);
+        await _auditLog(req.user.sub, activeVal ? "ENABLE_ACCOUNT" : "DISABLE_ACCOUNT", "student", studentId, { userId: student.user_id });
+
+        res.json({
+            message: activeVal ? "Student account enabled successfully." : "Student account disabled successfully.",
+            account_is_active: activeVal,
+        });
+    } catch (err) {
+        console.error("toggleAccountStatus error:", err.message);
+        res.status(500).json({ error: "Failed to update account status" });
+    }
+};
+
+// ─── Archive student record ───────────────────────────────────────────────────
+const archiveStudent = async (req, res) => {
+    const studentId = req.params.id;
+    const schoolId = req.user?.school_id || 1;
+
+    try {
+        const [[student]] = await pool.execute(
+            "SELECT id, user_id FROM students WHERE id = ? AND school_id = ? LIMIT 1",
+            [studentId, schoolId]
+        );
+        if (!student) return res.status(404).json({ error: "Student not found" });
+
+        await pool.execute("UPDATE students SET status = 'Archived' WHERE id = ?", [studentId]);
+        if (student.user_id) {
+            await pool.execute("UPDATE users SET is_active = 0 WHERE id = ?", [student.user_id]);
+        }
+
+        await _auditLog(req.user.sub, "ARCHIVE_STUDENT", "student", studentId, { userId: student.user_id });
+        res.json({ message: "Student record archived and account disabled successfully." });
+    } catch (err) {
+        console.error("archiveStudent error:", err.message);
+        res.status(500).json({ error: "Failed to archive student record" });
+    }
+};
+
+// ─── Restore archived student record ──────────────────────────────────────────
+const restoreStudent = async (req, res) => {
+    const studentId = req.params.id;
+    const schoolId = req.user?.school_id || 1;
+
+    try {
+        const [[student]] = await pool.execute(
+            "SELECT id, user_id FROM students WHERE id = ? AND school_id = ? LIMIT 1",
+            [studentId, schoolId]
+        );
+        if (!student) return res.status(404).json({ error: "Student not found" });
+
+        await pool.execute("UPDATE students SET status = 'Active' WHERE id = ?", [studentId]);
+        if (student.user_id) {
+            await pool.execute("UPDATE users SET is_active = 1 WHERE id = ?", [student.user_id]);
+        }
+
+        await _auditLog(req.user.sub, "RESTORE_STUDENT", "student", studentId, { userId: student.user_id });
+        res.json({ message: "Student record restored to active successfully." });
+    } catch (err) {
+        console.error("restoreStudent error:", err.message);
+        res.status(500).json({ error: "Failed to restore student record" });
     }
 };
 
@@ -701,4 +795,7 @@ module.exports = {
     updateStudent,
     deleteStudent,
     createStudentAccount,
-};
+    toggleAccountStatus,
+    archiveStudent,
+    restoreStudent,
+};

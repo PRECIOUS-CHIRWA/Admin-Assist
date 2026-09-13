@@ -95,6 +95,7 @@
             <tr>
               <th>#</th>
               <th>Teacher</th>
+              <th>Position &amp; Dept</th>
               <th>Subject(s)</th>
               <th>Email</th>
               <th>Status</th>
@@ -103,7 +104,7 @@
           </thead>
           <tbody id="teachersBody">
             <tr>
-              <td colspan="6" class="pg-loading">Loading teachers…</td>
+              <td colspan="7" class="pg-loading">Loading teachers…</td>
             </tr>
           </tbody>
         </table>
@@ -135,6 +136,24 @@
           <div class="pg-form-group">
             <label class="pg-form-label" for="fTEmail">Email Address *</label>
             <input class="pg-form-control" type="email" id="fTEmail" placeholder="teacher@school.zm" />
+          </div>
+          <div class="pg-form-group">
+            <label class="pg-form-label" for="fTPosition">School Position</label>
+            <select class="pg-form-control" id="fTPosition">
+              <option value="Teacher">Teacher</option>
+              <option value="Senior Teacher">Senior Teacher</option>
+              <option value="Head of Department">Head of Department (HOD)</option>
+              <option value="Deputy Head Teacher">Deputy Head Teacher</option>
+              <option value="Head Teacher">Head Teacher</option>
+              <option value="Guidance & Counselling">Guidance &amp; Counselling</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="pg-form-group">
+            <label class="pg-form-label" for="fTDepartment">Department</label>
+            <select class="pg-form-control" id="fTDepartment">
+              <option value="">Select Department (optional)…</option>
+            </select>
           </div>
           <div class="pg-form-group" id="passwordGroup">
             <label class="pg-form-label">Account Access</label>

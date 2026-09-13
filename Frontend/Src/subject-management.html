@@ -104,7 +104,13 @@
                         View class student rosters and core subject curriculum focus.
                     </p>
                 </div>
-                <div style="display:flex;gap:10px;align-items:center;">
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                    <button class="aa-btn aa-btn-secondary" id="manageClassTimetableBtn" type="button" style="display:none">
+                        📅 Class Timetable
+                    </button>
+                    <button class="aa-btn aa-btn-secondary" id="assignClassTeacherBtn" type="button" style="display:none">
+                        👨‍🏫 Assign Class Teacher
+                    </button>
                     <button class="aa-btn aa-btn-secondary" id="editFocusBtn" type="button" style="display:none">
                         ✏️ Edit Core Focus
                     </button>
@@ -129,16 +135,28 @@
                             <h3 id="classTitle" style="font-size:17px;font-weight:700;margin:0;color:var(--aa-text)">—</h3>
                             <span class="aa-badge" id="classRosterCount">0 students</span>
                         </div>
-                        <div style="font-size:13px;color:var(--aa-text-muted)">
-                            Class Teacher: <strong id="classTeacherName" style="color:var(--aa-text)">—</strong>
+                        <div style="font-size:13px;color:var(--aa-text-muted);display:flex;align-items:center;gap:8px">
+                            <span>Class Teacher: <strong id="classTeacherName" style="color:var(--aa-text)">—</strong></span>
+                            <button type="button" id="quickChangeTeacherBtn" class="aa-btn aa-btn-sm aa-btn-secondary" style="display:none;padding:2px 8px;font-size:11.5px">Change</button>
                         </div>
                     </div>
-                    <div style="text-align:right">
-                        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--aa-text-muted);letter-spacing:.05em;margin-bottom:4px">
-                            Core Subject Focus
-                        </div>
-                        <div id="classFocusBadge" style="display:inline-flex;align-items:center;gap:6px;background:rgba(37,99,235,.1);color:var(--aa-blue, #2563EB);font-weight:700;font-size:13px;padding:4px 12px;border-radius:6px;border:1px solid rgba(37,99,235,.2)">
-                            🎯 <span id="classFocusText">General Secondary Core</span>
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                        <button type="button" id="manageClassTimetableBtn" class="aa-btn aa-btn-secondary" style="display:none;align-items:center;gap:6px;">
+                            📅 Class Timetable
+                        </button>
+                        <button type="button" id="assignClassTeacherBtn" class="aa-btn aa-btn-secondary" style="display:none;align-items:center;gap:6px;">
+                            👨‍🏫 Assign Class Teacher
+                        </button>
+                        <button type="button" id="editFocusBtn" class="aa-btn aa-btn-secondary" style="display:none;align-items:center;gap:6px;">
+                            🎯 Edit Core Focus
+                        </button>
+                        <div style="text-align:right">
+                            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--aa-text-muted);letter-spacing:.05em;margin-bottom:4px">
+                                Core Subject Focus
+                            </div>
+                            <div id="classFocusBadge" style="display:inline-flex;align-items:center;gap:6px;background:rgba(37,99,235,.1);color:var(--aa-blue, #2563EB);font-weight:700;font-size:13px;padding:4px 12px;border-radius:6px;border:1px solid rgba(37,99,235,.2)">
+                                🎯 <span id="classFocusText">General Secondary Core</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -291,6 +309,32 @@
             <div class="aa-modal-actions">
                 <button class="aa-btn aa-btn-ghost" id="cancelFocusBtn" type="button">Cancel</button>
                 <button class="aa-btn aa-btn-primary" id="saveFocusBtn" type="button">Save Focus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── Assign Class Teacher Modal ────────────────────────────────────── -->
+    <div class="aa-modal-backdrop" id="classTeacherModal" hidden>
+        <div class="aa-modal" style="max-width:460px" role="dialog" aria-labelledby="classTeacherModalTitle">
+            <div class="aa-modal-header">
+                <h2 id="classTeacherModalTitle">Assign Class Teacher</h2>
+                <button class="aa-modal-close" type="button" id="closeClassTeacherModalBtn">&times;</button>
+            </div>
+            <div class="aa-modal-body">
+                <input type="hidden" id="classTeacherClassId" value="">
+                <p style="font-size:13.5px;color:var(--aa-text-muted);margin:0 0 1rem">
+                    Select a designated class teacher responsible for <strong id="classTeacherClassName" style="color:var(--aa-text)">—</strong>.
+                </p>
+                <div class="aa-form-field">
+                    <label for="classTeacherSelect">Class Teacher *</label>
+                    <select id="classTeacherSelect" style="width:100%">
+                        <option value="">Select a teacher…</option>
+                    </select>
+                </div>
+            </div>
+            <div class="aa-modal-actions">
+                <button class="aa-btn aa-btn-ghost" type="button" id="cancelClassTeacherBtn">Cancel</button>
+                <button class="aa-btn aa-btn-primary" type="button" id="saveClassTeacherBtn">Save Class Teacher</button>
             </div>
         </div>
     </div>

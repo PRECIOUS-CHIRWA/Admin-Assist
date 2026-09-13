@@ -3,6 +3,7 @@ const router = express.Router();
 const {
     listStudents, getStudentById, getNextAdmissionNumber,
     createStudent, updateStudent, deleteStudent, createStudentAccount,
+    toggleAccountStatus, archiveStudent, restoreStudent,
 } = require("../controllers/studentController");
 
 const { authenticate, authorize } = require("../middleware/auth");
@@ -18,9 +19,12 @@ router.get("/next-admission-number", authenticate, getNextAdmissionNumber);
 router.get("/",    authenticate, listStudents);
 router.get("/:id", authenticate, getStudentById);
 
-// ─── Modifications ────────────────────────────────────────────────────────────
-router.put("/:id",          authenticate, authorize("admin", "headmaster", "staff"), updateStudent);
-router.post("/:id/account", authenticate, authorize("admin", "headmaster"), createStudentAccount);
-router.delete("/:id",       authenticate, authorize("admin", "headmaster"), deleteStudent);
+// ─── Modifications & Account Lifecycle ─────────────────────────────────────────
+router.put("/:id/account/status", authenticate, authorize("admin", "headmaster"), toggleAccountStatus);
+router.post("/:id/account",        authenticate, authorize("admin", "headmaster"), createStudentAccount);
+router.put("/:id/archive",         authenticate, authorize("admin", "headmaster"), archiveStudent);
+router.put("/:id/restore",         authenticate, authorize("admin", "headmaster"), restoreStudent);
+router.put("/:id",                 authenticate, authorize("admin", "headmaster", "staff"), updateStudent);
+router.delete("/:id",              authenticate, authorize("admin", "headmaster"), deleteStudent);
 
 module.exports = router;
