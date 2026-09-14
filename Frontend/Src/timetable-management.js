@@ -13,6 +13,7 @@
     let allTerms = [];
     let currentTimetable = [];
     let deleteTargetId = null;
+    let isPureAdmin = false;
 
     const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
@@ -34,6 +35,25 @@
             alert('Access restricted. Timetable management is reserved for school administrators.');
             window.location.replace('dashboard.html');
             return;
+        }
+
+        isPureAdmin = (user && user.role === 'admin');
+        const createBtn = document.getElementById('openCreateEntryBtn');
+        if (createBtn && !isPureAdmin) {
+            createBtn.style.display = 'none';
+        }
+
+        const isTeacher = !!(user && (user.is_teacher || user.school_position === 'Teacher'));
+        const myTtBtn = document.getElementById('viewMyTimetableBtn');
+        if (myTtBtn && isPureAdmin && isTeacher) {
+            myTtBtn.style.display = 'inline-flex';
+            myTtBtn.addEventListener('click', () => {
+                const teacherSelect = document.getElementById('filterTeacher');
+                if (teacherSelect) {
+                    teacherSelect.value = user.id;
+                    loadTimetable();
+                }
+            });
         }
 
         await loadMetadata();
@@ -302,6 +322,7 @@
                             ${e.room ? `<span>📍 ${_esc(e.room)}</span>` : ''}
                             <span style="font-size:11px;opacity:.8;">⏱ ${(e.start_time_formatted || '').substring(0,5)}–${(e.end_time_formatted || '').substring(0,5)}</span>
                         </div>
+                        ${isPureAdmin ? `
                         <div class="tt-entry-actions">
                             <button type="button" class="tt-btn-icon edit" data-action="edit" data-id="${e.id}" title="Edit this entry">
                                 ✏️ Edit
@@ -309,7 +330,7 @@
                             <button type="button" class="tt-btn-icon delete" data-action="delete" data-id="${e.id}" title="Delete this entry">
                                 🗑️ Delete
                             </button>
-                        </div>
+                        </div>` : ''}
                     </div>
                 `).join('');
 

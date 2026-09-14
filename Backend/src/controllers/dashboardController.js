@@ -205,78 +205,9 @@ const getDashboardStats = async (req, res) => {
             });
         }
 
-        // ── 3. HEAD TEACHER SUPERVISORY DASHBOARD STATS ───────────────────────
-        if (role === "headmaster" || req.user?.school_position === "Head Teacher") {
-            const [[{ totalStudents }]] = await pool.execute(
-                "SELECT COUNT(*) AS totalStudents FROM students WHERE school_id = ? AND status = 'Active'",
-                [schoolId]
-            );
+        // ── 3. ADMIN & HEAD TEACHER FULL DASHBOARD STATS ─────────────────────
+        const isHeadMaster = (role === "headmaster" || req.user?.school_position === "Head Teacher");
 
-            const [[{ totalTeachers }]] = await pool.execute(
-                "SELECT COUNT(*) AS totalTeachers FROM users WHERE school_id = ? AND role IN ('staff', 'headmaster', 'admin') AND (school_position != 'Student' OR school_position IS NULL) AND is_active = 1",
-                [schoolId]
-            );
-
-            const [[{ totalClasses }]] = await pool.execute(
-                "SELECT COUNT(*) AS totalClasses FROM classes WHERE school_id = ?",
-                [schoolId]
-            );
-
-            const [[attendanceToday]] = await pool.execute(
-                `SELECT
-                    COALESCE(SUM(ar.status = 'present'), 0) AS todayPresent,
-                    COALESCE(SUM(ar.status = 'absent'),  0) AS todayAbsent,
-                    COALESCE(SUM(ar.status = 'late'),    0) AS todayLate,
-                    COUNT(ar.id)                            AS todayTotal
-                 FROM attendance_records ar
-                 JOIN attendance_sessions s ON s.id = ar.session_id
-                 WHERE s.school_id = ? AND s.attendance_date = CURDATE()`,
-                [schoolId]
-            );
-
-            const todayTotal = Number(attendanceToday.todayTotal) || 0;
-            const attendanceRate = todayTotal > 0
-                ? Math.round((Number(attendanceToday.todayPresent) / todayTotal) * 100)
-                : 0;
-
-            const [classRoster] = await pool.execute(
-                `SELECT c.id, c.grade_level, c.stream,
-                        CONCAT(c.grade_level, IF(c.stream != '', CONCAT(' ', c.stream), '')) AS class_name,
-                        u.name AS class_teacher_name,
-                        COUNT(s.id) AS student_count
-                 FROM classes c
-                 LEFT JOIN users u ON u.id = c.class_teacher_id
-                 LEFT JOIN students s ON s.class_id = c.id AND s.status = 'Active'
-                 WHERE c.school_id = ?
-                 GROUP BY c.id
-                 ORDER BY c.grade_level, c.stream`,
-                [schoolId]
-            );
-
-            const [[acad]] = await pool.execute(
-                `SELECT ROUND(AVG(percentage), 1) AS avg_percentage, COUNT(*) AS total_recorded
-                 FROM results
-                 WHERE school_id = ?`,
-                [schoolId]
-            );
-
-            return res.json({
-                role: "headmaster",
-                totalStudents: Number(totalStudents) || 0,
-                totalTeachers: Number(totalTeachers) || 0,
-                totalClasses: Number(totalClasses) || 0,
-                todayPresent: Number(attendanceToday.todayPresent) || 0,
-                todayAbsent: Number(attendanceToday.todayAbsent) || 0,
-                todayLate: Number(attendanceToday.todayLate) || 0,
-                todayTotal,
-                attendanceRate,
-                avgPerformance: acad && acad.avg_percentage ? Number(acad.avg_percentage) : 0,
-                resultsCount: acad && acad.total_recorded ? Number(acad.total_recorded) : 0,
-                classes: classRoster
-            });
-        }
-
-        // ── 4. ADMIN DASHBOARD STATS ──────────────────────────────────────────
         const [[{ totalStudents }]] = await pool.execute(
             "SELECT COUNT(*) AS totalStudents FROM students WHERE school_id = ? AND status != 'Inactive'",
             [schoolId]
@@ -351,7 +282,7 @@ const getDashboardStats = async (req, res) => {
         } catch { /* non-fatal */ }
 
         res.json({
-            role: "admin",
+            role: isHeadMaster ? "headmaster" : "admin",
             totalStudents: Number(totalStudents) || 0,
             totalTeachers: Number(totalTeachers) || 0,
             totalClasses: Number(totalClasses) || 0,

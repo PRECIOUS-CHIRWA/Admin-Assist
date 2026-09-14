@@ -432,15 +432,15 @@
         const quickChangeBtn = document.getElementById('quickChangeTeacherBtn');
 
         const user = (typeof getUser === 'function' && getUser()) || {};
-        const isAdmin = (user.role === 'admin' || user.role === 'headmaster');
+        const isPureAdmin = (user.role === 'admin');
         const { class: cls, subjects, students } = data;
 
         if (placeholder) placeholder.hidden = true;
         if (overview) overview.style.display = 'block';
-        if (editBtn) editBtn.style.display = isAdmin ? 'inline-flex' : 'none';
-        if (timetableBtn) timetableBtn.style.display = isAdmin ? 'inline-flex' : 'none';
-        if (assignTeacherBtn) assignTeacherBtn.style.display = isAdmin ? 'inline-flex' : 'none';
-        if (quickChangeBtn) quickChangeBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+        if (editBtn) editBtn.style.display = isPureAdmin ? 'inline-flex' : 'none';
+        if (timetableBtn) timetableBtn.style.display = (isPureAdmin || user.role === 'headmaster') ? 'inline-flex' : 'none';
+        if (assignTeacherBtn) assignTeacherBtn.style.display = isPureAdmin ? 'inline-flex' : 'none';
+        if (quickChangeBtn) quickChangeBtn.style.display = isPureAdmin ? 'inline-flex' : 'none';
 
         // Title and teacher
         const titleEl = document.getElementById('classTitle');

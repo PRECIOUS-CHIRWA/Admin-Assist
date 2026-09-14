@@ -14,8 +14,14 @@
             populateSelect("filterTerm", terms, "id", (t) => `${t.term_name} (${t.year_label})`, "All Terms");
 
             // Unique years
+            const user = typeof getUser === "function" ? getUser() : null;
+            const isStaff = user && user.role === "staff";
             const years = [...new Map(terms.map((t) => [t.academic_year_id, { id: t.academic_year_id, label: t.year_label }])).values()];
-            populateSelect("filterYear", years, "id", (y) => y.label, "All Years");
+            if (isStaff) {
+                populateSelect("filterYear", years, "id", (y) => y.label, "— Select Year —");
+            } else {
+                populateSelect("filterYear", years, "id", (y) => y.label, "All Years");
+            }
 
             const current = terms.find((t) => t.is_current);
             if (current) { document.getElementById("filterTerm").value = current.id; document.getElementById("filterYear").value = current.academic_year_id; }

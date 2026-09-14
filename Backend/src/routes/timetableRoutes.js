@@ -24,8 +24,8 @@ router.get("/my/week", authorize("staff", "admin", "headmaster", "user"), getMyW
 
 // Administrative management endpoints
 router.get("/", authorize("admin", "headmaster"), listTimetables);
-router.post("/", authorize("admin", "headmaster"), createTimetableEntry);
-router.put("/:id", authorize("admin", "headmaster"), updateTimetableEntry);
-router.delete("/:id", authorize("admin", "headmaster"), deleteTimetableEntry);
+router.post("/", authorize("admin"), createTimetableEntry);
+router.put("/:id", authorize("admin"), updateTimetableEntry);
+router.delete("/:id", authorize("admin"), deleteTimetableEntry);
 
 module.exports = router;

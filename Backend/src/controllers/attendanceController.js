@@ -65,14 +65,36 @@ const isTeacherAuthorizedForClass = async (req, classId) => {
  */
 const getAcademicYears = async (req, res) => {
     const schoolId = getSchoolId(req);
+    const role = req.user.role;
+    const userId = req.user.sub || req.user.id;
+    const isTeachingOnly = (role === "staff" || req.query.teaching === "1");
+
     try {
-        const [rows] = await pool.execute(
-            `SELECT id, year_label, start_date, end_date, is_current
-             FROM   academic_years
-             WHERE  school_id = ?
-             ORDER BY year_label DESC`,
-            [schoolId]
-        );
+        let query;
+        let params;
+
+        if (isTeachingOnly) {
+            query = `
+                SELECT DISTINCT ay.id, ay.year_label, ay.start_date, ay.end_date, ay.is_current
+                FROM academic_years ay
+                WHERE ay.school_id = ?
+                  AND (
+                    ay.id IN (SELECT DISTINCT academic_year_id FROM attendance_sessions WHERE teacher_id = ? AND academic_year_id IS NOT NULL)
+                    OR ay.id IN (SELECT DISTINCT academic_year_id FROM teacher_subjects WHERE teacher_id = ? AND academic_year_id IS NOT NULL)
+                    OR ay.is_current = 1
+                  )
+                ORDER BY ay.year_label DESC
+            `;
+            params = [schoolId, userId, userId];
+        } else {
+            query = `SELECT id, year_label, start_date, end_date, is_current
+                     FROM   academic_years
+                     WHERE  school_id = ?
+                     ORDER BY year_label DESC`;
+            params = [schoolId];
+        }
+
+        const [rows] = await pool.execute(query, params);
         res.json(rows);
     } catch (err) {
         if (err.code === "ER_NO_SUCH_TABLE") {
@@ -143,7 +165,7 @@ const getClasses = async (req, res) => {
         let sql;
         let params;
 
-        if (role === "staff") {
+        if (role === "staff" || req.query.teaching === "1") {
             // Only classes where this teacher is class teacher OR has a teacher_subjects assignment
             sql = `SELECT DISTINCT c.id, c.grade_level, c.stream,
                     CONCAT(c.grade_level, IF(c.stream != '' AND c.stream IS NOT NULL, CONCAT(' ', c.stream), '')) AS class_name,
@@ -548,7 +570,35 @@ const getSessions = async (req, res) => {
     }
 
     if (targetTerm) { filters.push("s.term_id = ?"); values.push(targetTerm); }
-    if (targetYear) { filters.push("s.academic_year_id = ?"); values.push(targetYear); }
+    if (role === "staff" || req.query.teaching === "1") {
+        let yearToFilter = targetYear;
+        if (!yearToFilter) {
+            // Staff cannot run unrestricted all-years queries; default to their current or latest teaching year
+            const [teacherYears] = await pool.execute(
+                `SELECT DISTINCT ay.id, ay.year_label, ay.is_current
+                 FROM academic_years ay
+                 WHERE ay.school_id = ?
+                   AND (
+                     ay.id IN (SELECT DISTINCT academic_year_id FROM attendance_sessions WHERE teacher_id = ? AND academic_year_id IS NOT NULL)
+                     OR ay.id IN (SELECT DISTINCT academic_year_id FROM teacher_subjects WHERE teacher_id = ? AND academic_year_id IS NOT NULL)
+                     OR ay.is_current = 1
+                   )
+                 ORDER BY ay.is_current DESC, ay.year_label DESC
+                 LIMIT 1`,
+                [schoolId, userId, userId]
+            );
+            if (teacherYears.length > 0) {
+                yearToFilter = teacherYears[0].id;
+            }
+        }
+        if (yearToFilter) {
+            filters.push("s.academic_year_id = ?");
+            values.push(yearToFilter);
+        }
+    } else if (targetYear) {
+        filters.push("s.academic_year_id = ?");
+        values.push(targetYear);
+    }
     if (targetFrom) { filters.push("s.attendance_date >= ?"); values.push(targetFrom); }
     if (targetTo) { filters.push("s.attendance_date <= ?"); values.push(targetTo); }
 

@@ -11,6 +11,7 @@
     let allSubjects = [];
     let rosterStudents = [];
     let editingSessionId = null;
+    let attendanceMode = 'admin'; // 'admin' or 'teaching'
 
     // ─── DOM Initialization ───────────────────────────────────────────────────
 
@@ -26,6 +27,56 @@
         try {
             if (typeof loadCurrentUser === 'function') {
                 loadCurrentUser();
+            }
+
+            // Check user role for Admin + Teacher dual access
+            const user = typeof getUser === 'function' ? getUser() : null;
+            const role = user ? user.role : 'user';
+            const isTeacher = !!(user && (user.is_teacher || user.school_position === 'Teacher'));
+            const isAdminTeacher = (role === 'admin' && isTeacher);
+
+            if (role === 'staff') {
+                attendanceMode = 'teaching';
+            }
+
+            // Wire context switcher for Admin + Teacher
+            const switcher = document.getElementById('attendanceModeSwitcher');
+            if (switcher && isAdminTeacher) {
+                switcher.style.display = 'block';
+                const btnAdmin = document.getElementById('btnModeAdmin');
+                const btnTeaching = document.getElementById('btnModeTeaching');
+
+                btnAdmin?.addEventListener('click', async () => {
+                    if (attendanceMode === 'admin') return;
+                    attendanceMode = 'admin';
+                    btnAdmin.style.background = '#fff';
+                    btnAdmin.style.color = 'var(--aa-blue, #2563EB)';
+                    btnAdmin.style.fontWeight = '700';
+                    btnAdmin.style.boxShadow = '0 1px 2px rgba(0,0,0,.06)';
+                    btnTeaching.style.background = 'transparent';
+                    btnTeaching.style.color = 'var(--aa-text-muted, #64748B)';
+                    btnTeaching.style.fontWeight = '500';
+                    btnTeaching.style.boxShadow = 'none';
+
+                    await Promise.all([loadAcademicYears(), loadClasses()]);
+                    await loadAttendanceSessions();
+                });
+
+                btnTeaching?.addEventListener('click', async () => {
+                    if (attendanceMode === 'teaching') return;
+                    attendanceMode = 'teaching';
+                    btnTeaching.style.background = '#fff';
+                    btnTeaching.style.color = 'var(--aa-blue, #2563EB)';
+                    btnTeaching.style.fontWeight = '700';
+                    btnTeaching.style.boxShadow = '0 1px 2px rgba(0,0,0,.06)';
+                    btnAdmin.style.background = 'transparent';
+                    btnAdmin.style.color = 'var(--aa-text-muted, #64748B)';
+                    btnAdmin.style.fontWeight = '500';
+                    btnAdmin.style.boxShadow = 'none';
+
+                    await Promise.all([loadAcademicYears(), loadClasses()]);
+                    await loadAttendanceSessions();
+                });
             }
 
             // Load meta-data in parallel
@@ -54,12 +105,29 @@
      * Fetches academic years available to the authenticated user's school.
      */
     async function loadAcademicYears() {
+        const user = typeof getUser === 'function' ? getUser() : null;
+        const role = user ? user.role : 'user';
+        const isTeachingMode = (role === 'staff' || attendanceMode === 'teaching');
+        const url = isTeachingMode ? '/api/attendance/academic-years?teaching=1' : '/api/attendance/academic-years';
+
         try {
-            const res = await apiFetch('/api/attendance/academic-years');
+            const res = await apiFetch(url);
             if (!res || !res.ok) throw new Error('Failed to fetch academic years');
             allYears = await res.json();
 
-            populateSelect('filterYear', allYears, 'id', y => y.year_label, 'All Years');
+            if (isTeachingMode) {
+                // Staff / Teaching mode: NO "All Years". Select Year placeholder and auto-select active year
+                populateSelect('filterYear', allYears, 'id', y => y.year_label, '— Select Year —');
+                const filterYearSelect = document.getElementById('filterYear');
+                if (filterYearSelect && allYears.length > 0) {
+                    const activeYear = allYears.find(y => y.is_current) || allYears[0];
+                    filterYearSelect.value = activeYear.id;
+                }
+            } else {
+                // Administrative attendance: All Years is available
+                populateSelect('filterYear', allYears, 'id', y => y.year_label, 'All Years');
+            }
+
             populateSelect('sessionYear', allYears, 'id', y => y.year_label, '— Select Year —');
 
             // Auto-select current academic year in modal if available
@@ -122,8 +190,13 @@
      * Retrieves configured classes for the authenticated school.
      */
     async function loadClasses() {
+        const user = typeof getUser === 'function' ? getUser() : null;
+        const role = user ? user.role : 'user';
+        const isTeachingMode = (role === 'staff' || attendanceMode === 'teaching');
+        const url = isTeachingMode ? '/api/attendance/classes?teaching=1' : '/api/attendance/classes';
+
         try {
-            const res = await apiFetch('/api/attendance/classes');
+            const res = await apiFetch(url);
             if (!res || !res.ok) throw new Error('Failed to fetch classes');
             allClasses = await res.json();
 
@@ -387,6 +460,14 @@
      */
     async function loadAttendanceSessions() {
         const params = new URLSearchParams();
+        const user = typeof getUser === 'function' ? getUser() : null;
+        const role = user ? user.role : 'user';
+        const isTeachingMode = (role === 'staff' || attendanceMode === 'teaching');
+
+        if (isTeachingMode) {
+            params.set('teaching', '1');
+        }
+
         const yearId = document.getElementById('filterYear')?.value;
         const classId = document.getElementById('filterClass')?.value;
         const termId = document.getElementById('filterTerm')?.value;

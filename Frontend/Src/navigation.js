@@ -154,7 +154,8 @@
                 { href: 'enroll-student.html', label: 'Enrollment', icon: 'students' },
                 { href: 'students.html', label: 'Students', icon: 'students' },
                 { href: 'teachers.html', label: 'Staff', icon: 'teachers' },
-                { href: 'subject-management.html', label: 'Classes & Subjects', icon: 'subjects' },
+                { href: 'subject-management.html', label: 'Classes', icon: 'subjects' },
+                { href: 'subject-management.html#subjects', label: 'Subjects', icon: 'subjects' },
                 { href: 'timetable-management.html', label: 'Timetable', icon: 'timetable' },
             ];
             // Results-menu rule: Pure Admin must NOT have Results. Admin + Teacher MUST have Results!

@@ -23,40 +23,8 @@ async function loadDashboardStats() {
         // Hide all views first
         document.querySelectorAll('.role-dashboard').forEach(el => el.classList.remove('is-active'));
 
-        // ── 0. HEAD TEACHER SUPERVISORY DASHBOARD ──────────────────────
-        if (isHeadTeacher && role !== 'admin') {
-            const hmEl = document.getElementById('headmasterDashboard');
-            if (hmEl) hmEl.classList.add('is-active');
-
-            _setText('hmStatStudents', _fmt(data.totalStudents));
-            _setText('hmStatTeachers', _fmt(data.totalTeachers));
-            _setText('hmStatAttendance', data.attendanceRate != null ? data.attendanceRate + '%' : '—');
-            _setText('hmStatClasses', _fmt(data.totalClasses));
-
-            const rosterEl = document.getElementById('hmClassRosterList');
-            if (rosterEl) {
-                const classes = data.classes || [];
-                if (!classes.length) {
-                    rosterEl.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--aa-text-muted)">No classes currently registered.</td></tr>';
-                } else {
-                    rosterEl.innerHTML = classes.map(c => `
-                        <tr>
-                            <td><strong>${_esc(c.class_name)}</strong></td>
-                            <td>${_esc(c.grade_level)}</td>
-                            <td>${_esc(c.class_teacher_name || 'Unassigned')}</td>
-                            <td><span class="aa-badge" style="background:#EFF6FF;color:#2563EB;font-weight:700;">${_fmt(c.student_count)}</span></td>
-                            <td>
-                                <a href="subject-management.html?class_id=${c.id}" style="color:#2563EB;font-weight:600;text-decoration:none;font-size:13px;">View Roster &rarr;</a>
-                            </td>
-                        </tr>
-                    `).join('');
-                }
-            }
-            return;
-        }
-
         // ── 1. STAFF DASHBOARD ─────────────────────────────────────────
-        if (role === 'staff') {
+        if (role === 'staff' && !isHeadTeacher) {
             const staffEl = document.getElementById('staffDashboard');
             if (staffEl) staffEl.classList.add('is-active');
 
@@ -64,7 +32,7 @@ async function loadDashboardStats() {
             _setText('staffStatSubjects', _fmt(data.assignedSubjectsCount));
 
             const ttCount = data.todayClassesCount != null ? Number(data.todayClassesCount) : 0;
-            _setText('staffStatTimetable', ttCount > 0 ? `${ttCount} ${ttCount === 1 ? 'Class' : 'Classes'}` : 'No Classes');
+            _setText('staffStatTimetable', String(ttCount));
 
             _setText('staffStatAttendance', (data.todayAttendance?.rate != null ? data.todayAttendance.rate + '%' : '0%'));
 

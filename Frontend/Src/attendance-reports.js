@@ -12,8 +12,16 @@
             const terms = await tr.json();
             populateSelect("filterClass", classes, "id", (c) => c.class_name || `${c.grade_level}${c.stream ? " " + c.stream : ""}`, "All Classes");
             populateSelect("filterTerm", terms, "id", (t) => `${t.term_name} (${t.year_label})`, "All Terms");
+            const user = typeof getUser === "function" ? getUser() : null;
+            const isStaff = user && user.role === "staff";
             const years = [...new Map(terms.map((t) => [t.academic_year_id, { id: t.academic_year_id, label: t.year_label }])).values()];
-            populateSelect("filterYear", years, "id", (y) => y.label, "All Years");
+            if (isStaff) {
+                populateSelect("filterYear", years, "id", (y) => y.label, "— Select Year —");
+                const ySel = document.getElementById("filterYear");
+                if (ySel && years.length > 0) ySel.value = years[0].id;
+            } else {
+                populateSelect("filterYear", years, "id", (y) => y.label, "All Years");
+            }
         } catch (err) { console.error(err); }
     }
 
