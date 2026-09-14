@@ -32,7 +32,12 @@ const authenticate = (req, res, next) => {
 */
 
 const authorize = (...roles) => (req, res, next) => {
-    if (!req.user || !roles.includes(req.user.role)) {
+    if (!req.user) {
+        return res.status(403).json({ error: "You do not have permission to access this resource" });
+    }
+    const hasRole = roles.includes(req.user.role) ||
+        (roles.includes("headmaster") && req.user.school_position === "Head Teacher");
+    if (!hasRole) {
         return res.status(403).json({ error: "You do not have permission to access this resource" });
     }
     next();

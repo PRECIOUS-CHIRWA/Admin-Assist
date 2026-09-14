@@ -18,13 +18,13 @@ const {
 // All routes require authentication
 router.use(authenticate);
 
-// Staff can read; only admin/headmaster can write
+// Staff and headmaster can read; only admin can write
 router.get("/",            authorize("admin", "headmaster", "staff"), listTeachers);
 router.get("/departments", authorize("admin", "headmaster", "staff"), listDepartments);
 router.get("/:id",         authorize("admin", "headmaster", "staff"), getTeacherById);
-router.post("/",   authorize("admin", "headmaster"),          createTeacher);
-router.put("/:id", authorize("admin", "headmaster"),          updateTeacher);
-router.patch("/:id/status", authorize("admin", "headmaster"), toggleTeacherStatus);
-router.delete("/:id", authorize("admin"),                     deleteTeacher);
+router.post("/",           authorize("admin"), createTeacher);
+router.put("/:id",         authorize("admin"), updateTeacher);
+router.patch("/:id/status", authorize("admin"), toggleTeacherStatus);
+router.delete("/:id",      authorize("admin"), deleteTeacher);
 
 module.exports = router;

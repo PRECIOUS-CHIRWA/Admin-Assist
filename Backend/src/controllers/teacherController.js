@@ -51,7 +51,7 @@ const listTeachers = async (req, res) => {
         const search = req.query.search ? `%${req.query.search}%` : null;
         const status = req.query.status; // "active" | "inactive" | ""
 
-        const conditions = ["u.role IN ('staff', 'headmaster')"];
+        const conditions = ["(u.role IN ('staff', 'headmaster') OR (u.role = 'admin' AND (u.school_position IS NULL OR u.school_position != 'Student')))"];
         const params     = [];
 
         if (search) {
@@ -70,8 +70,9 @@ const listTeachers = async (req, res) => {
 
         const [teachers] = await pool.execute(
             `SELECT u.id, u.name, u.email, u.role, u.is_active, u.last_login_at, u.created_at,
-                    COALESCE(u.school_position, 'Teacher') AS school_position,
+                    COALESCE(u.school_position, IF(u.role = 'admin', 'Administrator', 'Teacher')) AS school_position,
                     COALESCE(u.department, 'Unassigned') AS department,
+                    (COUNT(ts.id) > 0 OR u.school_position = 'Teacher' OR (SELECT COUNT(*) FROM classes cl WHERE cl.class_teacher_id = u.id) > 0) AS is_teacher,
                     (SELECT GROUP_CONCAT(CONCAT(c.grade_level, IF(c.stream != '', CONCAT(' ', c.stream), '')) SEPARATOR ', ')
                      FROM classes c WHERE c.class_teacher_id = u.id) AS class_teacher_of,
                     GROUP_CONCAT(DISTINCT sub.subject_name ORDER BY sub.subject_name SEPARATOR ', ') AS subjects
@@ -117,11 +118,11 @@ const getTeacherById = async (req, res) => {
     try {
         const [[teacher]] = await pool.execute(
             `SELECT u.id, u.name, u.email, u.role, u.is_active, u.last_login_at, u.created_at,
-                    COALESCE(u.school_position, 'Teacher') AS school_position,
+                    COALESCE(u.school_position, IF(u.role = 'admin', 'Administrator', 'Teacher')) AS school_position,
                     COALESCE(u.department, 'Unassigned') AS department,
                     (SELECT GROUP_CONCAT(CONCAT(c.grade_level, IF(c.stream != '', CONCAT(' ', c.stream), '')) SEPARATOR ', ')
                      FROM classes c WHERE c.class_teacher_id = u.id) AS class_teacher_of
-             FROM users u WHERE u.id = ? AND u.role IN ('staff', 'headmaster') LIMIT 1`,
+             FROM users u WHERE u.id = ? AND (u.role IN ('staff', 'headmaster') OR (u.role = 'admin' AND (u.school_position IS NULL OR u.school_position != 'Student'))) LIMIT 1`,
             [req.params.id]
         );
         if (!teacher) return res.status(404).json({ error: "Teacher not found" });
@@ -152,8 +153,8 @@ const createTeacher = async (req, res) => {
     const { name, email, role = "staff", school_position = "Teacher", department = null } = req.body;
 
     if (!name || !email) return res.status(400).json({ error: "Name and email are required" });
-    if (!["staff", "headmaster"].includes(role))
-        return res.status(400).json({ error: "Role must be 'staff' or 'headmaster'" });
+    if (!["staff", "headmaster", "admin"].includes(role))
+        return res.status(400).json({ error: "Role must be 'staff', 'headmaster', or 'admin'" });
 
     try {
         // Check duplicate email
@@ -239,7 +240,7 @@ const updateTeacher = async (req, res) => {
 
     try {
         const [[teacher]] = await pool.execute(
-            "SELECT id FROM users WHERE id = ? AND role IN ('staff', 'headmaster') LIMIT 1",
+            "SELECT id FROM users WHERE id = ? AND (role IN ('staff', 'headmaster') OR (role = 'admin' AND (school_position IS NULL OR school_position != 'Student'))) LIMIT 1",
             [id]
         );
         if (!teacher) return res.status(404).json({ error: "Teacher not found" });
@@ -249,7 +250,7 @@ const updateTeacher = async (req, res) => {
 
         if (name)  { fields.push("name = ?");  values.push(name.trim()); }
         if (email) { fields.push("email = ?"); values.push(email.trim().toLowerCase()); }
-        if (role && ["staff", "headmaster"].includes(role)) {
+        if (role && ["staff", "headmaster", "admin"].includes(role)) {
             fields.push("role = ?"); values.push(role);
         }
         if (school_position !== undefined) {
@@ -282,8 +283,11 @@ const toggleTeacherStatus = async (req, res) => {
     const { id } = req.params;
 
     try {
+        if (Number(id) === Number(req.user.sub)) {
+            return res.status(400).json({ error: "Cannot deactivate your own account" });
+        }
         const [[teacher]] = await pool.execute(
-            "SELECT id, name, is_active FROM users WHERE id = ? AND role IN ('staff', 'headmaster') LIMIT 1",
+            "SELECT id, name, is_active FROM users WHERE id = ? AND (role IN ('staff', 'headmaster') OR (role = 'admin' AND (school_position IS NULL OR school_position != 'Student'))) LIMIT 1",
             [id]
         );
         if (!teacher) return res.status(404).json({ error: "Teacher not found" });
@@ -309,8 +313,11 @@ const deleteTeacher = async (req, res) => {
     const { id } = req.params;
 
     try {
+        if (Number(id) === Number(req.user.sub)) {
+            return res.status(400).json({ error: "Cannot deactivate your own account" });
+        }
         const [[teacher]] = await pool.execute(
-            "SELECT id, name FROM users WHERE id = ? AND role IN ('staff', 'headmaster') LIMIT 1",
+            "SELECT id, name FROM users WHERE id = ? AND (role IN ('staff', 'headmaster') OR (role = 'admin' AND (school_position IS NULL OR school_position != 'Student'))) LIMIT 1",
             [id]
         );
         if (!teacher) return res.status(404).json({ error: "Teacher not found" });

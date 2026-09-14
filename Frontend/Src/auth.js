@@ -146,9 +146,18 @@ function requireAuth() {
 // ============================================================================
 
 /**
- * formatRole(role) — converts DB enum values to display labels
+ * formatRole(role, user) — converts DB enum values to display labels
  */
-function formatRole(role) {
+function formatRole(role, user) {
+    if (user && typeof user === "object") {
+        const r = user.role || role;
+        const pos = user.school_position || "";
+        const isTeacher = !!(user.is_teacher || pos === "Teacher");
+        if (r === "admin") return isTeacher ? "Admin & Teacher" : "Administrator";
+        if (r === "headmaster" || pos === "Head Teacher") return "Head Teacher";
+        if (r === "staff") return pos || "Staff";
+        if (r === "user") return "Student";
+    }
     const labels = {
         admin: "Administrator",
         headmaster: "Headmaster",
@@ -181,7 +190,7 @@ function applyUserToDOM(user) {
         el.textContent = user.name || user.fullName || "User";
     });
     document.querySelectorAll("[data-user-role]").forEach(el => {
-        el.textContent = formatRole(user.role);
+        el.textContent = formatRole(user.role, user);
     });
     document.querySelectorAll("[data-user-initials]").forEach(el => {
         el.textContent = getInitials(user.name || user.fullName || "");
@@ -195,7 +204,7 @@ function applyUserToDOM(user) {
     if (nameEl) nameEl.textContent = user.name || user.fullName || "User";
     if (avatarEl) avatarEl.textContent = getInitials(user.name || user.fullName || "");
     if (badgeEl) {
-        badgeEl.textContent = formatRole(user.role);
+        badgeEl.textContent = formatRole(user.role, user);
         badgeEl.className = `role-badge ${user.role || ""}`;
     }
 }
@@ -215,6 +224,11 @@ async function loadCurrentUser() {
         if (!res || !res.ok) return cached || null;
         const data = await res.json();
         const user = data.user;
+
+        // Dynamic session refresh: update token if fresh token returned
+        if (data.accessToken) {
+            localStorage.setItem("accessToken", data.accessToken);
+        }
 
         // Normalise: ensure both `fullName` and `name` are present so that
         // any consumer (navigation.js, other pages) can read either key.

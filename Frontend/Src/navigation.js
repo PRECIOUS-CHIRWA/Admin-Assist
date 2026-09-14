@@ -131,20 +131,39 @@
     ThemeManager.init();
 
     /* ── Role-based Navigation config ────────────────────────────────── */
-    function _getNavItemsForRole(role) {
-        if (role === 'admin' || role === 'headmaster') {
+    function _getNavItemsForUser(userOrRole) {
+        var user = (typeof userOrRole === 'object' && userOrRole) ? userOrRole : { role: userOrRole || 'user' };
+        var role = user.role || 'user';
+        var position = user.school_position || '';
+        var isHeadTeacher = (role === 'headmaster') || (position === 'Head Teacher');
+        var isTeacher = !!(user.is_teacher || position === 'Teacher');
+
+        if (isHeadTeacher && role !== 'admin') {
+            // Head Teacher Supervisory Navigation (strictly supervisory)
             return [
+                { href: 'dashboard.html', label: 'Dashboard', icon: 'dashboard' },
+                { href: 'subject-management.html', label: 'Classes', icon: 'subjects' },
+                { href: 'subject-management.html#subjects', label: 'Subjects', icon: 'subjects' },
+                { href: 'teachers.html', label: 'Staff', icon: 'teachers' },
+                { href: 'reports-dashboard.html', label: 'Reports', icon: 'reports' },
+                { href: 'settings.html', label: 'Settings', icon: 'settings' },
+            ];
+        } else if (role === 'admin') {
+            var items = [
                 { href: 'dashboard.html', label: 'Dashboard', icon: 'dashboard' },
                 { href: 'enroll-student.html', label: 'Enrollment', icon: 'students' },
                 { href: 'students.html', label: 'Students', icon: 'students' },
                 { href: 'teachers.html', label: 'Staff', icon: 'teachers' },
                 { href: 'subject-management.html', label: 'Classes & Subjects', icon: 'subjects' },
                 { href: 'timetable-management.html', label: 'Timetable', icon: 'timetable' },
-                // ATTENDANCE IS STRICTLY EXCLUDED FROM ADMIN MENU PER REQUIREMENTS
-                { href: 'academic-records.html', label: 'Results', icon: 'results' },
-                { href: 'reports-dashboard.html', label: 'Reports', icon: 'reports' },
-                { href: 'settings.html', label: 'Settings', icon: 'settings' },
             ];
+            // Results-menu rule: Pure Admin must NOT have Results. Admin + Teacher MUST have Results!
+            if (isTeacher) {
+                items.push({ href: 'academic-records.html', label: 'Results', icon: 'results' });
+            }
+            items.push({ href: 'reports-dashboard.html', label: 'Reports', icon: 'reports' });
+            items.push({ href: 'settings.html', label: 'Settings', icon: 'settings' });
+            return items;
         } else if (role === 'staff') {
             return [
                 { href: 'dashboard.html', label: 'Dashboard', icon: 'dashboard' },
@@ -155,17 +174,14 @@
                 { href: 'settings.html', label: 'Settings', icon: 'settings' },
             ];
         } else {
-            // Unified Student / Parent Account ('user')
+            // Unified Student / Parent Account ('user') — strictly Transcript and Settings
             return [
-                { href: 'dashboard.html', label: 'My Dashboard', icon: 'dashboard' },
-                { href: 'student-profile.html', label: 'My Profile', icon: 'students' },
-                { href: 'attendance-history.html', label: 'Attendance', icon: 'attendance' },
-                { href: 'academic-records.html', label: 'Results', icon: 'results' },
-                { href: 'student-transcript.html', label: 'Transcript', icon: 'reports' },
+                { href: 'student-transcript.html', label: 'My Transcript', icon: 'reports' },
                 { href: 'settings.html', label: 'Account Settings', icon: 'settings' },
             ];
         }
     }
+    var _getNavItemsForRole = _getNavItemsForUser;
 
     /* ── Page title map ───────────────────────────────────────────────── */
     var PAGE_TITLES = {
@@ -219,10 +235,15 @@
     }
 
     /* ── Build sidebar ────────────────────────────────────────────────── */
-    function _renderNavLinks(role) {
+    function _renderNavLinks(userOrRole) {
         var ul = document.querySelector('.sb-nav');
         if (!ul) return;
-        var items = _getNavItemsForRole(role);
+        var user = (typeof userOrRole === 'object' && userOrRole) ? userOrRole : null;
+        if (!user) {
+            try { user = JSON.parse(localStorage.getItem('user')); } catch (e) {}
+        }
+        if (!user && typeof userOrRole === 'string') user = { role: userOrRole };
+        var items = _getNavItemsForUser(user);
         ul.innerHTML = items.map(function (item) {
             return '<li class="sb-item">' +
                 '<a href="' + item.href + '" class="sb-link" data-page="' + item.href + '">' +
@@ -241,8 +262,7 @@
 
         var initialUser = null;
         try { initialUser = JSON.parse(localStorage.getItem('user')); } catch (e) {}
-        var initialRole = (initialUser && initialUser.role) ? initialUser.role : 'user';
-        var items = _getNavItemsForRole(initialRole);
+        var items = _getNavItemsForUser(initialUser);
 
         nav.innerHTML =
             // Logo area
@@ -288,6 +308,11 @@
         var pageTitle = PAGE_TITLES[currentPage] || 'Admin Assist';
         var isDark = ThemeManager.getEffectiveTheme() === 'dark';
 
+        var initialUser = null;
+        try { initialUser = JSON.parse(localStorage.getItem('user')); } catch (e) {}
+        var initialRole = (initialUser && initialUser.role) ? initialUser.role : 'user';
+        var isStudent = initialRole === 'user';
+
         var bar = document.createElement('div');
         bar.id = 'app-topbar';
         bar.innerHTML =
@@ -304,22 +329,24 @@
             '<button class="tb-icon-btn" title="Settings" onclick="window.location=\'settings.html\'">' +
             ICONS.gear +
             '</button>' +
-            '<div style="position:relative" id="tb-notif-wrap">' +
-            '<button class="tb-icon-btn" id="tb-notif-btn" title="Notifications" type="button" aria-haspopup="true" aria-expanded="false" style="position:relative">' +
-            ICONS.bell +
-            '<span class="tb-badge" id="notif-badge" hidden>0</span>' +
-            '</button>' +
-            '<div class="tb-notif-dropdown" id="tb-notif-dropdown" hidden>' +
-            '<div class="tb-notif-header">' +
-            '<span class="tb-notif-header-title">Notifications</span>' +
-            '<button class="tb-notif-mark-all" id="tb-notif-mark-all" type="button">Mark all read</button>' +
-            '</div>' +
-            '<div class="tb-notif-list" id="tb-notif-list">' +
-            '<div class="tb-notif-empty">Loading notifications…</div>' +
-            '</div>' +
-            '<a href="notifications.html" class="tb-notif-footer">View all notifications &rarr;</a>' +
-            '</div>' +
-            '</div>' +
+            (isStudent ? '' : (
+                '<div style="position:relative" id="tb-notif-wrap">' +
+                '<button class="tb-icon-btn" id="tb-notif-btn" title="Notifications" type="button" aria-haspopup="true" aria-expanded="false" style="position:relative">' +
+                ICONS.bell +
+                '<span class="tb-badge" id="notif-badge" hidden>0</span>' +
+                '</button>' +
+                '<div class="tb-notif-dropdown" id="tb-notif-dropdown" hidden>' +
+                '<div class="tb-notif-header">' +
+                '<span class="tb-notif-header-title">Notifications</span>' +
+                '<button class="tb-notif-mark-all" id="tb-notif-mark-all" type="button">Mark all read</button>' +
+                '</div>' +
+                '<div class="tb-notif-list" id="tb-notif-list">' +
+                '<div class="tb-notif-empty">Loading notifications…</div>' +
+                '</div>' +
+                '<a href="notifications.html" class="tb-notif-footer">View all notifications &rarr;</a>' +
+                '</div>' +
+                '</div>'
+            )) +
             '<div class="tb-user" id="tb-user">' +
             '<div class="tb-avatar" id="tb-avatar">?</div>' +
             '<div class="tb-user-info">' +
@@ -342,6 +369,11 @@
     var _notifCache = [];
 
     async function _loadNotifications() {
+        var u = null;
+        try { u = JSON.parse(localStorage.getItem('user')); } catch (e) {}
+        if ((u && u.role === 'user') || (typeof getUser === 'function' && getUser()?.role === 'user')) {
+            return; // Students have no access to internal notifications
+        }
         if (typeof apiFetch !== 'function') return;
         try {
             var res = await apiFetch('/api/notifications');
@@ -450,26 +482,40 @@
             var avatarEl = document.getElementById('tb-avatar');
 
             if (nameEl) nameEl.textContent = name;
-            if (roleEl) roleEl.textContent = _roleLabel(role);
+            if (roleEl) roleEl.textContent = _roleLabel(user);
             if (avatarEl) avatarEl.textContent = initials;
 
-            // Dynamically refresh sidebar links for the confirmed role
-            if (role) {
-                _renderNavLinks(role);
-            }
+            // Dynamically refresh sidebar links for the confirmed user context
+            _renderNavLinks(user);
             _filterByRole(role);
+
+            if (role === 'user') {
+                var nw = document.getElementById('tb-notif-wrap');
+                if (nw) nw.remove();
+            }
         }).catch(function () { });
     }
 
-    /* ── Role label map (mirrors auth.js formatRole) ─────────────────── */
-    function _roleLabel(role) {
-        var labels = {
-            admin: 'Administrator',
-            headmaster: 'Headmaster',
-            staff: 'Staff',
-            user: 'Student / Parent',
-        };
-        return labels[role] || _capitalise(role);
+    /* ── Role label map ──────────────────────────────────────────────── */
+    function _roleLabel(user) {
+        if (!user) return 'User';
+        var role = typeof user === 'string' ? user : (user.role || '');
+        var position = (typeof user === 'object' && user) ? (user.school_position || '') : '';
+        var isTeacher = (typeof user === 'object' && user) ? (user.is_teacher || position === 'Teacher') : false;
+
+        if (role === 'admin') {
+            return isTeacher ? 'Admin & Teacher' : 'Administrator';
+        }
+        if (role === 'headmaster' || position === 'Head Teacher') {
+            return 'Head Teacher';
+        }
+        if (role === 'staff') {
+            return position || 'Staff';
+        }
+        if (role === 'user') {
+            return 'Student';
+        }
+        return position || _capitalise(role);
     }
 
     /* ── RBAC: hide items user's role can't access ───────────────────── */

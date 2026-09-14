@@ -40,6 +40,8 @@ const createTokens = (user) => {
         sub: user.id,
         email: user.email,
         role: user.role,
+        school_position: user.school_position || (user.role === 'admin' ? 'Administrator' : 'Teacher'),
+        is_teacher: !!user.is_teacher,
         school_id: user.school_id || 1
     };
     const accessToken = jwt.sign(payload, secret, { expiresIn: ACCESS_TTL });
@@ -180,6 +182,21 @@ const login = async (req, res) => {
             [user.id]
         );
 
+        // Check teaching status
+        let isTeacher = false;
+        try {
+            const [[ts]] = await pool.execute(
+                "SELECT COUNT(*) AS cnt FROM teacher_subjects WHERE teacher_id = ?",
+                [user.id]
+            );
+            const [[ct]] = await pool.execute(
+                "SELECT COUNT(*) AS cnt FROM classes WHERE class_teacher_id = ?",
+                [user.id]
+            );
+            isTeacher = (ts && ts.cnt > 0) || (ct && ct.cnt > 0) || (user.school_position === 'Teacher');
+        } catch { /* non-fatal */ }
+        user.is_teacher = isTeacher;
+
         const { accessToken, refreshToken } = createTokens(user);
 
         //  Persist hashed refresh token so we can revoke it on logout
@@ -216,6 +233,9 @@ const login = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                school_position: user.school_position || (user.role === 'admin' ? 'Administrator' : 'Teacher'),
+                department: user.department || null,
+                is_teacher: isTeacher,
                 student_id: studentId,
                 admission_number: admissionNumber
             },
@@ -230,7 +250,10 @@ const login = async (req, res) => {
 const getMe = async (req, res) => {
     try {
         const [rows] = await pool.execute(
-            `SELECT u.id, u.school_id, u.name, u.name as fullName, u.email, u.role, u.created_at,
+            `SELECT u.id, u.school_id, u.name, u.name as fullName, u.email, u.role,
+                    COALESCE(u.school_position, IF(u.role = 'admin', 'Administrator', 'Teacher')) AS school_position,
+                    COALESCE(u.department, 'Unassigned') AS department,
+                    u.created_at,
                     s.id AS student_id, s.admission_number
              FROM users u
              LEFT JOIN students s ON s.user_id = u.id
@@ -238,7 +261,35 @@ const getMe = async (req, res) => {
             [req.user.sub]
         );
         if (!rows[0]) return res.status(404).json({ error: "User not found" });
-        res.json({ user: rows[0] });
+
+        const u = rows[0];
+
+        // Compute is_teacher
+        let isTeacher = false;
+        try {
+            const [[ts]] = await pool.execute(
+                "SELECT COUNT(*) AS cnt FROM teacher_subjects WHERE teacher_id = ?",
+                [u.id]
+            );
+            const [[ct]] = await pool.execute(
+                "SELECT COUNT(*) AS cnt FROM classes WHERE class_teacher_id = ?",
+                [u.id]
+            );
+            isTeacher = (ts && ts.cnt > 0) || (ct && ct.cnt > 0) || (u.school_position === 'Teacher');
+        } catch { /* non-fatal */ }
+        u.is_teacher = isTeacher;
+
+        // If JWT role or position is stale, generate a fresh token
+        let freshAccessToken = null;
+        if (req.user.role !== u.role || req.user.school_position !== u.school_position) {
+            const tokens = createTokens(u);
+            freshAccessToken = tokens.accessToken;
+        }
+
+        res.json({
+            user: u,
+            accessToken: freshAccessToken || undefined
+        });
     } catch (err) {
         console.error("getMe error:", err.message);
         res.status(500).json({ error: "Something went wrong" });

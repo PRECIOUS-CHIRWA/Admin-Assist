@@ -96,14 +96,18 @@
                     // Redirection: respect "next" query parameter or route to role default
                     const urlParams = new URLSearchParams(window.location.search);
                     const nextUrl = urlParams.get("next");
+                    const isStudent = data.user && data.user.role === "user";
 
                     if (nextUrl && !nextUrl.startsWith("http") && !nextUrl.startsWith("//")) {
-                        window.location.href = decodeURIComponent(nextUrl);
-                        return;
+                        const decodedNext = decodeURIComponent(nextUrl);
+                        if (!isStudent || decodedNext.includes("student-transcript.html") || decodedNext.includes("settings.html")) {
+                            window.location.href = decodedNext;
+                            return;
+                        }
                     }
 
-                    // Default route
-                    window.location.href = "dashboard.html";
+                    // Default route: Student goes to transcript; staff and admin go to dashboard
+                    window.location.href = isStudent ? "student-transcript.html" : "dashboard.html";
 
                 } catch (err) {
                     showError(err.message || "Unable to sign in. Please verify your credentials.");
