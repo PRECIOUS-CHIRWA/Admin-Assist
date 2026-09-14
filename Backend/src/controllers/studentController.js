@@ -44,9 +44,9 @@ const toApiShape = (row) => {
     let accountStatus = "Not Created";
     if (row.status === "Archived") {
         accountStatus = "Archived";
-    } else if (row.user_id && (row.user_email || row.account_email)) {
-        accountStatus = (row.user_is_active === 0) ? "Disabled" : "Active";
     } else if (row.user_id) {
+        // A user_id link means an account genuinely exists.
+        // is_active drives whether it is Active or Disabled.
         accountStatus = (row.user_is_active === 0) ? "Disabled" : "Active";
     }
 
@@ -200,62 +200,71 @@ const getStudentById = async (req, res) => {
 };
 
 // ─── Auto-generate Admission Number ──────────────────────────────────────────
-// Format: ADM-[YEAR]-[CLASS_CODE]-[SEQUENCE]
-// e.g. ADM-2026-8A-0001 or ADM-2026-10B-0001
-const generateAdmissionNumber = async ({ year, classId, grade, stream }) => {
+// Format: {PREFIX}-{YEAR}-{NNNN}
+//
+// PREFIX  = school_settings.school_code for the school (e.g. '9736').
+//           Falls back to 'ADM' if school_code is NULL or not set.
+//           When admin sets/changes school_code in Settings the prefix updates
+//           for all subsequent enrollments; existing numbers are unchanged.
+//
+// Examples: ADM-2026-0001  |  9736-2026-0042
+//
+// The sequence is global per school per year — class/grade are NOT embedded.
+// A student moving from Grade 10A to Grade 11B keeps the same number.
+//
+// schoolId is optional; omit (or pass null) to use the default school (id=1).
+const generateAdmissionNumber = async ({ year, schoolId }) => {
     const yr = parseInt(year, 10) || new Date().getFullYear();
+    const sid = schoolId || 1;
 
-    let gradeLevel = grade || "";
-    let streamCode = stream || "";
-
-    if (classId) {
-        const [[cls]] = await pool.execute(
-            "SELECT grade_level, stream FROM classes WHERE id = ?",
-            [classId]
+    // Look up the school prefix (school_code) — fall back to 'ADM' if unset.
+    let prefix = "ADM";
+    try {
+        const [[settingsRow]] = await pool.execute(
+            "SELECT school_code FROM school_settings WHERE school_id = ? LIMIT 1",
+            [sid]
         );
-        if (cls) {
-            gradeLevel = cls.grade_level || gradeLevel;
-            streamCode = cls.stream || streamCode;
+        if (settingsRow && settingsRow.school_code && String(settingsRow.school_code).trim()) {
+            prefix = String(settingsRow.school_code).trim().toUpperCase();
         }
+    } catch (_) {
+        // If school_settings table is missing or query fails, fall back silently.
     }
 
-    // Extract grade digit(s): e.g. "Grade 8" -> "8", "Grade 10" -> "10"
-    const gradeNum = String(gradeLevel).replace(/[^0-9]/g, "") || "8";
-    // Clean stream letter/code: e.g. "A" -> "A", "Science" -> "SCI"
-    let streamClean = String(streamCode).trim().toUpperCase();
-    if (streamClean.length > 3) streamClean = streamClean.slice(0, 3);
+    const admPrefix = `${prefix}-${yr}-`;
 
-    const classCode = `${gradeNum}${streamClean}`;
-    const prefix = `ADM-${yr}-${classCode}-`;
-
-    // Find highest existing sequence for this prefix
+    // Find the highest existing sequence for this school+year prefix.
+    // LIKE '%-{yr}-%' would match too broadly; we match the exact prefix.
     const [rows] = await pool.execute(
-        "SELECT admission_number FROM students WHERE admission_number LIKE ? ORDER BY admission_number DESC LIMIT 50",
-        [`${prefix}%`]
+        `SELECT admission_number FROM students
+         WHERE school_id = ? AND admission_number LIKE ?
+         ORDER BY admission_number DESC LIMIT 100`,
+        [sid, `${admPrefix}%`]
     );
 
     let maxSeq = 0;
     for (const r of rows) {
+        // Expected shape: PREFIX-YYYY-NNNN  (3 dash-separated parts)
         const parts = r.admission_number.split("-");
         const lastPart = parts[parts.length - 1];
         const num = parseInt(lastPart, 10);
-        if (!isNaN(num) && num > maxSeq) {
-            maxSeq = num;
-        }
+        if (!isNaN(num) && num > maxSeq) maxSeq = num;
     }
 
     let nextSeq = maxSeq + 1;
-    let candidate = `${prefix}${String(nextSeq).padStart(4, "0")}`;
+    let candidate = `${admPrefix}${String(nextSeq).padStart(4, "0")}`;
 
-    // Safety check: ensure absolute uniqueness in DB
-    while (true) {
+    // Safety loop: guarantee absolute DB uniqueness even under concurrent inserts.
+    // In practice the UNIQUE KEY constraint is the hard guard; this loop avoids
+    // a retry round-trip in the happy path.
+    for (let guard = 0; guard < 50; guard++) {
         const [[exists]] = await pool.execute(
             "SELECT id FROM students WHERE admission_number = ? LIMIT 1",
             [candidate]
         );
         if (!exists) break;
         nextSeq++;
-        candidate = `${prefix}${String(nextSeq).padStart(4, "0")}`;
+        candidate = `${admPrefix}${String(nextSeq).padStart(4, "0")}`;
     }
 
     return candidate;
@@ -263,13 +272,9 @@ const generateAdmissionNumber = async ({ year, classId, grade, stream }) => {
 
 const getNextAdmissionNumber = async (req, res) => {
     try {
-        const { year, class_id, grade, stream } = req.query;
-        const adm = await generateAdmissionNumber({
-            year,
-            classId: class_id,
-            grade,
-            stream,
-        });
+        const { year } = req.query;
+        const schoolId = req.user?.school_id || 1;
+        const adm = await generateAdmissionNumber({ year, schoolId });
         res.json({ admission_number: adm, admissionNumber: adm });
     } catch (err) {
         console.error("getNextAdmissionNumber error:", err.message);
@@ -333,9 +338,7 @@ const createStudent = async (req, res) => {
             const enrollYear = enrollmentDate ? new Date(enrollmentDate).getFullYear() : new Date().getFullYear();
             admissionNumber = await generateAdmissionNumber({
                 year: enrollYear,
-                classId,
-                grade,
-                stream: section,
+                schoolId,
             });
         }
 
@@ -365,37 +368,12 @@ const createStudent = async (req, res) => {
             normalizedRelationship = "Guardian";
         }
 
-        const schoolId = req.user?.school_id || 1;
-
-        // ── Unified Student / Parent User Account Association ────────────────
-        // A single unified account (role 'user') is associated with the student record.
-        // If an account email is provided or guardian email is provided, we use it;
-        // otherwise, generate a standard student portal email.
-        const cleanStudentName = `${firstName} ${lastName}`.trim();
-        const accountEmail = (email && email.trim()) 
-            ? email.trim().toLowerCase() 
-            : `${admissionNumber.toLowerCase().replace(/[^a-z0-9]/g, '')}@student.school.local`;
-
-        let userId = null;
-        const [existingUsers] = await pool.execute(
-            "SELECT id FROM users WHERE email = ? LIMIT 1",
-            [accountEmail]
-        );
-
-        if (existingUsers.length > 0) {
-            userId = existingUsers[0].id;
-        } else {
-            // Default password 'Student@123' for student/parent initial access
-            const defaultPassword = "Student@123";
-            const passwordHash = await _hashPassword(defaultPassword);
-            const [newUserRes] = await pool.execute(
-                `INSERT INTO users (school_id, name, email, password_hash, role, is_active, email_verified)
-                 VALUES (?, ?, ?, ?, 'user', 1, 1)`,
-                [schoolId, cleanStudentName, accountEmail, passwordHash]
-            );
-            userId = newUserRes.insertId;
-        }
-
+        // ── Enrollment only — NO user account is created here ───────────────────
+        // Student records and login accounts are separate concerns.
+        // An enrolled student starts with user_id = NULL and account_status = 'Not Created'.
+        // Admin must explicitly use the 'Create Account' action to issue login credentials.
+        // This prevents the false "student already has an account" error that occurred
+        // when enrollment auto-created a user and the Admin later tried to create one.
         const [result] = await pool.execute(
             `INSERT INTO students (
                 school_id, user_id, admission_number, first_name, last_name, date_of_birth, gender,
@@ -404,13 +382,13 @@ const createStudent = async (req, res) => {
                 phone_number, email, status
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                schoolId, userId, admissionNumber, firstName, lastName,
+                schoolId, null, admissionNumber, firstName, lastName,
                 dateOfBirth, normalizedGender,
                 nrcNumber, homeAddress,
                 district, province,
                 grade, section, classId, enrollmentDate,
                 previousSchool, parentGuardianName,
-                normalizedRelationship, phoneNumber, email || accountEmail,
+                normalizedRelationship, phoneNumber, email || null,
                 status,
             ]
         );
@@ -418,9 +396,9 @@ const createStudent = async (req, res) => {
         // Audit log
         await _auditLog(
             req.user.sub,
-            `Enrolled student ${firstName} ${lastName} (${admissionNumber}) with unified account`,
+            `Enrolled student ${firstName} ${lastName} (${admissionNumber})`,
             "student", result.insertId,
-            { admissionNumber, userId }
+            { admissionNumber }
         );
 
         // Notify the enrolling admin/staff that the enrollment succeeded
@@ -618,15 +596,36 @@ const createStudentAccount = async (req, res) => {
         );
         if (!student) return res.status(404).json({ error: "Student not found" });
 
-        // Prevent accidental duplicate creation unless explicit reset
-        if (student.user_id && !reset) {
-            return res.status(409).json({
-                error: "This student already has an account.",
-                accountExists: true,
-                userId: student.user_id,
-                email: student.user_email || student.email,
-                isActive: student.user_is_active === 1,
-            });
+        // ── Account-existence check ──────────────────────────────────────────────
+        // We verify the FK is live (the users row actually exists) before treating
+        // user_id as evidence of an account. A stale FK (user deleted externally)
+        // would otherwise block account creation forever.
+        if (student.user_id) {
+            const [[linkedUser]] = await pool.execute(
+                "SELECT id, is_active FROM users WHERE id = ? LIMIT 1",
+                [student.user_id]
+            );
+
+            if (!linkedUser) {
+                // Stale FK — the users row no longer exists. Clear it so we can
+                // create a fresh account below.
+                await pool.execute(
+                    "UPDATE students SET user_id = NULL WHERE id = ?",
+                    [studentId]
+                );
+                student.user_id = null;
+            } else if (!reset) {
+                // A real, live account exists and this is not a reset request.
+                return res.status(409).json({
+                    success: false,
+                    code: "STUDENT_ACCOUNT_EXISTS",
+                    message: "This student already has an account.",
+                    accountExists: true,
+                    userId: student.user_id,
+                    email: student.user_email || student.email,
+                    isActive: linkedUser.is_active === 1,
+                });
+            }
         }
 
         const recipientEmail = customEmail || (student.email && student.email.trim()) || (student.user_email) ||

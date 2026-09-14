@@ -121,7 +121,7 @@ CREATE TABLE IF NOT EXISTS students (
     relationship         ENUM('Father','Mother','Guardian') NOT NULL,
     phone_number         VARCHAR(20)   NOT NULL,
     email                VARCHAR(255)           DEFAULT NULL,
-    status               ENUM('Active','Inactive','Suspended') NOT NULL DEFAULT 'Active',
+    status               ENUM('Active','Inactive','Suspended','Archived') NOT NULL DEFAULT 'Active',
     created_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),

@@ -398,7 +398,11 @@
     document.getElementById('acctStudentStatus').textContent = student.status || 'Active';
     document.getElementById('acctSelectedCard').style.display = 'block';
 
-    const hasAccount = student.user_id || (student.account_status && student.account_status !== 'Not Created');
+    // Determine whether this student already has a login account.
+    // account_status is set by the backend based on the actual users FK —
+    // do NOT use student.user_id here since it is null for all newly enrolled
+    // students (enrollment no longer auto-creates an account).
+    const hasAccount = student.account_status && student.account_status !== 'Not Created';
     const existsAlert = document.getElementById('acctExistsAlert');
     const formFields = document.getElementById('acctFormFields');
     const submitBtn = document.getElementById('submitCreateAcctBtn');
@@ -498,7 +502,23 @@
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to create student account');
+        // Handle 409 STUDENT_ACCOUNT_EXISTS gracefully: show the exists alert
+        // panel in the modal rather than a generic error toast.
+        if (res.status === 409 && data.code === 'STUDENT_ACCOUNT_EXISTS') {
+          const existsAlert = document.getElementById('acctExistsAlert');
+          const emailEl = document.getElementById('acctExistsEmail');
+          if (existsAlert) existsAlert.style.display = 'block';
+          if (emailEl) emailEl.textContent = data.email || 'Linked User';
+          if (msgBox) {
+            msgBox.style.display = 'block';
+            msgBox.style.background = '#fef3c7';
+            msgBox.style.color = '#92400e';
+            msgBox.style.border = '1px solid #fde68a';
+            msgBox.textContent = 'This student already has an account. Use the Reset option to update credentials.';
+          }
+          return;
+        }
+        throw new Error(data.error || data.message || 'Failed to create student account');
       }
 
       _toast(data.message || 'Unified Student & Guardian account established successfully.', 'success');
