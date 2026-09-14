@@ -173,9 +173,10 @@ const createTeacher = async (req, res) => {
         const newId = result.insertId;
 
         // Send welcome email (non-fatal — log but don't fail the request)
-        const loginUrl = (process.env.PUBLIC_APP_URL && process.env.PUBLIC_APP_URL.includes("Admin-Assist"))
-            ? `${process.env.PUBLIC_APP_URL.replace(/\/$/, "")}/login.html`
-            : "https://precious-chirwa.github.io/Admin-Assist/Frontend/Src/login.html";
+        // Login URL sent in the welcome email.
+        // PUBLIC_LOGIN_URL env var allows override for custom deployments.
+        const loginUrl = process.env.PUBLIC_LOGIN_URL
+            || "https://precious-chirwa.github.io/Admin-Assist/Src/login.html";
 
         try {
             await sendNewAccountEmail({ to: { name: name.trim(), email: email.trim().toLowerCase() }, tempPassword, loginUrl });

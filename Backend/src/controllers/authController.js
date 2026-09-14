@@ -105,17 +105,29 @@ const signup = async (req, res) => {
 // ─── Login ──────────────────────
 const login = async (req, res) => {
     try {
-        const email = normalizeEmail(req.body.email);
+        const rawIdentifier = req.body.email || req.body.identifier || "";
+        const identifier = String(rawIdentifier).trim();
         const password = req.body.password;
 
-        if (!email || !password)
-            return res.status(400).json({ error: "Email and password are required" });
+        if (!identifier || !password)
+            return res.status(400).json({ error: "Email/Admission number and password are required" });
 
+        const normalizedEmail = normalizeEmail(identifier);
+        const cleanAdmission = identifier.replace(/\s+/g, '');
+
+        // Support authentication via either email or student admission number (with or without hyphens)
         const [users] = await pool.execute(
-            `SELECT id, school_id, name, email, password_hash, role,
-                    is_active, failed_attempts, locked_until
-             FROM users WHERE email = ? LIMIT 1`,
-            [email]
+            `SELECT u.id, u.school_id, u.name, u.email, u.password_hash, u.role,
+                    u.is_active, u.failed_attempts, u.locked_until,
+                    s.id AS student_id, s.admission_number
+             FROM users u
+             LEFT JOIN students s ON s.user_id = u.id
+             WHERE LOWER(u.email) = LOWER(?)
+                OR LOWER(s.admission_number) = LOWER(?)
+                OR REPLACE(LOWER(s.admission_number), '-', '') = REPLACE(LOWER(?), '-', '')
+             ORDER BY (LOWER(u.email) = LOWER(?)) DESC, (LOWER(s.admission_number) = LOWER(?)) DESC
+             LIMIT 1`,
+            [normalizedEmail, identifier, cleanAdmission, normalizedEmail, identifier]
         );
 
         const user = users[0];
@@ -123,7 +135,7 @@ const login = async (req, res) => {
         // Use the same error message whether the user exists or not
         // to avoid revealing which emails are registered (user enumeration)
         if (!user)
-            return res.status(401).json({ error: "Invalid email or password" });
+            return res.status(401).json({ error: "Invalid email/admission number or password" });
 
         //  Reject disabled accounts
         if (!user.is_active)
@@ -158,7 +170,8 @@ const login = async (req, res) => {
                     error: `Too many failed attempts. Account locked for 15 minutes.`,
                 });
             }
-            return res.status(401).json({ error: "Invalid email or password" });
+
+            return res.status(401).json({ error: "Invalid email/admission number or password" });
         }
 
         //  Successful login — reset lockout counters and record timestamp
@@ -179,18 +192,20 @@ const login = async (req, res) => {
         res.cookie("refreshToken", refreshToken, cookieOptions());
 
         // Check if there is an associated student record (for unified accounts)
-        let studentId = null;
-        let admissionNumber = null;
-        try {
-            const [[st]] = await pool.execute(
-                "SELECT id, admission_number FROM students WHERE user_id = ? LIMIT 1",
-                [user.id]
-            );
-            if (st) {
-                studentId = st.id;
-                admissionNumber = st.admission_number;
-            }
-        } catch { /* column might be migrating */ }
+        let studentId = user.student_id || null;
+        let admissionNumber = user.admission_number || null;
+        if (!studentId) {
+            try {
+                const [[st]] = await pool.execute(
+                    "SELECT id, admission_number FROM students WHERE user_id = ? LIMIT 1",
+                    [user.id]
+                );
+                if (st) {
+                    studentId = st.id;
+                    admissionNumber = st.admission_number;
+                }
+            } catch { /* column might be migrating */ }
+        }
 
         res.status(200).json({
             message: "User logged in successfully",

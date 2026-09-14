@@ -500,6 +500,10 @@
       return;
     }
 
+    const s = allStudents.find(function (item) { return String(item.id) === String(studentId); });
+    const hasExisting = s && s.account_status && s.account_status !== 'Not Created';
+    const isReset = resetMode === true || (resetMode !== false && hasExisting);
+
     btn.disabled = true;
     btn.textContent = 'Saving…';
     if (msgBox) msgBox.style.display = 'none';
@@ -511,7 +515,7 @@
           email: email,
           password: password,
           allow_guardian: allowGuardian,
-          reset: resetMode === true
+          reset: isReset
         })
       });
 
@@ -529,11 +533,12 @@
             msgBox.style.background = '#fef3c7';
             msgBox.style.color = '#92400e';
             msgBox.style.border = '1px solid #fde68a';
-            msgBox.textContent = 'This student already has an account. Use the Reset option to update credentials.';
+            msgBox.textContent = 'This student already has an account. Click "Update / Reset Account" to update credentials.';
           }
           return;
         }
-        throw new Error(data.error || data.message || 'Failed to create student account');
+        const errMessage = data.detail || data.error || data.message || 'Failed to create student account';
+        throw new Error(errMessage);
       }
 
       _toast(data.message || 'Unified Student & Guardian account established successfully.', 'success');

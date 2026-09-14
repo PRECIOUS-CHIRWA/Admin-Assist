@@ -83,6 +83,17 @@ const getAttendanceReport = async (req, res) => {
     if (class_id)         { filters.push("s.class_id = ?");          values.push(class_id); }
     if (term_id)          { filters.push("s.term_id = ?");           values.push(term_id); }
     if (academic_year_id) { filters.push("s.academic_year_id = ?"); values.push(academic_year_id); }
+
+    // Staff only see attendance for their own sessions and students
+    if (req.user && req.user.role === "staff") {
+        const teacherId = req.user.sub || req.user.id;
+        filters.push(`s.teacher_id = ? AND s.class_id IN (
+            SELECT DISTINCT ts.class_id FROM teacher_subjects ts WHERE ts.teacher_id = ?
+            UNION SELECT c2.id FROM classes c2 WHERE c2.class_teacher_id = ?
+        )`);
+        values.push(teacherId, teacherId, teacherId);
+    }
+
     const where = `WHERE ${filters.join(" AND ")}`;
 
     try {
@@ -419,6 +430,17 @@ const getStudentAttendanceSummary = async (req, res) => {
         filters.push("s.academic_year_id = ?");
         values.push(academic_year_id);
     }
+
+    // Staff only see attendance for their own sessions and students
+    if (req.user && req.user.role === "staff") {
+        const teacherId = req.user.sub || req.user.id;
+        filters.push(`s.teacher_id = ? AND s.class_id IN (
+            SELECT DISTINCT ts.class_id FROM teacher_subjects ts WHERE ts.teacher_id = ?
+            UNION SELECT c2.id FROM classes c2 WHERE c2.class_teacher_id = ?
+        )`);
+        values.push(teacherId, teacherId, teacherId);
+    }
+
     const where = `WHERE ${filters.join(" AND ")}`;
 
     try {

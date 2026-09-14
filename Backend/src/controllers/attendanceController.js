@@ -530,17 +530,17 @@ const getSessions = async (req, res) => {
 
     if (targetClass) { filters.push("s.class_id = ?"); values.push(targetClass); }
 
-    // Staff: restrict to classes they are assigned to
+    // Staff: restrict to their own sessions for classes they are assigned to
     if (role === "staff") {
         if (targetTeacher && String(targetTeacher) !== String(userId)) {
             // Staff cannot query other teachers' sessions
             return res.status(403).json({ error: "Access denied" });
         }
-        // Scope to classes where this teacher is assigned
-        filters.push(`(s.teacher_id = ? OR s.class_id IN (
+        // Scope strictly to sessions taken by this teacher for their assigned classes
+        filters.push(`s.teacher_id = ? AND s.class_id IN (
             SELECT DISTINCT ts.class_id FROM teacher_subjects ts WHERE ts.teacher_id = ?
             UNION SELECT c2.id FROM classes c2 WHERE c2.class_teacher_id = ?
-        ))`);
+        )`);
         values.push(userId, userId, userId);
     } else if (targetTeacher) {
         filters.push("s.teacher_id = ?");
@@ -612,6 +612,14 @@ const getSessionById = async (req, res) => {
 
         if (!session) return res.status(404).json({ error: "Session not found" });
 
+        // Staff can only view their own attendance sessions
+        if (req.user.role === "staff") {
+            const userId = req.user.sub || req.user.id;
+            if (String(session.teacher_id) !== String(userId)) {
+                return res.status(403).json({ error: "Access denied. You can only view your own attendance sessions." });
+            }
+        }
+
         const [records] = await pool.execute(
             `SELECT ar.id, ar.status, ar.remarks, ar.created_at, ar.updated_at,
                     st.id AS student_id, st.first_name, st.last_name, st.admission_number
@@ -639,10 +647,17 @@ const updateSession = async (req, res) => {
 
     try {
         const [[existing]] = await pool.execute(
-            "SELECT id FROM attendance_sessions WHERE id = ?",
+            "SELECT id, teacher_id FROM attendance_sessions WHERE id = ?",
             [id]
         );
         if (!existing) return res.status(404).json({ error: "Session not found" });
+
+        if (req.user.role === "staff") {
+            const userId = req.user.sub || req.user.id;
+            if (String(existing.teacher_id) !== String(userId)) {
+                return res.status(403).json({ error: "Access denied. You can only update your own attendance sessions." });
+            }
+        }
 
         const fields = [];
         const values = [];
@@ -681,6 +696,19 @@ const deleteSession = async (req, res) => {
     const { id } = req.params;
 
     try {
+        const [[existing]] = await pool.execute(
+            "SELECT id, teacher_id FROM attendance_sessions WHERE id = ?",
+            [id]
+        );
+        if (!existing) return res.status(404).json({ error: "Session not found" });
+
+        if (req.user.role === "staff") {
+            const userId = req.user.sub || req.user.id;
+            if (String(existing.teacher_id) !== String(userId)) {
+                return res.status(403).json({ error: "Access denied. You can only delete your own attendance sessions." });
+            }
+        }
+
         const [result] = await pool.execute(
             "DELETE FROM attendance_sessions WHERE id = ?",
             [id]
@@ -847,6 +875,23 @@ const getStudentAttendance = async (req, res) => {
             }
         }
 
+        // Staff can only view attendance for their own students (assigned classes)
+        if (role === "staff") {
+            const [[assigned]] = await pool.execute(
+                `SELECT s.id FROM students s
+                 WHERE s.id = ? AND s.school_id = ?
+                   AND (s.class_id IN (
+                       SELECT DISTINCT ts.class_id FROM teacher_subjects ts WHERE ts.teacher_id = ?
+                       UNION SELECT c2.id FROM classes c2 WHERE c2.class_teacher_id = ?
+                   ))
+                 LIMIT 1`,
+                [studentId, schoolId, userId, userId]
+            );
+            if (!assigned) {
+                return res.status(403).json({ error: "Access denied. You can only view attendance for your own students." });
+            }
+        }
+
         const [[student]] = await pool.execute(
             "SELECT id, first_name, last_name, admission_number FROM students WHERE id = ? AND school_id = ?",
             [studentId, schoolId]
@@ -855,6 +900,12 @@ const getStudentAttendance = async (req, res) => {
 
         const filters = ["ar.student_id = ?"];
         const values = [studentId];
+
+        // Staff only see their own attendance history records
+        if (role === "staff") {
+            filters.push("sess.teacher_id = ?");
+            values.push(userId);
+        }
 
         if (term_id) { filters.push("sess.term_id = ?"); values.push(term_id); }
         if (academic_year_id) { filters.push("sess.academic_year_id = ?"); values.push(academic_year_id); }

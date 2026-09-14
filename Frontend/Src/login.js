@@ -55,7 +55,7 @@
                 const password = passwordInput ? passwordInput.value : "";
 
                 if (!email || !password) {
-                    showError("Please enter both email address and password.");
+                    showError("Please enter your email or admission number and password.");
                     return;
                 }
 

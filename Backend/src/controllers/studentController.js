@@ -597,27 +597,25 @@ const createStudentAccount = async (req, res) => {
         if (!student) return res.status(404).json({ error: "Student not found" });
 
         // ── Account-existence check ──────────────────────────────────────────────
-        // We verify the FK is live (the users row actually exists) before treating
-        // user_id as evidence of an account. A stale FK (user deleted externally)
-        // would otherwise block account creation forever.
+        // We verify the FK is live (the users row actually exists) AND is a student ('user' role)
+        // before treating user_id as evidence of an account. A stale FK or mislinked staff user
+        // would otherwise block account creation or hijack a teacher's login.
         if (student.user_id) {
             const [[linkedUser]] = await pool.execute(
-                "SELECT id, is_active FROM users WHERE id = ? LIMIT 1",
+                "SELECT id, is_active, role FROM users WHERE id = ? LIMIT 1",
                 [student.user_id]
             );
 
-            if (!linkedUser) {
-                // Stale FK — the users row no longer exists. Clear it so we can
-                // create a fresh account below.
+            if (!linkedUser || linkedUser.role !== "user") {
+                // Stale FK OR user is not a student account (e.g. was mistakenly linked to a staff/admin user).
+                // Decouple it so we can create a genuine student account below.
                 await pool.execute(
                     "UPDATE students SET user_id = NULL WHERE id = ?",
                     [studentId]
                 );
                 student.user_id = null;
             } else if (!reset) {
-                // A real, live account exists and this is not a reset request.
-                // Include both 'error' (for edit-modal handler) and 'code'+'message'
-                // (for unified-modal handler) so both frontend paths work correctly.
+                // A real, live student account exists and this is not a reset request.
                 return res.status(409).json({
                     success: false,
                     code: "STUDENT_ACCOUNT_EXISTS",
@@ -631,8 +629,19 @@ const createStudentAccount = async (req, res) => {
             }
         }
 
-        const recipientEmail = customEmail || (student.email && student.email.trim()) || (student.user_email) ||
-            `${student.admission_number.toLowerCase().replace(/[^a-z0-9]/g, '')}@student.school.local`;
+        const defaultStudentEmail = `${student.admission_number.toLowerCase().replace(/[^a-z0-9]/g, '')}@student.school.local`;
+        let recipientEmail = customEmail || (student.email && student.email.trim()) || (student.user_email) || defaultStudentEmail;
+
+        // If recipientEmail belongs to an existing staff/admin user (e.g. parent is a teacher/staff member),
+        // we must NOT hijack or overwrite the teacher's account. Fall back to the student's unique email.
+        const [[existingWithEmail]] = await pool.execute(
+            "SELECT id, role FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1",
+            [recipientEmail]
+        );
+        if (existingWithEmail && existingWithEmail.role !== "user") {
+            recipientEmail = defaultStudentEmail;
+        }
+
         const studentFullName = `${student.first_name} ${student.last_name}`.trim();
 
         const tempPassword = req.body.password && String(req.body.password).trim().length >= 6
@@ -643,52 +652,52 @@ const createStudentAccount = async (req, res) => {
         let userId = student.user_id;
 
         if (userId) {
-            // Update existing user — reset password and re-activate.
-            // school_position is intentionally omitted: it may not exist on all
-            // DB instances (added in Sprint4 migration, not in base schema.sql).
+            // Update existing student user — reset password and re-activate.
             await pool.execute(
-                `UPDATE users SET email = ?, password_hash = ?, is_active = 1 WHERE id = ?`,
+                `UPDATE users SET email = ?, password_hash = ?, role = 'user', is_active = 1 WHERE id = ?`,
                 [recipientEmail, passwordHash, userId]
             );
         } else {
-            // Check if a users row with this email already exists
+            // Check if a student user row with this email already exists
             const [[existingUser]] = await pool.execute(
-                "SELECT id FROM users WHERE email = ? LIMIT 1",
+                "SELECT id, role FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1",
                 [recipientEmail]
             );
-            if (existingUser) {
+            if (existingUser && existingUser.role === "user") {
                 userId = existingUser.id;
                 await pool.execute(
                     `UPDATE users SET password_hash = ?, is_active = 1 WHERE id = ?`,
                     [passwordHash, userId]
                 );
             } else {
-                // Create a brand-new user row.
-                // school_position is omitted here deliberately — it uses its DEFAULT
-                // ('Teacher') and we patch it below only when the column actually exists.
-                const [newUser] = await pool.execute(
-                    `INSERT INTO users (school_id, name, email, password_hash, role, is_active, email_verified)
-                     VALUES (?, ?, ?, ?, 'user', 1, 1)`,
-                    [schoolId, studentFullName, recipientEmail, passwordHash]
-                );
-                userId = newUser.insertId;
-
-                // Attempt to set school_position = 'Student' if the column exists.
-                // This is a best-effort update — failure is silently ignored so that
-                // account creation still succeeds on DBs without the Sprint4 migration.
+                // Create a brand-new user row with role 'user' and school_position 'Student'
                 try {
-                    await pool.execute(
-                        `UPDATE users SET school_position = 'Student' WHERE id = ?`,
-                        [userId]
+                    const [newUser] = await pool.execute(
+                        `INSERT INTO users (school_id, name, email, password_hash, role, school_position, is_active, email_verified)
+                         VALUES (?, ?, ?, ?, 'user', 'Student', 1, 1)`,
+                        [schoolId, studentFullName, recipientEmail, passwordHash]
                     );
-                } catch (_) { /* column may not exist yet — non-fatal */ }
+                    userId = newUser.insertId;
+                } catch (insertErr) {
+                    // Fallback if school_position column is missing on an unmigrated database
+                    if (insertErr.code === "ER_BAD_FIELD_ERROR") {
+                        const [newUser] = await pool.execute(
+                            `INSERT INTO users (school_id, name, email, password_hash, role, is_active, email_verified)
+                             VALUES (?, ?, ?, ?, 'user', 1, 1)`,
+                            [schoolId, studentFullName, recipientEmail, passwordHash]
+                        );
+                        userId = newUser.insertId;
+                    } else {
+                        throw insertErr;
+                    }
+                }
             }
             await pool.execute("UPDATE students SET user_id = ? WHERE id = ?", [userId, studentId]);
         }
 
-        const loginUrl = (process.env.PUBLIC_APP_URL && process.env.PUBLIC_APP_URL.includes("Admin-Assist"))
-            ? `${process.env.PUBLIC_APP_URL.replace(/\/$/, "")}/login.html`
-            : "https://precious-chirwa.github.io/Admin-Assist/Frontend/Src/login.html";
+        // Login URL sent in the welcome email.
+        const loginUrl = process.env.PUBLIC_LOGIN_URL
+            || "https://precious-chirwa.github.io/Admin-Assist/Src/login.html";
 
         let emailSent = false;
         try {
@@ -719,7 +728,16 @@ const createStudentAccount = async (req, res) => {
         });
     } catch (err) {
         console.error("createStudentAccount error:", err.code || '', err.message);
-        res.status(500).json({ error: "Failed to create student/guardian account", detail: err.message });
+        if (err.code === "ER_DUP_ENTRY") {
+            return res.status(409).json({
+                error: "An account with this email already exists for another user. Please use a unique email.",
+                detail: err.message
+            });
+        }
+        res.status(500).json({
+            error: err.message ? `Failed to create student/guardian account: ${err.message}` : "Failed to create student/guardian account",
+            detail: err.message
+        });
     }
 };
 
