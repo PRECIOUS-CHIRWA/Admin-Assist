@@ -504,6 +504,8 @@ CREATE TABLE IF NOT EXISTS notifications (
     INDEX idx_notif_user    (user_id),
     INDEX idx_notif_read    (user_id, is_read),
     INDEX idx_notif_created (created_at)
+);
+
 -- ─── 22. Timetables ──────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS timetables (
     id               INT UNSIGNED NOT NULL AUTO_INCREMENT,

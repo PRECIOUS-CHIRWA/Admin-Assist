@@ -616,9 +616,12 @@ const createStudentAccount = async (req, res) => {
                 student.user_id = null;
             } else if (!reset) {
                 // A real, live account exists and this is not a reset request.
+                // Include both 'error' (for edit-modal handler) and 'code'+'message'
+                // (for unified-modal handler) so both frontend paths work correctly.
                 return res.status(409).json({
                     success: false,
                     code: "STUDENT_ACCOUNT_EXISTS",
+                    error: "This student already has an account.",
                     message: "This student already has an account.",
                     accountExists: true,
                     userId: student.user_id,

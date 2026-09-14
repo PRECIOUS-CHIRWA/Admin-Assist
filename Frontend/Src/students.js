@@ -281,8 +281,23 @@
         body: JSON.stringify({})
       });
       const data = await res.json().catch(() => ({}));
+
       if (!res || !res.ok) {
-        throw new Error(data.error || 'Failed to create account');
+        // 409 = student already has an account (detected via verified FK).
+        // Show an informational amber message rather than a red error.
+        if (res.status === 409 && (data.code === 'STUDENT_ACCOUNT_EXISTS' || data.accountExists)) {
+          if (statusMsg) {
+            statusMsg.hidden = false;
+            statusMsg.style.background = '#fef3c7';
+            statusMsg.style.color = '#92400e';
+            statusMsg.style.border = '1px solid #fde68a';
+            statusMsg.innerHTML = `<strong>Account already exists</strong> for this student` +
+              (data.email ? ` (${_esc(data.email)})` : '') +
+              `.<br><em>Use the <strong>Create Account</strong> modal to reset credentials if needed.</em>`;
+          }
+          return; // not an error — just inform the admin
+        }
+        throw new Error(data.error || data.message || 'Failed to create account');
       }
 
       if (statusMsg) {

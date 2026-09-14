@@ -56,5 +56,26 @@ SET @stmt = (SELECT IF(
 ));
 PREPARE s FROM @stmt; EXECUTE s; DEALLOCATE PREPARE s;
 
+-- ─── 5. Create notifications table if missing ───────────────────────────────────
+-- The original schema.sql was missing the closing ); on this table definition,
+-- so it was never created on the live database. This fixes the recurring
+-- "Table 'defaultdb.notifications' doesn't exist" backend error.
+CREATE TABLE IF NOT EXISTS notifications (
+    id          INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    user_id     INT UNSIGNED  NOT NULL,
+    type        VARCHAR(50)   NOT NULL DEFAULT 'system',
+    title       VARCHAR(255)  NOT NULL,
+    description TEXT                   DEFAULT NULL,
+    entity_type VARCHAR(50)            DEFAULT NULL,
+    entity_id   INT UNSIGNED           DEFAULT NULL,
+    is_read     TINYINT(1)    NOT NULL DEFAULT 0,
+    created_at  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_notif_user    (user_id),
+    INDEX idx_notif_read    (user_id, is_read),
+    INDEX idx_notif_created (created_at)
+);
+
 SELECT 'Chunk 1 migration applied successfully.' AS status;
 
