@@ -15,10 +15,45 @@ async function loadDashboardStats() {
         if (!res || !res.ok) return;
         const data = await res.json();
 
-        const role = data.role || (typeof getUser === 'function' && getUser()?.role) || 'user';
+        const user = typeof getUser === 'function' ? getUser() : null;
+        const role = data.role || (user && user.role) || 'user';
+        const position = (user && user.school_position) || '';
+        const isHeadTeacher = (role === 'headmaster') || (position === 'Head Teacher');
 
         // Hide all views first
         document.querySelectorAll('.role-dashboard').forEach(el => el.classList.remove('is-active'));
+
+        // ── 0. HEAD TEACHER SUPERVISORY DASHBOARD ──────────────────────
+        if (isHeadTeacher && role !== 'admin') {
+            const hmEl = document.getElementById('headmasterDashboard');
+            if (hmEl) hmEl.classList.add('is-active');
+
+            _setText('hmStatStudents', _fmt(data.totalStudents));
+            _setText('hmStatTeachers', _fmt(data.totalTeachers));
+            _setText('hmStatAttendance', data.attendanceRate != null ? data.attendanceRate + '%' : '—');
+            _setText('hmStatClasses', _fmt(data.totalClasses));
+
+            const rosterEl = document.getElementById('hmClassRosterList');
+            if (rosterEl) {
+                const classes = data.classes || [];
+                if (!classes.length) {
+                    rosterEl.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--aa-text-muted)">No classes currently registered.</td></tr>';
+                } else {
+                    rosterEl.innerHTML = classes.map(c => `
+                        <tr>
+                            <td><strong>${_esc(c.class_name)}</strong></td>
+                            <td>${_esc(c.grade_level)}</td>
+                            <td>${_esc(c.class_teacher_name || 'Unassigned')}</td>
+                            <td><span class="aa-badge" style="background:#EFF6FF;color:#2563EB;font-weight:700;">${_fmt(c.student_count)}</span></td>
+                            <td>
+                                <a href="subject-management.html?class_id=${c.id}" style="color:#2563EB;font-weight:600;text-decoration:none;font-size:13px;">View Roster &rarr;</a>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            }
+            return;
+        }
 
         // ── 1. STAFF DASHBOARD ─────────────────────────────────────────
         if (role === 'staff') {
@@ -57,45 +92,9 @@ async function loadDashboardStats() {
             return;
         }
 
-        // ── 2. UNIFIED STUDENT / PARENT DASHBOARD ──────────────────────
+        // ── 2. UNIFIED STUDENT / PARENT DASHBOARD (Redirects to Transcript) ──
         if (role === 'user') {
-            const studentEl = document.getElementById('studentDashboard');
-            if (studentEl) studentEl.classList.add('is-active');
-
-            const st = data.student || {};
-            _setText('spStudentName', st.full_name || st.first_name || 'Student Profile');
-            _setText('spStatus', st.status || 'Active');
-            _setText('spAdmissionNo', st.admission_number || '—');
-            _setText('spClass', st.class_name || '—');
-            _setText('spGuardian', st.parent_guardian_name ? `${st.parent_guardian_name} (${st.relationship || 'Guardian'})` : '—');
-            _setText('spGuardianPhone', st.phone_number || '—');
-
-            const att = data.attendance || {};
-            _setText('spAttendanceRate', (att.rate != null ? att.rate + '%' : '—'));
-            _setText('spAttPresent', _fmt(att.present || 0));
-            _setText('spAttAbsent', _fmt(att.absent || 0));
-            _setText('spAttLate', _fmt(att.late || 0));
-            _setText('spAttTotal', _fmt(att.total || 0));
-
-            const results = data.results || [];
-            _setText('spResultsCount', _fmt(results.length));
-
-            const resList = document.getElementById('studentResultsList');
-            if (resList) {
-                if (!results.length) {
-                    resList.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--aa-text-muted)">No results published yet for this period.</td></tr>';
-                } else {
-                    resList.innerHTML = results.map(r => `
-                        <tr>
-                            <td><strong>${_esc(r.subject_name || r.subject_code)}</strong></td>
-                            <td>${_esc(r.term_name || '—')}</td>
-                            <td>${_fmt(r.total_marks)}</td>
-                            <td>${r.percentage != null ? r.percentage + '%' : '—'}</td>
-                            <td><span class="badge-grade">${_esc(r.grade_classification || 'Grade ' + r.grade_code)}</span></td>
-                        </tr>
-                    `).join('');
-                }
-            }
+            window.location.replace('student-transcript.html');
             return;
         }
 
@@ -112,6 +111,23 @@ async function loadDashboardStats() {
         _setText('overviewAbsent', _fmt(data.todayAbsent));
         _setText('overviewLate', _fmt(data.todayLate));
         _setText('overviewNew', _fmt(data.newAdmissions));
+
+        // Dual Access: Admin + Teacher
+        const teacherStrip = document.getElementById('adminTeacherStrip');
+        if (teacherStrip) {
+            const isTeacher = !!(data.is_teacher || (user && (user.is_teacher || user.school_position === 'Teacher')));
+            if (isTeacher) {
+                teacherStrip.style.display = 'block';
+                const sub = document.getElementById('adminTeacherSubtitle');
+                if (sub) {
+                    const cls = data.assignedClassesCount || 0;
+                    const subCount = data.assignedSubjectsCount || 0;
+                    sub.textContent = `You are assigned to ${cls} ${cls === 1 ? 'class' : 'classes'} and ${subCount} ${subCount === 1 ? 'subject' : 'subjects'} alongside system administration duties.`;
+                }
+            } else {
+                teacherStrip.style.display = 'none';
+            }
+        }
 
     } catch (err) {
         console.error('loadDashboardStats:', err);

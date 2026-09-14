@@ -78,9 +78,142 @@
   <main class="main-container" id="main-content">
 
     <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 0. HEAD TEACHER SUPERVISORY DASHBOARD VIEW                    -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div id="headmasterDashboard" class="role-dashboard">
+      <!-- 4 Supervisory Stat Cards -->
+      <div class="dash-stats-row">
+        <div class="dash-stat-card">
+          <div class="dash-stat-icon dash-stat-icon-blue">
+            <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+            </svg>
+          </div>
+          <div class="dash-stat-body">
+            <div class="dash-stat-value" id="hmStatStudents">—</div>
+            <div class="dash-stat-label">Total Enrollment</div>
+            <a href="subject-management.html" class="dash-stat-link">Inspect classes &rarr;</a>
+          </div>
+        </div>
+
+        <div class="dash-stat-card">
+          <div class="dash-stat-icon dash-stat-icon-gold">
+            <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+              <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          </div>
+          <div class="dash-stat-body">
+            <div class="dash-stat-value" id="hmStatTeachers">—</div>
+            <div class="dash-stat-label">Active Staff</div>
+            <a href="teachers.html" class="dash-stat-link">Staff directory &rarr;</a>
+          </div>
+        </div>
+
+        <div class="dash-stat-card">
+          <div class="dash-stat-icon dash-stat-icon-green">
+            <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="dash-stat-body">
+            <div class="dash-stat-value" id="hmStatAttendance">—</div>
+            <div class="dash-stat-label">School Attendance Rate</div>
+            <a href="reports-dashboard.html" class="dash-stat-link">Attendance reports &rarr;</a>
+          </div>
+        </div>
+
+        <div class="dash-stat-card">
+          <div class="dash-stat-icon dash-stat-icon-blue">
+            <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+          </div>
+          <div class="dash-stat-body">
+            <div class="dash-stat-value" id="hmStatClasses">—</div>
+            <div class="dash-stat-label">Total Classes</div>
+            <a href="subject-management.html" class="dash-stat-link">View classes &rarr;</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Supervisory overview row -->
+      <div class="dash-mid-row" style="margin-top:24px;display:flex;gap:20px;flex-wrap:wrap;">
+        <div class="dash-card" style="flex:2;min-width:320px;">
+          <div class="dash-card-header">
+            <h2 class="dash-card-title">School Class Roster Overview</h2>
+            <a href="subject-management.html" class="dash-card-link">Class Rosters &rarr;</a>
+          </div>
+          <div style="padding:16px; overflow-x:auto;">
+            <table class="dash-table" id="hmClassTable">
+              <thead>
+                <tr>
+                  <th>Class</th>
+                  <th>Grade</th>
+                  <th>Class Teacher</th>
+                  <th>Enrolled Students</th>
+                  <th>Roster</th>
+                </tr>
+              </thead>
+              <tbody id="hmClassRosterList">
+                <tr><td colspan="5" style="text-align:center;color:var(--aa-text-muted)">Loading school classes…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="dash-card" style="flex:1;min-width:260px;">
+          <div class="dash-card-header">
+            <h2 class="dash-card-title">Supervisory Functions</h2>
+          </div>
+          <div style="padding:20px 16px;display:flex;flex-direction:column;gap:12px;">
+            <a href="subject-management.html" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--aa-border,#e5e7eb);border-radius:8px;text-decoration:none;color:var(--aa-text,#111827);font-weight:600;font-size:13.5px;">
+              <span>🏫</span>
+              <span>Classes &amp; Rosters</span>
+            </a>
+            <a href="teachers.html" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--aa-border,#e5e7eb);border-radius:8px;text-decoration:none;color:var(--aa-text,#111827);font-weight:600;font-size:13.5px;">
+              <span>👥</span>
+              <span>Teaching Staff Directory</span>
+            </a>
+            <a href="reports-dashboard.html" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--aa-border,#e5e7eb);border-radius:8px;text-decoration:none;color:var(--aa-text,#111827);font-weight:600;font-size:13.5px;">
+              <span>📈</span>
+              <span>School Reports &amp; Analytics</span>
+            </a>
+            <a href="settings.html" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--aa-border,#e5e7eb);border-radius:8px;text-decoration:none;color:var(--aa-text,#111827);font-weight:600;font-size:13.5px;">
+              <span>⚙️</span>
+              <span>Account Settings</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
     <!-- 1. ADMIN DASHBOARD VIEW                                       -->
     <!-- ══════════════════════════════════════════════════════════════ -->
     <div id="adminDashboard" class="role-dashboard">
+      <!-- Dual Access Banner: Teaching Responsibilities -->
+      <div id="adminTeacherStrip" class="dash-overview-strip" style="display:none;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:40px;height:40px;border-radius:8px;background:#DBEAFE;display:flex;align-items:center;justify-content:center;color:#2563EB;font-size:20px;">
+              👨‍🏫
+            </div>
+            <div>
+              <div style="font-weight:700;color:#1E3A8A;font-size:15px;">Active Teaching Responsibilities</div>
+              <div style="color:#2563EB;font-size:13px;" id="adminTeacherSubtitle">You are assigned to teaching duties in addition to system administration.</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="subject-management.html" class="pg-btn-sm" style="background:#fff;border:1px solid #BFDBFE;color:#2563EB;padding:6px 14px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;">My Classes</a>
+            <a href="attendance-management.html" class="pg-btn-sm" style="background:#fff;border:1px solid #BFDBFE;color:#2563EB;padding:6px 14px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;">Take Attendance</a>
+            <a href="academic-records.html" class="pg-btn-sm" style="background:#2563EB;color:#fff;padding:6px 14px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;">Enter Results</a>
+          </div>
+        </div>
+      </div>
+
       <!-- 4 Stat Cards -->
       <div class="dash-stats-row">
         <div class="dash-stat-card">

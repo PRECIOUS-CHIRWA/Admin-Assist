@@ -11,8 +11,38 @@
         
         const user = (typeof getUser === 'function' && getUser()) || {};
         const role = user.role || 'user';
+        const position = user.school_position || '';
+        const isHeadTeacher = (role === 'headmaster') || (position === 'Head Teacher');
+        const isAdmin = (role === 'admin');
 
-        if (role === 'staff') {
+        if (isHeadTeacher && !isAdmin) {
+            // Adapt UI for Head Teacher: Supervisory Mode
+            const titleEl = document.querySelector('.aa-page-header h1');
+            if (titleEl) titleEl.textContent = 'Classes & Subjects';
+            const kickerEl = document.querySelector('.aa-page-header .aa-kicker');
+            if (kickerEl) kickerEl.textContent = 'Supervisory';
+            const subtitleEl = document.querySelector('.aa-page-header .aa-subtitle');
+            if (subtitleEl) subtitleEl.textContent = 'View and inspect school classes, student rosters, and subject allocations.';
+
+            // Hide write/mutation buttons
+            const assignBtn = document.getElementById('assignBtn');
+            if (assignBtn) assignBtn.style.display = 'none';
+            const addSubBtn = document.getElementById('addSubjectBtn');
+            if (addSubBtn) addSubBtn.style.display = 'none';
+            const editFocusBtn = document.getElementById('editFocusBtn');
+            if (editFocusBtn) editFocusBtn.style.display = 'none';
+
+            await Promise.all([loadSubjects(), loadAssignments()]);
+
+            // Auto-select first class to display roster immediately
+            if (allClasses.length > 0) {
+                const sel = document.getElementById('recordClassSelect');
+                if (sel) {
+                    sel.value = allClasses[0].id;
+                    loadClassRecord(allClasses[0].id);
+                }
+            }
+        } else if (role === 'staff') {
             // Adapt UI for Teacher: Display as "Classes"
             const titleEl = document.querySelector('.aa-page-header h1');
             if (titleEl) titleEl.textContent = 'Classes';
@@ -131,13 +161,14 @@
                     ${s.is_active ? 'Active' : 'Inactive'}
                 </span></td>
                 <td>${s.teacher_assignments || 0}</td>
+                ${isAdmin ? `
                 <td class="aa-table-actions">
                     <button class="aa-link-btn" data-edit='${JSON.stringify(s).replace(/'/g, "&#39;")}'>Edit</button>
                     <button class="aa-link-btn aa-link-danger"
                         data-toggle="${s.id}" data-active="${s.is_active ? '1' : '0'}">
                         ${s.is_active ? 'Deactivate' : 'Activate'}
                     </button>
-                </td>
+                </td>` : `<td class="aa-table-actions"><span style="color:var(--aa-text-muted);font-size:12px;">View only</span></td>`}
             </tr>`).join('');
 
         tbody.querySelectorAll('[data-edit]').forEach(btn =>
@@ -233,9 +264,10 @@
                 <td><span class="aa-badge aa-badge-info" style="font-weight:600">${_esc(r.subject_code ? r.subject_code + ' — ' + r.subject_name : r.subject_name)}</span></td>
                 <td>${_esc(r.class_name)}</td>
                 <td>${_esc(r.year_label)}</td>
+                ${isAdmin ? `
                 <td class="aa-table-actions">
                     <button class="aa-link-btn aa-link-danger" data-rem="${r.id}">Remove</button>
-                </td>
+                </td>` : `<td class="aa-table-actions"><span style="color:var(--aa-text-muted);font-size:12px;">Active</span></td>`}
             </tr>`).join('');
 
         tbody.querySelectorAll('[data-rem]').forEach(btn =>
@@ -461,7 +493,10 @@
                 <td><span class="aa-badge" style="background:rgba(37,99,235,.08);color:var(--aa-blue);font-weight:600">${_esc(focusLabel)}</span></td>
                 <td class="aa-table-actions">
                     <a class="aa-btn aa-btn-sm aa-btn-secondary" href="student-transcript.html?id=${s.id}">
-                        📄 View Transcript
+                        📄 Transcript
+                    </a>
+                    <a class="aa-btn aa-btn-sm aa-btn-primary" href="academic-records.html?student_id=${s.id}" style="margin-left:6px;background:#2563EB;color:#fff;">
+                        📊 Results
                     </a>
                 </td>
             </tr>

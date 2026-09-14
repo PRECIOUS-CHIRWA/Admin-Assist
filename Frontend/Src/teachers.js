@@ -19,8 +19,18 @@
     let deactivateTargetName = '';
     let searchQuery = '';
     let statusFilter = '';
+    let currentUser = null;
+    let isAdmin = false;
+    try {
+        currentUser = (typeof getUser === 'function' ? getUser() : null) || JSON.parse(localStorage.getItem('user'));
+        isAdmin = currentUser && currentUser.role === 'admin';
+    } catch (e) {}
 
     document.addEventListener('DOMContentLoaded', async function () {
+        if (!isAdmin) {
+            const addBtn = document.getElementById('addTeacherBtn');
+            if (addBtn) addBtn.style.display = 'none';
+        }
         await Promise.all([loadSubjects(), loadTeachers()]);
         bindEvents();
     });
@@ -183,21 +193,27 @@
                 '<td>' + subjectHtml + '</td>' +
                 '<td>' + _esc(t.email || '—') + '</td>' +
                 '<td><span class="' + badgeCls + '">' + badgeTxt + '</span></td>' +
-                '<td>' +
-                '<div class="pg-dropdown" id="dd-' + t.id + '">' +
-                '<div class="pg-action-split">' +
-                '<button class="pg-action-split-main" data-view="' + t.id + '">View</button>' +
-                '<button class="pg-action-split-caret" data-toggle="' + t.id + '">▾</button>' +
-                '</div>' +
-                '<div class="pg-dropdown-menu" id="ddm-' + t.id + '">' +
-                '<button data-edit="' + t.id + '">Edit</button>' +
-                '<a href="subject-management.html?teacher_id=' + t.id + '" style="display:block;padding:8px 14px;text-align:left;font-size:13px;color:var(--aa-text,#1e293b);text-decoration:none;font-weight:500;">Assign Subject</a>' +
-                '<button class="danger" data-deactivate="' + t.id + '" data-name="' + _esc(t.name || '') + '" data-active="' + (active ? '1' : '0') + '">' +
-                (active ? 'Deactivate' : 'Activate') +
-                '</button>' +
-                '</div>' +
-                '</div>' +
-                '</td>' +
+                (isAdmin ? (
+                    '<td>' +
+                    '<div class="pg-dropdown" id="dd-' + t.id + '">' +
+                    '<div class="pg-action-split">' +
+                    '<button class="pg-action-split-main" data-view="' + t.id + '">View</button>' +
+                    '<button class="pg-action-split-caret" data-toggle="' + t.id + '">▾</button>' +
+                    '</div>' +
+                    '<div class="pg-dropdown-menu" id="ddm-' + t.id + '">' +
+                    '<button data-edit="' + t.id + '">Edit</button>' +
+                    '<a href="subject-management.html?teacher_id=' + t.id + '" style="display:block;padding:8px 14px;text-align:left;font-size:13px;color:var(--aa-text,#1e293b);text-decoration:none;font-weight:500;">Assign Subject</a>' +
+                    '<button class="danger" data-deactivate="' + t.id + '" data-name="' + _esc(t.name || '') + '" data-active="' + (active ? '1' : '0') + '">' +
+                    (active ? 'Deactivate' : 'Activate') +
+                    '</button>' +
+                    '</div>' +
+                    '</div>' +
+                    '</td>'
+                ) : (
+                    '<td>' +
+                    '<button class="pg-action-split-main" data-view="' + t.id + '" style="border-radius:6px;width:100%;padding:6px 12px;background:#fff;border:1px solid var(--aa-border,#cbd5e1);cursor:pointer;font-weight:600;font-size:12.5px;">View</button>' +
+                    '</td>'
+                )) +
                 '</tr>';
         }).join('');
 
@@ -278,6 +294,7 @@
             '</div>' +
             '</div>' +
             '<div class="pg-view-rows">' +
+            '<div class="pg-view-row"><span>System Access</span><strong style="color:var(--aa-blue,#2563eb)">' + (t.role === 'admin' ? 'Administrator' : (t.role === 'headmaster' ? 'Headmaster' : 'Staff')) + '</strong></div>' +
             '<div class="pg-view-row"><span>Position</span><strong>' + _esc(t.school_position || 'Teacher') + '</strong></div>' +
             '<div class="pg-view-row"><span>Department</span><strong>' + _esc(t.department || '—') + '</strong></div>' +
             (t.class_teacher_of ? '<div class="pg-view-row"><span>Class Teacher</span><strong style="color:var(--aa-blue,#2563eb)">' + _esc(t.class_teacher_of) + '</strong></div>' : '') +
@@ -288,9 +305,11 @@
             (assigns.length ? [...new Set(assigns.map(function (a) { return a.class_name; }))].join(', ') : '—') +
             '</strong></div>' +
             '</div>' +
-            '<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--aa-border,#e2e8f0);display:flex;justify-content:flex-end;">' +
-            '<a href="subject-management.html?teacher_id=' + t.id + '" class="pg-btn-primary" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-size:13px;padding:8px 16px;border-radius:6px;background:#2563EB;color:#fff;">+ Assign to Subject / Class</a>' +
-            '</div>';
+            (isAdmin ? (
+                '<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--aa-border,#e2e8f0);display:flex;justify-content:flex-end;">' +
+                '<a href="subject-management.html?teacher_id=' + t.id + '" class="pg-btn-primary" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-size:13px;padding:8px 16px;border-radius:6px;background:#2563EB;color:#fff;">+ Assign to Subject / Class</a>' +
+                '</div>'
+            ) : '');
 
         document.getElementById('viewTeacherModal').hidden = false;
     }
@@ -308,6 +327,8 @@
         if (clsEl) clsEl.value = '';
         const posEl = document.getElementById('fTPosition');
         if (posEl) posEl.value = 'Teacher';
+        const roleEl = document.getElementById('fTRole');
+        if (roleEl) roleEl.value = 'staff';
         const deptEl = document.getElementById('fTDepartment');
         if (deptEl) deptEl.value = '';
         document.getElementById('passwordGroup').style.display = '';
@@ -324,6 +345,8 @@
         document.getElementById('fTPhone').value = t.phone || '';
         const posEl = document.getElementById('fTPosition');
         if (posEl) posEl.value = t.school_position || 'Teacher';
+        const roleEl = document.getElementById('fTRole');
+        if (roleEl) roleEl.value = t.role || 'staff';
         const deptEl = document.getElementById('fTDepartment');
         if (deptEl) deptEl.value = t.department || '';
         document.getElementById('passwordGroup').style.display = 'none'; // hide on edit
@@ -345,6 +368,7 @@
         const name = document.getElementById('fTName').value.trim();
         const email = document.getElementById('fTEmail').value.trim();
         const school_position = document.getElementById('fTPosition')?.value || 'Teacher';
+        const role = document.getElementById('fTRole')?.value || (isEdit ? undefined : 'staff');
         const department = document.getElementById('fTDepartment')?.value || '';
         const subjectId = document.getElementById('fTSubject').value;
         const classId = document.getElementById('fTClass')?.value || '';
@@ -358,10 +382,10 @@
             if (isEdit) {
                 res = await apiFetch('/api/teachers/' + id, {
                     method: 'PUT',
-                    body: JSON.stringify({ name, email, school_position, department })
+                    body: JSON.stringify({ name, email, role, school_position, department })
                 });
             } else {
-                const payload = { name, email, role: 'staff', school_position, department };
+                const payload = { name, email, role: role || 'staff', school_position, department };
                 if (subjectId && classId) {
                     payload.subject_id = subjectId;
                     payload.class_id = classId;
