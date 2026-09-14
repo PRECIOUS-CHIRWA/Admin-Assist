@@ -102,6 +102,55 @@ body:not(:has(.page-body)) > main:not(.landing-main) {
     border-radius: 0 3px 3px 0;
 }
 
+/* Sidebar Nav Groups */
+.sb-group {
+    list-style: none;
+    margin-bottom: 8px;
+}
+.sb-group-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px 6px 12px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    outline: none;
+    user-select: none;
+    transition: opacity .15s;
+    box-sizing: border-box;
+}
+.sb-group-header:hover {
+    opacity: 0.85;
+}
+.sb-group-title {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+.sb-group-chevron {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+    transition: transform .2s ease;
+    display: inline-block;
+}
+.sb-group-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.sb-group-items.is-collapsed {
+    display: none !important;
+}
+
+.tb-badge[hidden] {
+    display: none !important;
+}
+
 #app-sidebar a[aria-current="page"],
 #app-sidebar .active {
     background: var(--aa-blue, #2563EB) !important;

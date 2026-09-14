@@ -14,15 +14,16 @@
         const position = user.school_position || '';
         const isHeadTeacher = (role === 'headmaster') || (position === 'Head Teacher');
         const isAdmin = (role === 'admin');
+        const isTeacher = !!(user.is_teacher || position === 'Teacher');
 
         if (isHeadTeacher && !isAdmin) {
-            // Adapt UI for Head Teacher: Supervisory Mode
+            // Head Teacher: Supervisory Mode
             const titleEl = document.querySelector('.aa-page-header h1');
-            if (titleEl) titleEl.textContent = 'Classes & Subjects';
+            if (titleEl) titleEl.textContent = 'Classes & Academics';
             const kickerEl = document.querySelector('.aa-page-header .aa-kicker');
             if (kickerEl) kickerEl.textContent = 'Supervisory';
             const subtitleEl = document.querySelector('.aa-page-header .aa-subtitle');
-            if (subtitleEl) subtitleEl.textContent = 'View and inspect school classes, student rosters, and subject allocations.';
+            if (subtitleEl) subtitleEl.textContent = 'View school classes, student rosters, and subject allocations.';
 
             // Hide write/mutation buttons
             const assignBtn = document.getElementById('assignBtn');
@@ -31,6 +32,8 @@
             if (addSubBtn) addSubBtn.style.display = 'none';
             const editFocusBtn = document.getElementById('editFocusBtn');
             if (editFocusBtn) editFocusBtn.style.display = 'none';
+            const assignClassTeacherBtn = document.getElementById('assignClassTeacherBtn');
+            if (assignClassTeacherBtn) assignClassTeacherBtn.style.display = 'none';
 
             await Promise.all([loadSubjects(), loadAssignments()]);
 
@@ -43,7 +46,7 @@
                 }
             }
         } else if (role === 'staff') {
-            // Adapt UI for Teacher: Display as "Classes"
+            // Pure Teacher
             const titleEl = document.querySelector('.aa-page-header h1');
             if (titleEl) titleEl.textContent = 'Classes';
             const kickerEl = document.querySelector('.aa-page-header .aa-kicker');
@@ -58,10 +61,12 @@
             if (addSubBtn) addSubBtn.style.display = 'none';
             const editFocusBtn = document.getElementById('editFocusBtn');
             if (editFocusBtn) editFocusBtn.style.display = 'none';
+            const assignClassTeacherBtn = document.getElementById('assignClassTeacherBtn');
+            if (assignClassTeacherBtn) assignClassTeacherBtn.style.display = 'none';
 
-            // Hide global subjects management and assignment registry
-            const detailGrid = document.querySelector('.aa-detail-grid');
-            if (detailGrid) detailGrid.style.display = 'none';
+            // Hide global registry section for teachers
+            const globalSection = document.getElementById('globalRegistrySection');
+            if (globalSection) globalSection.style.display = 'none';
 
             // Auto-select first assigned class
             if (allClasses.length > 0) {
@@ -72,7 +77,28 @@
                 }
             }
         } else {
+            // Admin (Pure Admin or Admin + Teacher)
+            const titleEl = document.querySelector('.aa-page-header h1');
+            if (titleEl) titleEl.textContent = 'Classes & Academics';
+            const kickerEl = document.querySelector('.aa-page-header .aa-kicker');
+            if (kickerEl) kickerEl.textContent = 'Academics';
+            const subtitleEl = document.querySelector('.aa-page-header .aa-subtitle');
+            if (subtitleEl) subtitleEl.textContent = 'Manage class records, student rosters, subject allocations, and teacher assignments.';
+
+            if (isTeacher) {
+                const switcher = document.getElementById('classScopeSwitcher');
+                if (switcher) switcher.style.display = 'flex';
+            }
+
             await Promise.all([loadSubjects(), loadAssignments()]);
+
+            if (allClasses.length > 0) {
+                const sel = document.getElementById('recordClassSelect');
+                if (sel && !sel.value) {
+                    sel.value = allClasses[0].id;
+                    loadClassRecord(allClasses[0].id);
+                }
+            }
         }
 
         bindEvents();
@@ -275,10 +301,18 @@
         );
     }
 
-    function openAssignModal(preselectTeacherId) {
+    function openAssignModal(preselectTeacherId, preselectSubjectId, preselectClassId) {
         if (preselectTeacherId) {
             const teacherSelect = document.getElementById('aTeacher');
             if (teacherSelect) teacherSelect.value = preselectTeacherId;
+        }
+        if (preselectSubjectId) {
+            const subjectSelect = document.getElementById('aSubject');
+            if (subjectSelect) subjectSelect.value = preselectSubjectId;
+        }
+        if (preselectClassId) {
+            const classSelect = document.getElementById('aClass');
+            if (classSelect) classSelect.value = preselectClassId;
         }
         _showModal('assignModal');
     }
@@ -303,13 +337,14 @@
             });
             const data = await res.json().catch(() => ({}));
             if (!res || !res.ok) {
-                // Surface the server's error message clearly:
-                // 409 = already assigned, 400 = missing field, 500 = server error
                 const msg = data.error || `Assignment failed (HTTP ${res ? res.status : 'unknown'})`;
                 return _showAssignStatus(msg, 'error');
             }
             _hideModal('assignModal');
             await Promise.all([loadAssignments(), loadSubjects()]);
+            if (currentClassRecord && currentClassRecord.class) {
+                await loadClassRecord(currentClassRecord.class.id);
+            }
         } catch (err) {
             _showAssignStatus(err.message || 'Failed to assign teacher.', 'error');
         } finally {
@@ -323,6 +358,9 @@
             const res = await apiFetch(`/api/subjects/assign/${id}`, { method: 'DELETE' });
             if (!res || !res.ok) throw new Error('Delete failed');
             await Promise.all([loadAssignments(), loadSubjects()]);
+            if (currentClassRecord && currentClassRecord.class) {
+                await loadClassRecord(currentClassRecord.class.id);
+            }
         } catch { alert('Unable to remove assignment.'); }
     }
 
@@ -350,7 +388,10 @@
         document.getElementById('saveSubjectBtn')?.addEventListener('click', saveSubject);
 
         // Assign modal
-        document.getElementById('assignBtn')?.addEventListener('click', () => openAssignModal());
+        document.getElementById('assignBtn')?.addEventListener('click', () => {
+            const currentClassId = currentClassRecord && currentClassRecord.class ? currentClassRecord.class.id : null;
+            openAssignModal(null, null, currentClassId);
+        });
         document.getElementById('closeAssignModal')?.addEventListener('click', () => _hideModal('assignModal'));
         document.getElementById('cancelAssignBtn')?.addEventListener('click', () => _hideModal('assignModal'));
         document.getElementById('saveAssignBtn')?.addEventListener('click', saveAssignment);
@@ -369,6 +410,76 @@
                 window.location.href = `timetable-management.html?classId=${currentClassRecord.class.id}`;
             }
         });
+
+        // Tabs in Class Record
+        const tabRosterBtn = document.getElementById('tabRosterBtn');
+        const tabSubjectsBtn = document.getElementById('tabSubjectsBtn');
+        const tabRosterPanel = document.getElementById('tabRosterPanel');
+        const tabSubjectsPanel = document.getElementById('tabSubjectsPanel');
+
+        if (tabRosterBtn && tabSubjectsBtn) {
+            tabRosterBtn.addEventListener('click', () => {
+                tabRosterBtn.classList.add('is-active');
+                tabRosterBtn.style.color = 'var(--aa-blue, #2563EB)';
+                tabRosterBtn.style.borderBottomColor = 'var(--aa-blue, #2563EB)';
+
+                tabSubjectsBtn.classList.remove('is-active');
+                tabSubjectsBtn.style.color = 'var(--aa-text-muted, #64748B)';
+                tabSubjectsBtn.style.borderBottomColor = 'transparent';
+
+                if (tabRosterPanel) tabRosterPanel.style.display = 'block';
+                if (tabSubjectsPanel) tabSubjectsPanel.style.display = 'none';
+            });
+
+            tabSubjectsBtn.addEventListener('click', () => {
+                tabSubjectsBtn.classList.add('is-active');
+                tabSubjectsBtn.style.color = 'var(--aa-blue, #2563EB)';
+                tabSubjectsBtn.style.borderBottomColor = 'var(--aa-blue, #2563EB)';
+
+                tabRosterBtn.classList.remove('is-active');
+                tabRosterBtn.style.color = 'var(--aa-text-muted, #64748B)';
+                tabRosterBtn.style.borderBottomColor = 'transparent';
+
+                if (tabRosterPanel) tabRosterPanel.style.display = 'none';
+                if (tabSubjectsPanel) tabSubjectsPanel.style.display = 'block';
+            });
+        }
+
+        // Scope Switcher for Admin + Teacher
+        const scopeAllBtn = document.getElementById('scopeAllClassesBtn');
+        const scopeMyBtn = document.getElementById('scopeMyClassesBtn');
+        if (scopeAllBtn && scopeMyBtn) {
+            scopeAllBtn.addEventListener('click', () => {
+                scopeAllBtn.classList.add('is-active');
+                scopeAllBtn.classList.remove('aa-btn-secondary');
+                scopeMyBtn.classList.remove('is-active');
+                scopeMyBtn.classList.add('aa-btn-secondary');
+                _populate('recordClassSelect', allClasses, 'id', _classLabel, 'Choose a class…');
+                if (allClasses.length > 0) {
+                    const sel = document.getElementById('recordClassSelect');
+                    if (sel) { sel.value = allClasses[0].id; loadClassRecord(allClasses[0].id); }
+                }
+            });
+
+            scopeMyBtn.addEventListener('click', () => {
+                scopeMyBtn.classList.add('is-active');
+                scopeMyBtn.classList.remove('aa-btn-secondary');
+                scopeAllBtn.classList.remove('is-active');
+                scopeAllBtn.classList.add('aa-btn-secondary');
+
+                const user = (typeof getUser === 'function' && getUser()) || {};
+                const myClasses = allClasses.filter(c =>
+                    String(c.class_teacher_id) === String(user.id) ||
+                    String(c.class_teacher_id) === String(user.sub)
+                );
+                _populate('recordClassSelect', myClasses.length ? myClasses : allClasses, 'id', _classLabel, 'Choose a class…');
+                const sel = document.getElementById('recordClassSelect');
+                if (sel && sel.options.length > 1) {
+                    sel.value = sel.options[1].value;
+                    loadClassRecord(sel.value);
+                }
+            });
+        }
 
         // Assign Class Teacher modal
         document.getElementById('assignClassTeacherBtn')?.addEventListener('click', openClassTeacherModal);
@@ -395,15 +506,13 @@
     async function loadClassRecord(classId) {
         const placeholder = document.getElementById('classRecordPlaceholder');
         const overview = document.getElementById('classOverviewCard');
-        const empty = document.getElementById('classRecordEmpty');
-        const tableWrap = document.getElementById('classRecordTableWrap');
+        const content = document.getElementById('classRecordContent');
         const editBtn = document.getElementById('editFocusBtn');
 
         if (!classId) {
             if (placeholder) placeholder.hidden = false;
             if (overview) overview.style.display = 'none';
-            if (empty) empty.hidden = true;
-            if (tableWrap) tableWrap.hidden = true;
+            if (content) content.style.display = 'none';
             if (editBtn) editBtn.style.display = 'none';
             currentClassRecord = null;
             return;
@@ -424,23 +533,38 @@
     function renderClassRecord(data) {
         const placeholder = document.getElementById('classRecordPlaceholder');
         const overview = document.getElementById('classOverviewCard');
+        const content = document.getElementById('classRecordContent');
         const empty = document.getElementById('classRecordEmpty');
         const tableWrap = document.getElementById('classRecordTableWrap');
         const editBtn = document.getElementById('editFocusBtn');
         const timetableBtn = document.getElementById('manageClassTimetableBtn');
         const assignTeacherBtn = document.getElementById('assignClassTeacherBtn');
         const quickChangeBtn = document.getElementById('quickChangeTeacherBtn');
+        const resultsBtn = document.getElementById('viewClassResultsBtn');
 
         const user = (typeof getUser === 'function' && getUser()) || {};
         const isPureAdmin = (user.role === 'admin');
+        const isTeacher = !!(user.is_teacher || user.school_position === 'Teacher');
         const { class: cls, subjects, students } = data;
 
         if (placeholder) placeholder.hidden = true;
         if (overview) overview.style.display = 'block';
+        if (content) content.style.display = 'block';
+
         if (editBtn) editBtn.style.display = isPureAdmin ? 'inline-flex' : 'none';
         if (timetableBtn) timetableBtn.style.display = (isPureAdmin || user.role === 'headmaster') ? 'inline-flex' : 'none';
         if (assignTeacherBtn) assignTeacherBtn.style.display = isPureAdmin ? 'inline-flex' : 'none';
         if (quickChangeBtn) quickChangeBtn.style.display = isPureAdmin ? 'inline-flex' : 'none';
+
+        // Results button: show if admin+teacher or staff
+        if (resultsBtn) {
+            if (user.role === 'staff' || (isPureAdmin && isTeacher)) {
+                resultsBtn.style.display = 'inline-flex';
+                resultsBtn.href = `academic-records.html?classId=${cls.id}`;
+            } else {
+                resultsBtn.style.display = 'none';
+            }
+        }
 
         // Title and teacher
         const titleEl = document.getElementById('classTitle');
@@ -456,51 +580,78 @@
         const focusEl = document.getElementById('classFocusText');
         if (focusEl) focusEl.textContent = cls.core_focus || 'General Secondary Core';
 
-        // Subjects chips
-        const chipsEl = document.getElementById('classSubjectChips');
-        if (chipsEl) {
-            if (!subjects.length) {
-                chipsEl.innerHTML = '<span style="font-size:12.5px;color:var(--aa-text-muted);font-style:italic">No teacher-subject assignments for this class yet.</span>';
-            } else {
-                chipsEl.innerHTML = subjects.map(s => `
-                    <span class="aa-badge" style="background:var(--aa-surface);border:1px solid var(--aa-border);color:var(--aa-text);padding:4px 10px;font-size:12px">
-                        <strong>${_esc(s.subject_code)}</strong>: ${_esc(s.subject_name)} <span style="opacity:.7">(${_esc(s.teacher_name)})</span>
-                    </span>
-                `).join('');
-            }
-        }
+        // Counts on Tabs
+        const tabRosterCount = document.getElementById('tabRosterCount');
+        if (tabRosterCount) tabRosterCount.textContent = students.length;
 
-        // Students table
+        const tabSubjectsCount = document.getElementById('tabSubjectsCount');
+        if (tabSubjectsCount) tabSubjectsCount.textContent = subjects.length;
+
+        // Render Tab 1: Students Roster
         const tbody = document.getElementById('classRecordBody');
         if (!students.length) {
             if (empty) empty.hidden = false;
             if (tableWrap) tableWrap.hidden = true;
             if (tbody) tbody.innerHTML = '';
-            return;
+        } else {
+            if (empty) empty.hidden = true;
+            if (tableWrap) tableWrap.hidden = false;
+            const focusLabel = cls.core_focus || 'General Secondary Core';
+            tbody.innerHTML = students.map((s, idx) => `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td><strong style="font-family:monospace;color:var(--aa-blue)">${_esc(s.admission_number)}</strong></td>
+                    <td><strong>${_esc(s.last_name)}, ${_esc(s.first_name)}</strong></td>
+                    <td>${_esc(s.gender || '—')}</td>
+                    <td><span class="aa-status-pill aa-status-${(s.status || 'active').toLowerCase()}">${_esc(s.status || 'Active')}</span></td>
+                    <td><span class="aa-badge" style="background:rgba(37,99,235,.08);color:var(--aa-blue);font-weight:600">${_esc(focusLabel)}</span></td>
+                    <td class="aa-table-actions">
+                        <a class="aa-btn aa-btn-sm aa-btn-secondary" href="student-transcript.html?id=${s.id}">
+                            📄 Transcript
+                        </a>
+                        ${(isTeacher || isPureAdmin) ? `
+                        <a class="aa-btn aa-btn-sm aa-btn-primary" href="academic-records.html?student_id=${s.id}" style="margin-left:6px;background:#2563EB;color:#fff;">
+                            📊 Results
+                        </a>` : ''}
+                    </td>
+                </tr>
+            `).join('');
         }
 
-        if (empty) empty.hidden = true;
-        if (tableWrap) tableWrap.hidden = false;
+        // Render Tab 2: Subjects taught to this class
+        const subjectsBody = document.getElementById('classSubjectsBody');
+        const subjectsEmpty = document.getElementById('classSubjectsEmpty');
+        const subjectsTableWrap = document.getElementById('classSubjectsTableWrap');
+        if (subjectsBody) {
+            if (!subjects.length) {
+                if (subjectsEmpty) subjectsEmpty.hidden = false;
+                if (subjectsTableWrap) subjectsTableWrap.hidden = true;
+                subjectsBody.innerHTML = '';
+            } else {
+                if (subjectsEmpty) subjectsEmpty.hidden = true;
+                if (subjectsTableWrap) subjectsTableWrap.hidden = false;
+                subjectsBody.innerHTML = subjects.map(s => `
+                    <tr>
+                        <td><strong style="font-family:monospace;color:var(--aa-blue)">${_esc(s.subject_code)}</strong></td>
+                        <td>${_esc(s.subject_name)}</td>
+                        <td><strong>${_esc(s.teacher_name || 'Not assigned')}</strong></td>
+                        <td>${_esc(s.academic_year || 'Current')}</td>
+                        <td class="aa-table-actions">
+                            ${isPureAdmin ? `
+                            <button class="aa-link-btn" data-assign-subject="${s.subject_id}">
+                                Change Teacher
+                            </button>` : `<span style="color:var(--aa-text-muted);font-size:12px;">Allocated</span>`}
+                        </td>
+                    </tr>
+                `).join('');
 
-        const focusLabel = cls.core_focus || 'General Secondary Core';
-        tbody.innerHTML = students.map((s, idx) => `
-            <tr>
-                <td>${idx + 1}</td>
-                <td><strong style="font-family:monospace;color:var(--aa-blue)">${_esc(s.admission_number)}</strong></td>
-                <td><strong>${_esc(s.last_name)}, ${_esc(s.first_name)}</strong></td>
-                <td>${_esc(s.gender || '—')}</td>
-                <td><span class="aa-status-pill aa-status-${(s.status || 'active').toLowerCase()}">${_esc(s.status || 'Active')}</span></td>
-                <td><span class="aa-badge" style="background:rgba(37,99,235,.08);color:var(--aa-blue);font-weight:600">${_esc(focusLabel)}</span></td>
-                <td class="aa-table-actions">
-                    <a class="aa-btn aa-btn-sm aa-btn-secondary" href="student-transcript.html?id=${s.id}">
-                        📄 Transcript
-                    </a>
-                    <a class="aa-btn aa-btn-sm aa-btn-primary" href="academic-records.html?student_id=${s.id}" style="margin-left:6px;background:#2563EB;color:#fff;">
-                        📊 Results
-                    </a>
-                </td>
-            </tr>
-        `).join('');
+                subjectsBody.querySelectorAll('[data-assign-subject]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        openAssignModal(null, btn.dataset.assignSubject, cls.id);
+                    });
+                });
+            }
+        }
     }
 
     function openFocusModal() {

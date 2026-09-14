@@ -29,40 +29,14 @@ const sendNotification = async ({ userId, type = "system", title, description = 
 const getNotifications = async (req, res) => {
     const userId = req.user.sub;
     try {
-        let [rows] = await pool.execute(
+        const [rows] = await pool.execute(
             `SELECT id, type, title, description, entity_type AS category, is_read, created_at AS timestamp
              FROM notifications
              WHERE user_id = ?
              ORDER BY created_at DESC
-             LIMIT 30`,
+             LIMIT 50`,
             [userId]
         );
-
-        // If user has no explicit notifications yet, fetch recent audit log entries as notifications
-        if (rows.length === 0) {
-            try {
-                const [auditRows] = await pool.execute(
-                    `SELECT al.id, al.action AS title, al.entity_type AS category,
-                            CONCAT('Action: ', al.action, IF(u.name IS NOT NULL, CONCAT(' by ', u.name), '')) AS description,
-                            al.created_at AS timestamp
-                     FROM audit_log al
-                     LEFT JOIN users u ON u.id = al.actor_id
-                     ORDER BY al.created_at DESC
-                     LIMIT 10`
-                );
-                rows = auditRows.map(a => ({
-                    id: `audit-${a.id}`,
-                    type: "system",
-                    title: a.title,
-                    description: a.description,
-                    category: a.category || "System",
-                    is_read: 0,
-                    timestamp: a.timestamp,
-                }));
-            } catch (auditErr) {
-                rows = [];
-            }
-        }
 
         const formatted = rows.map(n => ({
             id: n.id,
@@ -83,23 +57,38 @@ const getNotifications = async (req, res) => {
 };
 
 /**
- * PATCH /api/notifications/:id/read
+ * GET /api/notifications/unread-count
+ * Returns total unread notification count for the logged-in user.
+ */
+const getUnreadCount = async (req, res) => {
+    const userId = req.user.sub;
+    try {
+        const [rows] = await pool.execute(
+            "SELECT COUNT(*) AS unreadCount FROM notifications WHERE user_id = ? AND is_read = 0",
+            [userId]
+        );
+        const unreadCount = rows[0]?.unreadCount || 0;
+        res.json({ unreadCount: Number(unreadCount) });
+    } catch (err) {
+        console.error("getUnreadCount error:", err.message);
+        res.status(500).json({ error: "Could not load unread count" });
+    }
+};
+
+/**
+ * PATCH or PUT /api/notifications/:id/read
  * Mark a single notification as read.
  */
 const markOneAsRead = async (req, res) => {
     const userId = req.user.sub;
     const notifId = req.params.id;
 
-    if (String(notifId).startsWith("audit-")) {
-        return res.json({ message: "Notification marked as read" });
-    }
-
     try {
         await pool.execute(
             "UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?",
             [notifId, userId]
         );
-        res.json({ message: "Notification marked as read" });
+        res.json({ message: "Notification marked as read", id: notifId });
     } catch (err) {
         console.error("markOneAsRead error:", err.message);
         res.status(500).json({ error: "Could not update notification" });
@@ -107,7 +96,7 @@ const markOneAsRead = async (req, res) => {
 };
 
 /**
- * POST /api/notifications/read-all
+ * POST or PUT /api/notifications/read-all
  * Mark all notifications for logged-in user as read.
  */
 const markAllAsRead = async (req, res) => {
@@ -124,4 +113,5 @@ const markAllAsRead = async (req, res) => {
     }
 };
 
-module.exports = { sendNotification, getNotifications, markOneAsRead, markAllAsRead };
+module.exports = { sendNotification, getNotifications, getUnreadCount, markOneAsRead, markAllAsRead };
+

@@ -18,8 +18,8 @@
         <header class="aa-page-header">
             <div>
                 <p class="aa-kicker">Academics</p>
-                <h1>Subject Management</h1>
-                <p class="aa-subtitle">Manage the subject registry and assign teachers to classes.</p>
+                <h1>Classes &amp; Academics</h1>
+                <p class="aa-subtitle">Manage class records, student rosters, subject allocations, and teacher assignments.</p>
             </div>
             <div class="aa-header-actions">
                 <button class="aa-btn aa-btn-secondary" id="assignBtn" type="button">+ Assign Teacher</button>
@@ -27,103 +27,43 @@
             </div>
         </header>
 
-        <div class="aa-detail-grid">
-            <!-- Subjects list -->
-            <section class="aa-card" style="margin-bottom:0">
-                <div class="aa-card-header">
-                    <h2>Subjects</h2>
-                    <span class="aa-badge" id="subjectCount">0</span>
-                </div>
-                <div class="aa-empty-state" id="subjectEmpty" hidden>
-                    <h3>No subjects yet</h3>
-                    <p>Add the first subject using the button above.</p>
-                </div>
-                <div class="aa-table-wrap">
-                    <table class="aa-table" id="subjectTable">
-                        <thead>
-                            <tr>
-                                <th>Code</th>
-                                <th>Name</th>
-                                <th>Status</th>
-                                <th>Assignments</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="subjectBody"></tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- Teacher assignments -->
-            <section class="aa-card" style="margin-bottom:0">
-                <div class="aa-card-header">
-                    <h2>Teacher Assignments</h2>
-                    <span class="aa-badge" id="assignCount">0</span>
-                </div>
-                <div class="aa-filter-bar" style="border:none;padding:0;box-shadow:none;margin-bottom:1rem">
-                    <div class="aa-filter-field">
-                        <label for="filterAssignClass">Class</label>
-                        <select id="filterAssignClass">
-                            <option value="">All Classes</option>
-                        </select>
-                    </div>
-                    <div class="aa-filter-field">
-                        <label for="filterAssignYear">Year</label>
-                        <select id="filterAssignYear">
-                            <option value="">All Years</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="aa-empty-state" id="assignEmpty" hidden>
-                    <h3>No assignments</h3>
-                    <p>Use "Assign Teacher" to link a teacher to a subject and class.</p>
-                </div>
-                <div class="aa-table-wrap">
-                    <table class="aa-table" id="assignTable">
-                        <thead>
-                            <tr>
-                                <th>Teacher</th>
-                                <th>Subject</th>
-                                <th>Class</th>
-                                <th>Year</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="assignBody"></tbody>
-                    </table>
-                </div>
-            </section>
-        </div>
-
-        <!-- ─── Class Record & Student Register ───────────────────────── -->
-        <section class="aa-card" style="margin-top:1.75rem">
+        <!-- ─── Class Record & Student Register (Primary Hero Section) ─── -->
+        <section class="aa-card" id="classRecordSection">
             <div class="aa-card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
                 <div>
-                    <h2 style="margin:0 0 4px">Class Record &amp; Student Register</h2>
+                    <h2 style="margin:0 0 4px">Class Record &amp; Academic Register</h2>
                     <p style="font-size:13px;color:var(--aa-text-muted);margin:0">
-                        View class student rosters and core subject curriculum focus.
+                        Select a class to view enrolled students, subjects taught, and teacher assignments.
                     </p>
                 </div>
                 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
                     <button class="aa-btn aa-btn-secondary" id="manageClassTimetableBtn" type="button" style="display:none">
                         📅 Class Timetable
                     </button>
+                    <a href="academic-records.html" class="aa-btn aa-btn-secondary" id="viewClassResultsBtn" style="display:none;text-decoration:none">
+                        📊 Class Results
+                    </a>
                     <button class="aa-btn aa-btn-secondary" id="assignClassTeacherBtn" type="button" style="display:none">
                         👨‍🏫 Assign Class Teacher
                     </button>
                     <button class="aa-btn aa-btn-secondary" id="editFocusBtn" type="button" style="display:none">
-                        ✏️ Edit Core Focus
+                        🎯 Edit Core Focus
                     </button>
                 </div>
             </div>
 
-            <!-- Class selection filter bar -->
-            <div class="aa-filter-bar" style="border:none;padding:0;box-shadow:none;margin-bottom:1.25rem">
-                <div class="aa-filter-field" style="max-width:320px">
+            <!-- Class selection filter bar with scope toggle -->
+            <div class="aa-filter-bar" style="border:none;padding:0;box-shadow:none;margin-bottom:1.25rem;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px">
+                <div class="aa-filter-field" style="max-width:320px;flex:1">
                     <label for="recordClassSelect">Select Class</label>
                     <select id="recordClassSelect">
                         <option value="">Choose a class…</option>
                     </select>
+                </div>
+                <div id="classScopeSwitcher" style="display:none;align-items:center;gap:6px;">
+                    <span style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--aa-text-muted);letter-spacing:.05em">Scope:</span>
+                    <button type="button" class="aa-btn aa-btn-sm is-active" id="scopeAllClassesBtn" style="padding:4px 10px;font-size:12px">All Classes</button>
+                    <button type="button" class="aa-btn aa-btn-sm aa-btn-secondary" id="scopeMyClassesBtn" style="padding:4px 10px;font-size:12px">My Teaching Classes</button>
                 </div>
             </div>
 
@@ -140,34 +80,13 @@
                             <button type="button" id="quickChangeTeacherBtn" class="aa-btn aa-btn-sm aa-btn-secondary" style="display:none;padding:2px 8px;font-size:11.5px">Change</button>
                         </div>
                     </div>
-                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                        <button type="button" id="manageClassTimetableBtn" class="aa-btn aa-btn-secondary" style="display:none;align-items:center;gap:6px;">
-                            📅 Class Timetable
-                        </button>
-                        <button type="button" id="assignClassTeacherBtn" class="aa-btn aa-btn-secondary" style="display:none;align-items:center;gap:6px;">
-                            👨‍🏫 Assign Class Teacher
-                        </button>
-                        <button type="button" id="editFocusBtn" class="aa-btn aa-btn-secondary" style="display:none;align-items:center;gap:6px;">
-                            🎯 Edit Core Focus
-                        </button>
-                        <div style="text-align:right">
-                            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--aa-text-muted);letter-spacing:.05em;margin-bottom:4px">
-                                Core Subject Focus
-                            </div>
-                            <div id="classFocusBadge" style="display:inline-flex;align-items:center;gap:6px;background:rgba(37,99,235,.1);color:var(--aa-blue, #2563EB);font-weight:700;font-size:13px;padding:4px 12px;border-radius:6px;border:1px solid rgba(37,99,235,.2)">
-                                🎯 <span id="classFocusText">General Secondary Core</span>
-                            </div>
+                    <div style="text-align:right">
+                        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--aa-text-muted);letter-spacing:.05em;margin-bottom:4px">
+                            Core Subject Focus
                         </div>
-                    </div>
-                </div>
-
-                <!-- Assigned subjects chips -->
-                <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--aa-border, #E2E8F0)">
-                    <div style="font-size:11.5px;font-weight:700;color:var(--aa-text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">
-                        Assigned Subjects for this Class:
-                    </div>
-                    <div id="classSubjectChips" style="display:flex;flex-wrap:wrap;gap:8px">
-                        <!-- populated dynamically -->
+                        <div id="classFocusBadge" style="display:inline-flex;align-items:center;gap:6px;background:rgba(37,99,235,.1);color:var(--aa-blue, #2563EB);font-weight:700;font-size:13px;padding:4px 12px;border-radius:6px;border:1px solid rgba(37,99,235,.2)">
+                            🎯 <span id="classFocusText">General Secondary Core</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -176,31 +95,144 @@
             <div class="aa-empty-state" id="classRecordPlaceholder">
                 <div style="font-size:32px;margin-bottom:8px">📋</div>
                 <h3>Select a Class to View Record</h3>
-                <p>Choose any class from the dropdown above to view its student roster and core subject focus.</p>
+                <p>Choose any class from the dropdown above to view its student roster and subjects.</p>
             </div>
 
-            <!-- Empty state when class has no students -->
-            <div class="aa-empty-state" id="classRecordEmpty" hidden>
-                <h3>No students enrolled</h3>
-                <p>No active students are currently enrolled in this class.</p>
-            </div>
+            <!-- Class Detail Tabs & Tables -->
+            <div id="classRecordContent" style="display:none">
+                <div class="aa-tabs" style="display:flex;gap:4px;border-bottom:2px solid var(--aa-border, #E2E8F0);margin-bottom:1.25rem">
+                    <button type="button" class="aa-tab-btn is-active" id="tabRosterBtn" style="padding:8px 16px;border:none;background:none;font-weight:700;font-size:13.5px;cursor:pointer;color:var(--aa-blue,#2563EB);border-bottom:2px solid var(--aa-blue,#2563EB);margin-bottom:-2px">
+                        👥 Enrolled Students (<span id="tabRosterCount">0</span>)
+                    </button>
+                    <button type="button" class="aa-tab-btn" id="tabSubjectsBtn" style="padding:8px 16px;border:none;background:none;font-weight:700;font-size:13.5px;cursor:pointer;color:var(--aa-text-muted,#64748B);border-bottom:2px solid transparent;margin-bottom:-2px">
+                        📚 Subjects &amp; Teachers (<span id="tabSubjectsCount">0</span>)
+                    </button>
+                </div>
 
-            <!-- Students table -->
-            <div class="aa-table-wrap" id="classRecordTableWrap" hidden>
-                <table class="aa-table">
-                    <thead>
-                        <tr>
-                            <th style="width:40px">#</th>
-                            <th>Admission No</th>
-                            <th>Student Name</th>
-                            <th>Gender</th>
-                            <th>Status</th>
-                            <th>Core Subject Focus</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="classRecordBody"></tbody>
-                </table>
+                <!-- Tab 1: Enrolled Students -->
+                <div id="tabRosterPanel">
+                    <div class="aa-empty-state" id="classRecordEmpty" hidden>
+                        <h3>No students enrolled</h3>
+                        <p>No active students are currently enrolled in this class.</p>
+                    </div>
+                    <div class="aa-table-wrap" id="classRecordTableWrap">
+                        <table class="aa-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:40px">#</th>
+                                    <th>Admission No</th>
+                                    <th>Student Name</th>
+                                    <th>Gender</th>
+                                    <th>Status</th>
+                                    <th>Core Subject Focus</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="classRecordBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Subjects Taught to this Class -->
+                <div id="tabSubjectsPanel" style="display:none">
+                    <div class="aa-empty-state" id="classSubjectsEmpty" hidden>
+                        <h3>No subjects assigned</h3>
+                        <p>No teacher-subject allocations recorded for this class yet.</p>
+                    </div>
+                    <div class="aa-table-wrap" id="classSubjectsTableWrap">
+                        <table class="aa-table">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Subject Name</th>
+                                    <th>Assigned Teacher</th>
+                                    <th>Academic Year</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="classSubjectsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ─── Global Subject Registry & School Allocations ───────────── -->
+        <section class="aa-card" id="globalRegistrySection" style="margin-top:2rem">
+            <div class="aa-card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+                <div>
+                    <h2 style="margin:0 0 4px">School Subject Registry &amp; Teacher Allocations</h2>
+                    <p style="font-size:13px;color:var(--aa-text-muted);margin:0">
+                        Manage all school curriculum subjects and teacher assignments.
+                    </p>
+                </div>
+            </div>
+            <div class="aa-detail-grid">
+                <!-- Subjects list -->
+                <section class="aa-card" style="margin-bottom:0">
+                    <div class="aa-card-header">
+                        <h2>Subjects</h2>
+                        <span class="aa-badge" id="subjectCount">0</span>
+                    </div>
+                    <div class="aa-empty-state" id="subjectEmpty" hidden>
+                        <h3>No subjects yet</h3>
+                        <p>Add the first subject using the button above.</p>
+                    </div>
+                    <div class="aa-table-wrap">
+                        <table class="aa-table" id="subjectTable">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Name</th>
+                                    <th>Status</th>
+                                    <th>Assignments</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="subjectBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Teacher assignments -->
+                <section class="aa-card" style="margin-bottom:0">
+                    <div class="aa-card-header">
+                        <h2>Teacher Assignments</h2>
+                        <span class="aa-badge" id="assignCount">0</span>
+                    </div>
+                    <div class="aa-filter-bar" style="border:none;padding:0;box-shadow:none;margin-bottom:1rem">
+                        <div class="aa-filter-field">
+                            <label for="filterAssignClass">Class</label>
+                            <select id="filterAssignClass">
+                                <option value="">All Classes</option>
+                            </select>
+                        </div>
+                        <div class="aa-filter-field">
+                            <label for="filterAssignYear">Year</label>
+                            <select id="filterAssignYear">
+                                <option value="">All Years</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="aa-empty-state" id="assignEmpty" hidden>
+                        <h3>No assignments</h3>
+                        <p>Use "Assign Teacher" to link a teacher to a subject and class.</p>
+                    </div>
+                    <div class="aa-table-wrap">
+                        <table class="aa-table" id="assignTable">
+                            <thead>
+                                <tr>
+                                    <th>Teacher</th>
+                                    <th>Subject</th>
+                                    <th>Class</th>
+                                    <th>Year</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assignBody"></tbody>
+                        </table>
+                    </div>
+                </section>
             </div>
         </section>
     </main>

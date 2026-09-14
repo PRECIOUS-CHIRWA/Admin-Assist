@@ -80,23 +80,6 @@ async function loadDashboardStats() {
         _setText('overviewLate', _fmt(data.todayLate));
         _setText('overviewNew', _fmt(data.newAdmissions));
 
-        // Dual Access: Admin + Teacher
-        const teacherStrip = document.getElementById('adminTeacherStrip');
-        if (teacherStrip) {
-            const isTeacher = !!(data.is_teacher || (user && (user.is_teacher || user.school_position === 'Teacher')));
-            if (isTeacher) {
-                teacherStrip.style.display = 'block';
-                const sub = document.getElementById('adminTeacherSubtitle');
-                if (sub) {
-                    const cls = data.assignedClassesCount || 0;
-                    const subCount = data.assignedSubjectsCount || 0;
-                    sub.textContent = `You are assigned to ${cls} ${cls === 1 ? 'class' : 'classes'} and ${subCount} ${subCount === 1 ? 'subject' : 'subjects'} alongside system administration duties.`;
-                }
-            } else {
-                teacherStrip.style.display = 'none';
-            }
-        }
-
     } catch (err) {
         console.error('loadDashboardStats:', err);
     }

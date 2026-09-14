@@ -211,6 +211,7 @@
             const found = allNotifs.find(x => String(x.id) === String(id));
             if (found) found.read = true;
             await apiFetch('/api/notifications/' + id + '/read', { method: 'PATCH' }).catch(() => {});
+            if (typeof _loadNotifications === 'function') _loadNotifications();
           }
         });
       });

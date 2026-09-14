@@ -23,7 +23,14 @@
         const role = user.role || 'user';
         const position = user.school_position || '';
         const isHeadTeacher = (role === 'headmaster') || (position === 'Head Teacher');
-        const isTeacher = !!(user.is_teacher || position === 'Teacher');
+        const isTeacher = !!(
+            user.is_teacher === true ||
+            user.is_teacher === 1 ||
+            user.is_teacher === '1' ||
+            position === 'Teacher' ||
+            (Array.isArray(user.teaching_classes) && user.teaching_classes.length > 0) ||
+            (Array.isArray(user.teaching_subjects) && user.teaching_subjects.length > 0)
+        );
 
         // 1. Unified Student/Parent (role 'user'): Strictly student-transcript.html and settings.html
         const studentAllowedPages = [
@@ -45,7 +52,8 @@
                 'enroll-student.html',
                 'students.html',
                 'timetable-management.html',
-                'attendance-management.html'
+                'attendance-management.html',
+                'academic-records.html'
             ];
             if (headTeacherBlocked.includes(page)) {
                 window.location.replace('dashboard.html');
@@ -67,8 +75,13 @@
             return false;
         }
 
-        // 4. Staff (non-head): Cannot access enrollment/student addition or staff directory
-        if (role === 'staff' && !isHeadTeacher && (page === 'enroll-student.html' || page === 'teachers.html' || page === 'students.html')) {
+        // 4. Staff (non-head): Cannot access enrollment/student addition, staff directory, or timetable
+        if (role === 'staff' && !isHeadTeacher && (
+            page === 'enroll-student.html' ||
+            page === 'teachers.html' ||
+            page === 'students.html' ||
+            page === 'timetable-management.html'
+        )) {
             window.location.replace('dashboard.html');
             return false;
         }

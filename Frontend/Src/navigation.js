@@ -131,56 +131,124 @@
     ThemeManager.init();
 
     /* ── Role-based Navigation config ────────────────────────────────── */
-    function _getNavItemsForUser(userOrRole) {
+    function _getNavGroupsForUser(userOrRole) {
         var user = (typeof userOrRole === 'object' && userOrRole) ? userOrRole : { role: userOrRole || 'user' };
         var role = user.role || 'user';
         var position = user.school_position || '';
         var isHeadTeacher = (role === 'headmaster') || (position === 'Head Teacher');
-        var isTeacher = !!(user.is_teacher || position === 'Teacher');
+        var isTeacher = !!(
+            user.is_teacher === true ||
+            user.is_teacher === 1 ||
+            user.is_teacher === '1' ||
+            position === 'Teacher' ||
+            (Array.isArray(user.teaching_classes) && user.teaching_classes.length > 0) ||
+            (Array.isArray(user.teaching_subjects) && user.teaching_subjects.length > 0)
+        );
 
-        if (isHeadTeacher && role !== 'admin') {
-            // Head Teacher Supervisory Navigation (strictly supervisory)
+        // 1. Unified Student / Parent Account ('user') — strictly Transcript and Settings
+        if (role === 'user') {
             return [
-                { href: 'dashboard.html', label: 'Dashboard', icon: 'dashboard' },
-                { href: 'subject-management.html', label: 'Classes', icon: 'subjects' },
-                { href: 'subject-management.html#subjects', label: 'Subjects', icon: 'subjects' },
-                { href: 'teachers.html', label: 'Staff', icon: 'teachers' },
-                { href: 'reports-dashboard.html', label: 'Reports', icon: 'reports' },
-                { href: 'settings.html', label: 'Settings', icon: 'settings' },
-            ];
-        } else if (role === 'admin') {
-            var items = [
-                { href: 'dashboard.html', label: 'Dashboard', icon: 'dashboard' },
-                { href: 'enroll-student.html', label: 'Enrollment', icon: 'students' },
-                { href: 'students.html', label: 'Students', icon: 'students' },
-                { href: 'teachers.html', label: 'Staff', icon: 'teachers' },
-                { href: 'subject-management.html', label: 'Classes', icon: 'subjects' },
-                { href: 'subject-management.html#subjects', label: 'Subjects', icon: 'subjects' },
-                { href: 'timetable-management.html', label: 'Timetable', icon: 'timetable' },
-            ];
-            // Results-menu rule: Pure Admin must NOT have Results. Admin + Teacher MUST have Results!
-            if (isTeacher) {
-                items.push({ href: 'academic-records.html', label: 'Results', icon: 'results' });
-            }
-            items.push({ href: 'reports-dashboard.html', label: 'Reports', icon: 'reports' });
-            items.push({ href: 'settings.html', label: 'Settings', icon: 'settings' });
-            return items;
-        } else if (role === 'staff') {
-            return [
-                { href: 'dashboard.html', label: 'Dashboard', icon: 'dashboard' },
-                { href: 'subject-management.html', label: 'Classes', icon: 'subjects' },
-                { href: 'attendance-management.html', label: 'Attendance', icon: 'attendance' },
-                { href: 'academic-records.html', label: 'Results', icon: 'results' },
-                { href: 'reports-dashboard.html', label: 'Reports', icon: 'reports' },
-                { href: 'settings.html', label: 'Settings', icon: 'settings' },
-            ];
-        } else {
-            // Unified Student / Parent Account ('user') — strictly Transcript and Settings
-            return [
-                { href: 'student-transcript.html', label: 'My Transcript', icon: 'reports' },
-                { href: 'settings.html', label: 'Account Settings', icon: 'settings' },
+                {
+                    id: 'student',
+                    title: null,
+                    items: [
+                        { href: 'student-transcript.html', label: 'My Transcript', icon: 'reports' },
+                        { href: 'settings.html', label: 'Account Settings', icon: 'settings' },
+                    ]
+                }
             ];
         }
+
+        // 2. Head Teacher (Supervisory menu: Dashboard, Classes, Staff, Reports, Settings)
+        if (isHeadTeacher && role !== 'admin') {
+            return [
+                {
+                    id: 'headmaster',
+                    title: 'HEAD TEACHER',
+                    items: [
+                        { href: 'dashboard.html', label: 'Dashboard', icon: 'dashboard' },
+                        { href: 'subject-management.html', label: 'Classes', icon: 'subjects' },
+                        { href: 'teachers.html', label: 'Staff', icon: 'teachers' },
+                        { href: 'reports-dashboard.html', label: 'Reports', icon: 'reports' },
+                        { href: 'settings.html', label: 'Settings', icon: 'settings' },
+                    ]
+                }
+            ];
+        }
+
+        // 3. Admin (Pure Admin or Admin + Teacher)
+        if (role === 'admin') {
+            var adminGroup = {
+                id: 'administration',
+                title: 'ADMINISTRATION',
+                items: [
+                    { href: 'dashboard.html', label: 'Dashboard', icon: 'dashboard' },
+                    { href: 'enroll-student.html', label: 'Enrollment', icon: 'students' },
+                    { href: 'students.html', label: 'Students', icon: 'students' },
+                    { href: 'teachers.html', label: 'Staff', icon: 'teachers' },
+                    { href: 'subject-management.html', label: 'Classes', icon: 'subjects' },
+                    { href: 'timetable-management.html', label: 'Timetable', icon: 'timetable' },
+                    { href: 'reports-dashboard.html', label: 'Reports', icon: 'reports' },
+                    { href: 'settings.html', label: 'Settings', icon: 'settings' },
+                ]
+            };
+
+            if (isTeacher) {
+                // Admin + Teacher: Two clearly separated dropdown/menu groups
+                return [
+                    adminGroup,
+                    {
+                        id: 'teaching',
+                        title: 'TEACHING',
+                        items: [
+                            { href: 'attendance-management.html', label: 'Attendance', icon: 'attendance' },
+                            { href: 'academic-records.html', label: 'Results', icon: 'results' },
+                        ]
+                    }
+                ];
+            } else {
+                // Pure Admin: Single ADMINISTRATION group (no Attendance, no Results, no Subjects)
+                return [adminGroup];
+            }
+        }
+
+        // 4. Staff / Teacher
+        if (role === 'staff') {
+            return [
+                {
+                    id: 'teaching',
+                    title: 'TEACHING',
+                    items: [
+                        { href: 'dashboard.html', label: 'Dashboard', icon: 'dashboard' },
+                        { href: 'subject-management.html', label: 'Classes', icon: 'subjects' },
+                        { href: 'attendance-management.html', label: 'Attendance', icon: 'attendance' },
+                        { href: 'academic-records.html', label: 'Results', icon: 'results' },
+                        { href: 'reports-dashboard.html', label: 'Reports', icon: 'reports' },
+                        { href: 'settings.html', label: 'Settings', icon: 'settings' },
+                    ]
+                }
+            ];
+        }
+
+        return [
+            {
+                id: 'main',
+                title: null,
+                items: [
+                    { href: 'dashboard.html', label: 'Dashboard', icon: 'dashboard' },
+                    { href: 'settings.html', label: 'Settings', icon: 'settings' },
+                ]
+            }
+        ];
+    }
+
+    function _getNavItemsForUser(userOrRole) {
+        var groups = _getNavGroupsForUser(userOrRole);
+        var flat = [];
+        groups.forEach(function (g) {
+            flat = flat.concat(g.items);
+        });
+        return flat;
     }
     var _getNavItemsForRole = _getNavItemsForUser;
 
@@ -196,7 +264,7 @@
         'attendance-summary.html': 'Attendance Summary',
         'attendance-reports.html': 'Attendance Reports',
         'academic-records.html': 'Academic Results',
-        'subject-management.html': 'Subject & Class Management',
+        'subject-management.html': 'Classes & Academics',
         'student-transcript.html': 'Student Transcript',
         'reports-dashboard.html': 'Reports & Analytics',
         'analytics-dashboard.html': 'Analytics',
@@ -244,15 +312,65 @@
             try { user = JSON.parse(localStorage.getItem('user')); } catch (e) {}
         }
         if (!user && typeof userOrRole === 'string') user = { role: userOrRole };
-        var items = _getNavItemsForUser(user);
-        ul.innerHTML = items.map(function (item) {
-            return '<li class="sb-item">' +
-                '<a href="' + item.href + '" class="sb-link" data-page="' + item.href + '">' +
-                '<span class="sb-icon">' + ICONS[item.icon] + '</span>' +
-                '<span class="sb-label">' + item.label + '</span>' +
-                '</a>' +
+        var groups = _getNavGroupsForUser(user);
+        var currentPage = _currentPage();
+
+        ul.innerHTML = groups.map(function (grp) {
+            var hasActive = grp.items.some(function (it) {
+                return it.href === currentPage || it.href.split('?')[0] === currentPage;
+            });
+            var savedCollapsed = false;
+            try {
+                savedCollapsed = sessionStorage.getItem('aa_nav_grp_' + grp.id) === 'collapsed';
+            } catch (e) {}
+            var isCollapsed = !hasActive && savedCollapsed;
+
+            var itemsHtml = grp.items.map(function (item) {
+                return '<li class="sb-item">' +
+                    '<a href="' + item.href + '" class="sb-link" data-page="' + item.href + '">' +
+                    '<span class="sb-icon">' + ICONS[item.icon] + '</span>' +
+                    '<span class="sb-label">' + item.label + '</span>' +
+                    '</a>' +
+                    '</li>';
+            }).join('');
+
+            if (!grp.title) {
+                return itemsHtml;
+            }
+
+            return '<li class="sb-group" data-group-id="' + grp.id + '">' +
+                '<button type="button" class="sb-group-header" aria-expanded="' + (!isCollapsed) + '" data-group-target="' + grp.id + '">' +
+                '<span class="sb-group-title">' + grp.title + '</span>' +
+                '<span class="sb-group-chevron">' + (isCollapsed ? '▸' : '▾') + '</span>' +
+                '</button>' +
+                '<ul class="sb-group-items' + (isCollapsed ? ' is-collapsed' : '') + '" id="sb-group-' + grp.id + '" role="list">' +
+                itemsHtml +
+                '</ul>' +
                 '</li>';
         }).join('');
+
+        ul.querySelectorAll('.sb-group-header').forEach(function (header) {
+            header.addEventListener('click', function (e) {
+                e.preventDefault();
+                var targetId = this.dataset.groupTarget;
+                var list = document.getElementById('sb-group-' + targetId);
+                var chevron = this.querySelector('.sb-group-chevron');
+                if (!list) return;
+                var isNowCollapsed = !list.classList.contains('is-collapsed');
+                if (isNowCollapsed) {
+                    list.classList.add('is-collapsed');
+                    this.setAttribute('aria-expanded', 'false');
+                    if (chevron) chevron.textContent = '▸';
+                    try { sessionStorage.setItem('aa_nav_grp_' + targetId, 'collapsed'); } catch (e) {}
+                } else {
+                    list.classList.remove('is-collapsed');
+                    this.setAttribute('aria-expanded', 'true');
+                    if (chevron) chevron.textContent = '▾';
+                    try { sessionStorage.removeItem('aa_nav_grp_' + targetId); } catch (e) {}
+                }
+            });
+        });
+
         _markActivePage();
     }
 
@@ -260,10 +378,6 @@
         var nav = document.createElement('nav');
         nav.id = 'app-sidebar';
         nav.setAttribute('aria-label', 'Main navigation');
-
-        var initialUser = null;
-        try { initialUser = JSON.parse(localStorage.getItem('user')); } catch (e) {}
-        var items = _getNavItemsForUser(initialUser);
 
         nav.innerHTML =
             // Logo area
@@ -277,14 +391,6 @@
 
             // Nav items
             '<ul class="sb-nav" role="list">' +
-            items.map(function (item) {
-                return '<li class="sb-item">' +
-                    '<a href="' + item.href + '" class="sb-link" data-page="' + item.href + '">' +
-                    '<span class="sb-icon">' + ICONS[item.icon] + '</span>' +
-                    '<span class="sb-label">' + item.label + '</span>' +
-                    '</a>' +
-                    '</li>';
-            }).join('') +
             '</ul>' +
 
             // Logout
@@ -296,6 +402,10 @@
             '</div>';
 
         document.body.insertBefore(nav, document.body.firstChild);
+
+        var initialUser = null;
+        try { initialUser = JSON.parse(localStorage.getItem('user')); } catch (e) {}
+        _renderNavLinks(initialUser);
 
         // Backdrop for mobile
         var backdrop = document.createElement('div');
@@ -385,8 +495,15 @@
 
             var badge = document.getElementById('notif-badge');
             if (badge) {
-                badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-                badge.hidden = unreadCount <= 0;
+                if (unreadCount > 0) {
+                    badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                    badge.removeAttribute('hidden');
+                    badge.style.display = 'flex';
+                } else {
+                    badge.setAttribute('hidden', '');
+                    badge.style.display = 'none';
+                    badge.textContent = '0';
+                }
             }
 
             _renderNotifDropdown(_notifCache);
@@ -424,6 +541,24 @@
             el.addEventListener('click', async function () {
                 var notifId = this.dataset.notifId;
                 if (notifId && this.classList.contains('is-unread')) {
+                    this.classList.remove('is-unread');
+                    var dot = this.querySelector('.tb-notif-dot');
+                    if (dot) dot.remove();
+                    var found = _notifCache.find(function (n) { return String(n.id) === String(notifId); });
+                    if (found) found.read = true;
+                    var remUnread = _notifCache.filter(function (n) { return !n.read; }).length;
+                    var badge = document.getElementById('notif-badge');
+                    if (badge) {
+                        if (remUnread > 0) {
+                            badge.textContent = remUnread > 99 ? '99+' : remUnread;
+                            badge.removeAttribute('hidden');
+                            badge.style.display = 'flex';
+                        } else {
+                            badge.setAttribute('hidden', '');
+                            badge.style.display = 'none';
+                            badge.textContent = '0';
+                        }
+                    }
                     try {
                         await apiFetch('/api/notifications/' + notifId + '/read', { method: 'PATCH' });
                         _loadNotifications();
@@ -554,6 +689,19 @@
         // Mark all notifications read
         document.addEventListener('click', async function (e) {
             if (e.target.closest('#tb-notif-mark-all')) {
+                _notifCache.forEach(function (n) { n.read = true; });
+                var badge = document.getElementById('notif-badge');
+                if (badge) {
+                    badge.setAttribute('hidden', '');
+                    badge.style.display = 'none';
+                    badge.textContent = '0';
+                }
+                var unreadItems = document.querySelectorAll('.tb-notif-item.is-unread');
+                unreadItems.forEach(function (el) {
+                    el.classList.remove('is-unread');
+                    var dot = el.querySelector('.tb-notif-dot');
+                    if (dot) dot.remove();
+                });
                 try {
                     await apiFetch('/api/notifications/read-all', { method: 'POST' });
                     _loadNotifications();
@@ -716,6 +864,51 @@
 
 .sb-item { margin: 3px 8px; }
 
+/* Sidebar Nav Groups */
+.sb-group {
+    list-style: none;
+    margin-bottom: 8px;
+}
+.sb-group-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px 6px 12px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    outline: none;
+    user-select: none;
+    transition: opacity .15s;
+    box-sizing: border-box;
+}
+.sb-group-header:hover {
+    opacity: 0.85;
+}
+.sb-group-title {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+.sb-group-chevron {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+    transition: transform .2s ease;
+    display: inline-block;
+}
+.sb-group-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.sb-group-items.is-collapsed {
+    display: none !important;
+}
+
 .sb-link {
     display: flex; align-items: center; gap: 12px;
     padding: 10px 12px; border-radius: 10px;
@@ -830,6 +1023,10 @@
     justify-content: center; border: 2px solid var(--aa-header-bg, #fff);
     box-shadow: 0 1px 3px rgba(0,0,0,.15);
 }
+.tb-badge[hidden] {
+    display: none !important;
+}
+
 
 /* ── Topbar Notification Dropdown ────────────────────── */
 .tb-notif-dropdown {
