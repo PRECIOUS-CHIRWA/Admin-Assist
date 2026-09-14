@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS users (
     email             VARCHAR(255)     NOT NULL,
     password_hash     VARCHAR(255)     NOT NULL,
     role              ENUM('admin','staff','user','headmaster') NOT NULL DEFAULT 'user',
+    school_position   VARCHAR(100)     NOT NULL DEFAULT 'Student',
+    department        VARCHAR(100)              DEFAULT NULL,
     is_active         TINYINT(1)       NOT NULL DEFAULT 1,
     email_verified    TINYINT(1)       NOT NULL DEFAULT 1,
     email_verified_at DATETIME                  DEFAULT NULL,

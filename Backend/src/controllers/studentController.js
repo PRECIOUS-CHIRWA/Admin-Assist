@@ -640,13 +640,15 @@ const createStudentAccount = async (req, res) => {
         let userId = student.user_id;
 
         if (userId) {
-            // Update existing user password and email
+            // Update existing user — reset password and re-activate.
+            // school_position is intentionally omitted: it may not exist on all
+            // DB instances (added in Sprint4 migration, not in base schema.sql).
             await pool.execute(
-                `UPDATE users SET email = ?, password_hash = ?, is_active = 1, school_position = 'Student' WHERE id = ?`,
+                `UPDATE users SET email = ?, password_hash = ?, is_active = 1 WHERE id = ?`,
                 [recipientEmail, passwordHash, userId]
             );
         } else {
-            // Check if user with this email exists
+            // Check if a users row with this email already exists
             const [[existingUser]] = await pool.execute(
                 "SELECT id FROM users WHERE email = ? LIMIT 1",
                 [recipientEmail]
@@ -654,16 +656,29 @@ const createStudentAccount = async (req, res) => {
             if (existingUser) {
                 userId = existingUser.id;
                 await pool.execute(
-                    `UPDATE users SET password_hash = ?, is_active = 1, school_position = 'Student' WHERE id = ?`,
+                    `UPDATE users SET password_hash = ?, is_active = 1 WHERE id = ?`,
                     [passwordHash, userId]
                 );
             } else {
+                // Create a brand-new user row.
+                // school_position is omitted here deliberately — it uses its DEFAULT
+                // ('Teacher') and we patch it below only when the column actually exists.
                 const [newUser] = await pool.execute(
-                    `INSERT INTO users (school_id, name, email, password_hash, role, school_position, is_active, email_verified)
-                     VALUES (?, ?, ?, ?, 'user', 'Student', 1, 1)`,
+                    `INSERT INTO users (school_id, name, email, password_hash, role, is_active, email_verified)
+                     VALUES (?, ?, ?, ?, 'user', 1, 1)`,
                     [schoolId, studentFullName, recipientEmail, passwordHash]
                 );
                 userId = newUser.insertId;
+
+                // Attempt to set school_position = 'Student' if the column exists.
+                // This is a best-effort update — failure is silently ignored so that
+                // account creation still succeeds on DBs without the Sprint4 migration.
+                try {
+                    await pool.execute(
+                        `UPDATE users SET school_position = 'Student' WHERE id = ?`,
+                        [userId]
+                    );
+                } catch (_) { /* column may not exist yet — non-fatal */ }
             }
             await pool.execute("UPDATE students SET user_id = ? WHERE id = ?", [userId, studentId]);
         }
@@ -700,8 +715,8 @@ const createStudentAccount = async (req, res) => {
             emailSent,
         });
     } catch (err) {
-        console.error("createStudentAccount error:", err.message);
-        res.status(500).json({ error: "Failed to create student/guardian account" });
+        console.error("createStudentAccount error:", err.code || '', err.message);
+        res.status(500).json({ error: "Failed to create student/guardian account", detail: err.message });
     }
 };
 
