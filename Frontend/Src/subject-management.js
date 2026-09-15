@@ -6,15 +6,22 @@
     let allSubjects = [];
     let allTeachers = [];
 
+    let user = (typeof getUser === 'function' && getUser()) || {};
+    let role = user.role || 'user';
+    let position = user.school_position || '';
+    let isHeadTeacher = (role === 'headmaster') || (position === 'Head Teacher');
+    let isAdmin = (role === 'admin');
+    let isTeacher = !!(user.is_teacher || position === 'Teacher');
+
     document.addEventListener('DOMContentLoaded', async () => {
+        user = (typeof getUser === 'function' && getUser()) || {};
+        role = user.role || 'user';
+        position = user.school_position || '';
+        isHeadTeacher = (role === 'headmaster') || (position === 'Head Teacher');
+        isAdmin = (role === 'admin');
+        isTeacher = !!(user.is_teacher || position === 'Teacher');
+
         await loadMeta();
-        
-        const user = (typeof getUser === 'function' && getUser()) || {};
-        const role = user.role || 'user';
-        const position = user.school_position || '';
-        const isHeadTeacher = (role === 'headmaster') || (position === 'Head Teacher');
-        const isAdmin = (role === 'admin');
-        const isTeacher = !!(user.is_teacher || position === 'Teacher');
 
         if (isHeadTeacher && !isAdmin) {
             // Head Teacher: Supervisory Mode
@@ -154,7 +161,8 @@
         try {
             const res = await apiFetch('/api/subjects');
             if (!res || !res.ok) return;
-            allSubjects = await res.json();
+            const data = await res.json();
+            allSubjects = Array.isArray(data) ? data : [];
             renderSubjects(allSubjects);
             // Only populate modal dropdown with active subjects
             _populate('aSubject',
@@ -189,7 +197,7 @@
                 <td>${s.teacher_assignments || 0}</td>
                 ${isAdmin ? `
                 <td class="aa-table-actions">
-                    <button class="aa-link-btn" data-edit='${JSON.stringify(s).replace(/'/g, "&#39;")}'>Edit</button>
+                    <button class="aa-link-btn" data-edit-id="${s.id}">Edit</button>
                     <button class="aa-link-btn aa-link-danger"
                         data-toggle="${s.id}" data-active="${s.is_active ? '1' : '0'}">
                         ${s.is_active ? 'Deactivate' : 'Activate'}
@@ -197,9 +205,12 @@
                 </td>` : `<td class="aa-table-actions"><span style="color:var(--aa-text-muted);font-size:12px;">View only</span></td>`}
             </tr>`).join('');
 
-        tbody.querySelectorAll('[data-edit]').forEach(btn =>
-            btn.addEventListener('click', () => openEditSubject(JSON.parse(btn.dataset.edit)))
-        );
+        tbody.querySelectorAll('[data-edit-id]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const s = allSubjects.find(sub => String(sub.id) === String(btn.dataset.editId));
+                if (s) openEditSubject(s);
+            });
+        });
         tbody.querySelectorAll('[data-toggle]').forEach(btn =>
             btn.addEventListener('click', () => toggleSubject(btn.dataset.toggle, btn.dataset.active === '1'))
         );
@@ -266,7 +277,8 @@
         try {
             const res = await apiFetch(`/api/subjects/assignments/list?${p}`);
             if (!res || !res.ok) return;
-            const rows = await res.json();
+            const data = await res.json();
+            const rows = Array.isArray(data) ? data : [];
             renderAssignments(rows);
         } catch (err) { console.error('loadAssignments:', err); }
     }
@@ -289,7 +301,7 @@
                 <td><strong>${_esc(r.teacher_name)}</strong></td>
                 <td><span class="aa-badge aa-badge-info" style="font-weight:600">${_esc(r.subject_code ? r.subject_code + ' — ' + r.subject_name : r.subject_name)}</span></td>
                 <td>${_esc(r.class_name)}</td>
-                <td>${_esc(r.year_label)}</td>
+                <td>${_esc(r.year_label || 'Current')}</td>
                 ${isAdmin ? `
                 <td class="aa-table-actions">
                     <button class="aa-link-btn aa-link-danger" data-rem="${r.id}">Remove</button>

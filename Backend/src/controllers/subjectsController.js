@@ -33,9 +33,11 @@ const getSubjects = async (req, res) => {
         values.push(is_active);
     }
 
-    // Role scoping: If Staff or teaching query, only show subjects assigned to this teacher
-    const isTeacher = (role === "staff" || req.query.teaching === "1" || req.user?.is_teacher || req.user?.school_position === "Teacher");
-    if (isTeacher) {
+    // Role scoping: If teaching query, or if pure staff / non-admin teacher, only show subjects assigned to this teacher
+    const isTeachingOnly = req.query.teaching === "1" ||
+        (role === "staff") ||
+        (role !== "admin" && role !== "headmaster" && (req.user?.is_teacher || req.user?.school_position === "Teacher"));
+    if (isTeachingOnly) {
         filters.push("s.id IN (SELECT subject_id FROM teacher_subjects WHERE teacher_id = ?)");
         values.push(userId);
     }
@@ -212,12 +214,12 @@ const getTeacherAssignments = async (req, res) => {
                     sub.id AS subject_id,   sub.subject_code, sub.subject_name,
                     c.id   AS class_id,
                     CONCAT(c.grade_level, IF(c.stream != '', CONCAT(' ', c.stream), '')) AS class_name,
-                    ay.id  AS academic_year_id, ay.year_label
+                    ay.id  AS academic_year_id, COALESCE(ay.year_label, 'Current') AS year_label
              FROM   teacher_subjects ts
              JOIN   users         u   ON u.id   = ts.teacher_id
              JOIN   subjects      sub ON sub.id = ts.subject_id
              JOIN   classes       c   ON c.id   = ts.class_id
-             JOIN   academic_years ay ON ay.id  = ts.academic_year_id
+             LEFT JOIN academic_years ay ON ay.id  = ts.academic_year_id
              ${where}
              ORDER BY ay.year_label DESC, c.grade_level, sub.subject_name`,
             values
