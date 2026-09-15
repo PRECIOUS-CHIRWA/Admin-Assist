@@ -7,7 +7,7 @@
     async function loadMeta() {
         try {
             const [classRes, termRes] = await Promise.all([
-                apiFetch("/api/attendance/classes"),
+                apiFetch("/api/attendance/classes?teaching=1"),
                 apiFetch("/api/attendance/terms"),
             ]);
             const classes = await classRes.json();
@@ -19,6 +19,7 @@
 
     async function loadSessions() {
         const p = new URLSearchParams();
+        p.set("teaching", "1");
         const v = (id) => document.getElementById(id).value;
         if (v("filterClass")) p.set("class_id", v("filterClass"));
         if (v("filterTerm")) p.set("term_id", v("filterTerm"));

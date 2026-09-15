@@ -17,6 +17,9 @@
   let currentUserRole = 'user';
 
   document.addEventListener('DOMContentLoaded', async function () {
+    // Only run on pages that have the student directory table
+    if (!document.getElementById('studentsBody')) return;
+
     try {
       const u = JSON.parse(localStorage.getItem('user'));
       if (u && u.role) currentUserRole = u.role;
@@ -41,20 +44,24 @@
       if (!res || !res.ok) return;
       allClasses = await res.json();
       const sel = document.getElementById('classFilter');
-      allClasses.forEach(function (c) {
-        const opt = document.createElement('option');
-        opt.value = c.id;
-        opt.textContent = c.class_name || (c.grade_level + (c.stream ? ' ' + c.stream : ''));
-        sel.appendChild(opt);
-      });
+      if (sel) {
+        allClasses.forEach(function (c) {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = c.class_name || (c.grade_level + (c.stream ? ' ' + c.stream : ''));
+          sel.appendChild(opt);
+        });
+      }
       // Also populate the modal class select
       const fClass = document.getElementById('fClass');
-      allClasses.forEach(function (c) {
-        const opt = document.createElement('option');
-        opt.value = c.id;
-        opt.textContent = c.class_name || (c.grade_level + (c.stream ? ' ' + c.stream : ''));
-        fClass.appendChild(opt);
-      });
+      if (fClass) {
+        allClasses.forEach(function (c) {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = c.class_name || (c.grade_level + (c.stream ? ' ' + c.stream : ''));
+          fClass.appendChild(opt);
+        });
+      }
     } catch (err) { console.error('loadClasses:', err); }
   }
 
@@ -67,16 +74,24 @@
       applyFilters();
     } catch (err) {
       console.error('loadStudents:', err);
-      document.getElementById('studentsBody').innerHTML =
-        '<tr><td colspan="8" class="pg-empty-cell">Unable to load students. Please try again.</td></tr>';
+      const tbody = document.getElementById('studentsBody');
+      if (tbody) {
+        tbody.innerHTML =
+          '<tr><td colspan="8" class="pg-empty-cell">Unable to load students. Please try again.</td></tr>';
+      }
     }
   }
 
   /* ── Filtering & pagination ────────────────────────────────────── */
   function applyFilters() {
-    const q = (document.getElementById('studentSearch').value || '').toLowerCase().trim();
-    const classId = document.getElementById('classFilter').value;
-    const statusVal = document.getElementById('statusFilter').value;
+    const searchEl = document.getElementById('studentSearch');
+    const classEl = document.getElementById('classFilter');
+    const statusEl = document.getElementById('statusFilter');
+    if (!searchEl || !classEl || !statusEl) return;
+
+    const q = (searchEl.value || '').toLowerCase().trim();
+    const classId = classEl.value;
+    const statusVal = statusEl.value;
 
     filtered = allStudents.filter(function (s) {
       const name = (s.first_name + ' ' + s.last_name).toLowerCase();

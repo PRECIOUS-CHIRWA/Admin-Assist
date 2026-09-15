@@ -135,8 +135,9 @@ const getResults = async (req, res) => {
     const filters = ["r.school_id = ?"];
     const values = [schoolId];
 
-    // Staff scoping: only classes and subjects assigned to this teacher
-    if (role === "staff") {
+    // Teacher scoping: only classes and subjects assigned to this teacher
+    const isTeacherUser = (role === "staff" || req.user?.is_teacher || req.user?.school_position === "Teacher" || req.query.teaching === "1");
+    if (isTeacherUser) {
         filters.push(`(
             r.class_id IN (SELECT id FROM classes WHERE class_teacher_id = ? AND school_id = ?)
             OR (r.class_id, r.subject_id) IN (SELECT class_id, subject_id FROM teacher_subjects WHERE teacher_id = ?)
@@ -226,8 +227,9 @@ const createResult = async (req, res) => {
     const teacher_id = req.user.sub || req.user.id;
     const schoolId = (req.user && req.user.school_id) ? Number(req.user.school_id) : 1;
 
-    // Staff: must be assigned to teach this class/subject or be class teacher
-    if (req.user.role === "staff") {
+    // Must be assigned to teach this class/subject
+    const isTeacherUser = (req.user.role === "staff" || req.user?.is_teacher || req.user?.school_position === "Teacher" || req.query.teaching === "1");
+    if (isTeacherUser) {
         try {
             const [[assigned]] = await pool.execute(
                 `SELECT id FROM teacher_subjects
@@ -236,13 +238,7 @@ const createResult = async (req, res) => {
                 [teacher_id, subject_id, class_id]
             );
             if (!assigned) {
-                const [[isClassTeacher]] = await pool.execute(
-                    "SELECT id FROM classes WHERE id = ? AND class_teacher_id = ? LIMIT 1",
-                    [class_id, teacher_id]
-                );
-                if (!isClassTeacher) {
-                    return res.status(403).json({ error: "You are not assigned to teach this subject in this class" });
-                }
+                return res.status(403).json({ error: "You are not assigned to teach this subject in this class" });
             }
         } catch (err) {
             console.error("createResult teacher check:", err.message);
@@ -345,8 +341,9 @@ const updateResult = async (req, res) => {
             return res.status(403).json({ error: "This result has been approved and cannot be modified by staff without administrator review." });
         }
 
-        // Staff: must be assigned to this class/subject
-        if (role === "staff") {
+        // Must be assigned to this class/subject
+        const isTeacherUser = (role === "staff" || req.user?.is_teacher || req.user?.school_position === "Teacher" || req.query.teaching === "1");
+        if (isTeacherUser) {
             const [[assigned]] = await pool.execute(
                 `SELECT id FROM teacher_subjects
                  WHERE teacher_id = ? AND subject_id = ? AND class_id = ?
@@ -354,13 +351,7 @@ const updateResult = async (req, res) => {
                 [teacher_id, existing.subject_id, existing.class_id]
             ).catch(() => [[null]]);
             if (!assigned) {
-                const [[isClassTeacher]] = await pool.execute(
-                    "SELECT id FROM classes WHERE id = ? AND class_teacher_id = ? LIMIT 1",
-                    [existing.class_id, teacher_id]
-                ).catch(() => [[null]]);
-                if (!isClassTeacher) {
-                    return res.status(403).json({ error: "You are not authorized to update this result" });
-                }
+                return res.status(403).json({ error: "You are not authorized to update this result" });
             }
         }
 

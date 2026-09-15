@@ -84,8 +84,8 @@ const getAttendanceReport = async (req, res) => {
     if (term_id)          { filters.push("s.term_id = ?");           values.push(term_id); }
     if (academic_year_id) { filters.push("s.academic_year_id = ?"); values.push(academic_year_id); }
 
-    // Staff only see attendance for their own sessions and students
-    if (req.user && req.user.role === "staff") {
+    const isTeachingMode = (req.user && (req.user.role === "staff" || req.query.teaching === "1" || req.user.is_teacher || req.user.school_position === "Teacher"));
+    if (isTeachingMode) {
         const teacherId = req.user.sub || req.user.id;
         filters.push(`s.teacher_id = ? AND s.class_id IN (
             SELECT DISTINCT ts.class_id FROM teacher_subjects ts WHERE ts.teacher_id = ?
@@ -157,6 +157,16 @@ const getAcademicReport = async (req, res) => {
     if (subject_id)       { filters.push("r.subject_id = ?");       values.push(subject_id); }
     if (term_id)          { filters.push("r.term_id = ?");          values.push(term_id); }
     if (academic_year_id) { filters.push("r.academic_year_id = ?"); values.push(academic_year_id); }
+
+    const isTeachingMode = (req.user && (req.user.role === "staff" || req.query.teaching === "1" || req.user.is_teacher || req.user.school_position === "Teacher"));
+    if (isTeachingMode) {
+        const teacherId = req.user.sub || req.user.id;
+        filters.push(`(
+            r.class_id IN (SELECT c2.id FROM classes c2 WHERE c2.class_teacher_id = ?)
+            OR (r.class_id, r.subject_id) IN (SELECT ts.class_id, ts.subject_id FROM teacher_subjects ts WHERE ts.teacher_id = ?)
+        )`);
+        values.push(teacherId, teacherId);
+    }
     const where = `WHERE ${filters.join(" AND ")}`;
 
     try {

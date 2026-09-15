@@ -17,10 +17,12 @@
     // ── Role detection ───────────────────────────────────────────────────────
     let _userRole = 'user';
     let _userStudentId = null;
+    let _isTeacher = false;
     try {
         const _u = JSON.parse(localStorage.getItem('user'));
         _userRole = (_u && _u.role) ? _u.role : 'user';
         _userStudentId = (_u && _u.student_id) ? _u.student_id : null;
+        _isTeacher = !!(_u && (_u.role === 'staff' || _u.is_teacher || _u.school_position === 'Teacher'));
     } catch (e) {}
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -76,9 +78,11 @@
     /* ─── Meta loads ─────────────────────────────────────────────────────── */
     async function loadMeta() {
         try {
+            const classesUrl = _isTeacher ? '/api/attendance/classes?teaching=1' : '/api/attendance/classes';
+            const subjectsUrl = _isTeacher ? '/api/subjects?is_active=1&teaching=1' : '/api/subjects?is_active=1';
             const [cr, sr, tr, stR] = await Promise.all([
-                apiFetch('/api/attendance/classes'),
-                apiFetch('/api/subjects?is_active=1'),
+                apiFetch(classesUrl),
+                apiFetch(subjectsUrl),
                 apiFetch('/api/attendance/terms'),
                 apiFetch('/api/search/students'),
             ]);
@@ -96,7 +100,7 @@
 
             // Modal dropdowns
             _populate('fClass', allClasses, 'id', c => _classLabel(c), 'Select Class…');
-            _populate('fSubject', allSubjects, 'id', s => s.subject_name, 'Select Subject…');
+            _populate('fSubject', _isTeacher ? [] : allSubjects, 'id', s => s.subject_name, _isTeacher ? '— Select Class first —' : 'Select Subject…');
             _populate('fTerm', allTerms, 'id', t => `${t.term_name} (${t.year_label})`, 'Select Term…');
             _populateStudents(allStudents);  // initial full list
 
@@ -122,6 +126,25 @@
         }
     }
 
+    async function reloadSubjectsForClass(classId) {
+        if (!_isTeacher || !classId) {
+            _populate('fSubject', allSubjects, 'id', s => s.subject_name, 'Select Subject…');
+            return;
+        }
+        try {
+            const res = await apiFetch(`/api/attendance/subjects?classId=${classId}&teaching=1`);
+            if (res && res.ok) {
+                const subs = await res.json();
+                _populate('fSubject', subs, 'id', s => s.subject_name, subs.length ? 'Select Subject…' : '— No subjects assigned for this class —');
+            } else {
+                _populate('fSubject', allSubjects, 'id', s => s.subject_name, 'Select Subject…');
+            }
+        } catch (err) {
+            console.error('reloadSubjectsForClass:', err);
+            _populate('fSubject', allSubjects, 'id', s => s.subject_name, 'Select Subject…');
+        }
+    }
+
     function _populateStudents(students) {
         _populate('fStudent', students, 'id',
             s => `${s.last_name}, ${s.first_name} (${s.admission_number})`,
@@ -132,6 +155,7 @@
     /* ─── Results table ──────────────────────────────────────────────────── */
     async function loadResults() {
         const p = new URLSearchParams();
+        if (_isTeacher) p.set('teaching', '1');
         const v = id => document.getElementById(id)?.value || '';
         if (v('filterClass')) p.set('class_id', v('filterClass'));
         if (v('filterSubject')) p.set('subject_id', v('filterSubject'));
@@ -211,6 +235,12 @@
         ['fStudent', 'fSubject', 'fClass', 'fTerm', 'fMidTerm', 'fFinalTerm', 'fCAScore', 'fComment']
             .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
         
+        if (_isTeacher) {
+            _populate('fSubject', [], 'id', s => s.subject_name, '— Select Class first —');
+        } else {
+            _populate('fSubject', allSubjects, 'id', s => s.subject_name, 'Select Subject…');
+        }
+
         const preview = document.getElementById('fTotalPreview');
         if (preview) preview.value = '';
 
@@ -220,7 +250,6 @@
     function openEdit(r) {
         _setText('modalTitle', 'Edit Result');
         document.getElementById('editingId').value = r.id;
-        document.getElementById('fSubject').value = r.subject_id;
         document.getElementById('fClass').value = r.class_id;
         document.getElementById('fTerm').value = r.term_id;
 
@@ -235,9 +264,12 @@
         }
         document.getElementById('fComment').value = r.teacher_comment || '';
 
-        // Reload students for this class, then set selected student
+        // Reload students and subjects for this class, then set selected values
         reloadStudentsForClass(r.class_id).then(() => {
             document.getElementById('fStudent').value = r.student_id;
+        });
+        reloadSubjectsForClass(r.class_id).then(() => {
+            document.getElementById('fSubject').value = r.subject_id;
         });
 
         updatePreview();
@@ -366,18 +398,36 @@
             document.getElementById(id)?.addEventListener('input', updatePreview)
         );
 
-        // Cascade class → students dropdown
+        // Cascade class → students and subjects dropdown
         document.getElementById('fClass')?.addEventListener('change', e => {
             reloadStudentsForClass(e.target.value);
+            reloadSubjectsForClass(e.target.value);
         });
 
         // Filter bar
-        ['filterClass', 'filterSubject', 'filterTerm'].forEach(id =>
-            document.getElementById(id)?.addEventListener('change', loadResults)
-        );
+        document.getElementById('filterClass')?.addEventListener('change', async e => {
+            const classId = e.target.value;
+            if (_isTeacher && classId) {
+                try {
+                    const res = await apiFetch(`/api/attendance/subjects?classId=${classId}&teaching=1`);
+                    if (res && res.ok) {
+                        const subs = await res.json();
+                        _populate('filterSubject', subs, 'id', s => s.subject_name, 'All Subjects');
+                    }
+                } catch (err) {}
+            } else if (_isTeacher && !classId) {
+                _populate('filterSubject', allSubjects, 'id', s => s.subject_name, 'All Subjects');
+            }
+            loadResults();
+        });
+        document.getElementById('filterSubject')?.addEventListener('change', loadResults);
+        document.getElementById('filterTerm')?.addEventListener('change', loadResults);
         document.getElementById('clearBtn')?.addEventListener('click', () => {
             ['filterClass', 'filterSubject', 'filterTerm']
                 .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            if (_isTeacher) {
+                _populate('filterSubject', allSubjects, 'id', s => s.subject_name, 'All Subjects');
+            }
             loadResults();
         });
     }

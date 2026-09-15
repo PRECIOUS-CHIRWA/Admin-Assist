@@ -33,8 +33,9 @@ const getSubjects = async (req, res) => {
         values.push(is_active);
     }
 
-    // Role scoping: If Staff, only show subjects assigned to this teacher
-    if (role === "staff") {
+    // Role scoping: If Staff or teaching query, only show subjects assigned to this teacher
+    const isTeacher = (role === "staff" || req.query.teaching === "1" || req.user?.is_teacher || req.user?.school_position === "Teacher");
+    if (isTeacher) {
         filters.push("s.id IN (SELECT subject_id FROM teacher_subjects WHERE teacher_id = ?)");
         values.push(userId);
     }

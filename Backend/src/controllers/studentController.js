@@ -285,6 +285,7 @@ const getNextAdmissionNumber = async (req, res) => {
 // ─── Create student / Enroll ──────────────────────────────────────────────────
 const createStudent = async (req, res) => {
     try {
+        const schoolId = req.user?.school_id || 1;
         const body = req.body || {};
 
         // Normalize input from both camelCase and snake_case (enroll-student.js payload)
@@ -427,7 +428,7 @@ const createStudent = async (req, res) => {
             return res.status(409).json({ error: "A student with this admission number already exists" });
         }
         console.error("createStudent error:", err.message);
-        res.status(500).json({ error: "Something went wrong while creating the student" });
+        res.status(500).json({ error: "Something went wrong while creating the student", detail: err.message });
     }
 };
 

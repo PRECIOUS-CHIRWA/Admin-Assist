@@ -7,29 +7,30 @@
 
     async function loadMeta() {
         try {
-            const [cr, tr] = await Promise.all([apiFetch("/api/attendance/classes"), apiFetch("/api/attendance/terms")]);
+            const [cr, tr] = await Promise.all([
+                apiFetch("/api/attendance/classes?teaching=1"),
+                apiFetch("/api/attendance/terms")
+            ]);
             const classes = await cr.json();
             const terms = await tr.json();
             populateSelect("filterClass", classes, "id", (c) => c.class_name || `${c.grade_level}${c.stream ? " " + c.stream : ""}`, "All Classes");
             populateSelect("filterTerm", terms, "id", (t) => `${t.term_name} (${t.year_label})`, "All Terms");
 
-            // Unique years
-            const user = typeof getUser === "function" ? getUser() : null;
-            const isStaff = user && user.role === "staff";
+            // Unique years — "All Years" removed throughout
             const years = [...new Map(terms.map((t) => [t.academic_year_id, { id: t.academic_year_id, label: t.year_label }])).values()];
-            if (isStaff) {
-                populateSelect("filterYear", years, "id", (y) => y.label, "— Select Year —");
-            } else {
-                populateSelect("filterYear", years, "id", (y) => y.label, "All Years");
-            }
+            populateSelect("filterYear", years, "id", (y) => y.label, "— Select Year —");
 
-            const current = terms.find((t) => t.is_current);
-            if (current) { document.getElementById("filterTerm").value = current.id; document.getElementById("filterYear").value = current.academic_year_id; }
+            const current = terms.find((t) => t.is_current) || terms[0];
+            if (current) {
+                document.getElementById("filterTerm").value = current.id;
+                document.getElementById("filterYear").value = current.academic_year_id;
+            }
         } catch (err) { console.error(err); }
     }
 
     async function loadSummary() {
         const p = new URLSearchParams();
+        p.set("teaching", "1");
         if (document.getElementById("filterClass").value) p.set("class_id", document.getElementById("filterClass").value);
         if (document.getElementById("filterTerm").value) p.set("term_id", document.getElementById("filterTerm").value);
         if (document.getElementById("filterYear").value) p.set("academic_year_id", document.getElementById("filterYear").value);
