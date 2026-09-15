@@ -100,12 +100,35 @@ const getDashboardStats = async (req, res) => {
             try {
                 const dayFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "Africa/Lusaka", weekday: "long" });
                 todayDayName = dayFormatter.format(new Date());
-                const [[ttToday]] = await pool.execute(
-                    `SELECT COUNT(*) AS todayClassesCount
-                     FROM timetables
-                     WHERE teacher_id = ? AND school_id = ? AND day_of_week = ? AND is_active = 1`,
-                    [userId, schoolId, todayDayName]
-                );
+
+                // Lookup active academic year and term for the school if available
+                let ttSql = `
+                    SELECT COUNT(*) AS todayClassesCount
+                    FROM timetables tt
+                    WHERE tt.teacher_id = ? AND tt.school_id = ? AND tt.day_of_week = ? AND tt.is_active = 1
+                `;
+                const ttParams = [userId, schoolId, todayDayName];
+
+                const [[currYear]] = await pool.execute(
+                    `SELECT id FROM academic_years WHERE (school_id = ? OR school_id IS NULL) AND is_current = 1 LIMIT 1`,
+                    [schoolId]
+                ).catch(() => [[null]]);
+
+                const [[currTerm]] = await pool.execute(
+                    `SELECT id FROM terms WHERE (school_id = ? OR school_id IS NULL) AND is_current = 1 LIMIT 1`,
+                    [schoolId]
+                ).catch(() => [[null]]);
+
+                if (currYear?.id) {
+                    ttSql += ` AND (tt.academic_year_id = ? OR tt.academic_year_id IS NULL)`;
+                    ttParams.push(currYear.id);
+                }
+                if (currTerm?.id) {
+                    ttSql += ` AND (tt.term_id = ? OR tt.term_id IS NULL)`;
+                    ttParams.push(currTerm.id);
+                }
+
+                const [[ttToday]] = await pool.execute(ttSql, ttParams);
                 todayClassesCount = Number(ttToday?.todayClassesCount) || 0;
             } catch (ttErr) {
                 console.warn("dashboard staff timetable query note:", ttErr.message);

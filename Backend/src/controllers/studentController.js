@@ -3,6 +3,7 @@ const { promisify } = require("util");
 const pool = require("../config/db");
 const { sendNotification } = require("./notificationController");
 const { sendNewAccountEmail } = require("../services/emailService");
+const { ZAMBIAN_CITIES, isValidZambianCity, normalizeZambianCity } = require("../constants/zambianLocations");
 
 const scrypt = promisify(crypto.scrypt);
 
@@ -323,6 +324,14 @@ const createStudent = async (req, res) => {
             return res.status(400).json({ error: `Missing required fields: ${missing.join(", ")}` });
         }
 
+        // Validate city/town against maintainable supported Zambian dataset (reject with 422 if unsupported)
+        if (district) {
+            if (!isValidZambianCity(district)) {
+                return res.status(422).json({ error: `Unsupported city/town: "${district}". Please select a supported city/town in Zambia.` });
+            }
+        }
+        const validatedDistrict = district ? (normalizeZambianCity(district) || district) : null;
+
         // Look the class up rather than trusting free-typed grade/section text.
         const [[classRow]] = await pool.execute(
             "SELECT id, grade_level, stream FROM classes WHERE id = ?",
@@ -386,7 +395,7 @@ const createStudent = async (req, res) => {
                 schoolId, null, admissionNumber, firstName, lastName,
                 dateOfBirth, normalizedGender,
                 nrcNumber, homeAddress,
-                district, province,
+                validatedDistrict, province,
                 grade, section, classId, enrollmentDate,
                 previousSchool, parentGuardianName,
                 normalizedRelationship, phoneNumber, email || null,
@@ -501,6 +510,20 @@ const updateStudent = async (req, res) => {
                 fields.push(`${columns[key]} = ?`);
                 values.push(phone);
                 continue;
+            }
+
+            if (key === "district") {
+                const cityStr = String(value).trim();
+                if (cityStr !== "") {
+                    if (!isValidZambianCity(cityStr)) {
+                        return res.status(422).json({
+                            error: `Unsupported city/town: "${cityStr}". Please select a supported city/town in Zambia.`
+                        });
+                    }
+                    fields.push("district = ?");
+                    values.push(normalizeZambianCity(cityStr) || cityStr);
+                    continue;
+                }
             }
 
             fields.push(`${columns[key]} = ?`);
@@ -822,6 +845,10 @@ const restoreStudent = async (req, res) => {
     }
 };
 
+const getSupportedCities = (req, res) => {
+    res.json({ cities: ZAMBIAN_CITIES });
+};
+
 module.exports = {
     listStudents,
     getStudentById,
@@ -834,4 +861,5 @@ module.exports = {
     toggleAccountStatus,
     archiveStudent,
     restoreStudent,
+    getSupportedCities,
 };

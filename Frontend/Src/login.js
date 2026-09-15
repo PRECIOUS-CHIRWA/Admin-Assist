@@ -64,6 +64,14 @@
                     loginBtn.textContent = "Signing in…";
                 }
 
+                // Show global loader over blurred background
+                if (window.AALoader) {
+                    window.AALoader.showPageLoader("Authenticating…");
+                }
+                if (document.body) {
+                    document.body.classList.add("aa-page-loading");
+                }
+
                 try {
                     const endpoint = typeof API_BASE !== "undefined"
                         ? `${API_BASE.replace(/\/+$/, "")}/auth/login`
@@ -110,6 +118,12 @@
                     window.location.href = isStudent ? "student-transcript.html" : "dashboard.html";
 
                 } catch (err) {
+                    if (window.AALoader) {
+                        window.AALoader.hidePageLoader();
+                    }
+                    if (document.body) {
+                        document.body.classList.remove("aa-page-loading");
+                    }
                     showError(err.message || "Unable to sign in. Please verify your credentials.");
                 } finally {
                     if (loginBtn) {

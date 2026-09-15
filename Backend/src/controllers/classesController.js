@@ -44,7 +44,7 @@ const listClasses = async (req, res) => {
              LEFT JOIN students s ON (s.class_id = c.id AND s.status = 'Active')
              ${where}
              GROUP BY c.id
-             ORDER BY c.grade_level, c.stream`,
+             ORDER BY COALESCE(CAST(REGEXP_SUBSTR(c.grade_level, '[0-9]+') AS UNSIGNED), 999) ASC, c.grade_level ASC, c.stream ASC`,
             params
         );
         res.json(rows);

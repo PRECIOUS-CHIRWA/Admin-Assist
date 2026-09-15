@@ -30,6 +30,59 @@ const getSchoolPolicy = async (schoolId) => {
     }
 };
 
+const validateScoreInput = (val, fieldName = "Score") => {
+    if (val === null || val === undefined || val === "") return null;
+    const num = Number(val);
+    if (isNaN(num) || num < 0 || num > 100) {
+        const err = new Error(`${fieldName} must be between 0 and 100. Received: ${val}`);
+        err.statusCode = 422;
+        throw err;
+    }
+    return Math.round(num * 100) / 100;
+};
+
+const verifyTeacherResultAccess = async ({ schoolId, role, teacherId, classId, subjectId, academicYearId, termId }) => {
+    if (role === "admin" || role === "headmaster") {
+        const [[cls]] = await pool.execute("SELECT id FROM classes WHERE id = ? AND school_id = ?", [classId, schoolId]);
+        if (!cls) return { authorized: false, status: 404, error: "Class not found in this school" };
+
+        const [[sub]] = await pool.execute("SELECT id FROM subjects WHERE id = ? AND school_id = ?", [subjectId, schoolId]);
+        if (!sub) return { authorized: false, status: 404, error: "Subject not found in this school" };
+
+        const [[term]] = await pool.execute("SELECT id FROM terms WHERE id = ? AND academic_year_id = ? AND school_id = ?", [termId, academicYearId, schoolId]);
+        if (!term) return { authorized: false, status: 404, error: "Term not found for this academic year in this school" };
+
+        return { authorized: true };
+    }
+
+    if (role === "staff") {
+        const [[cls]] = await pool.execute("SELECT id FROM classes WHERE id = ? AND school_id = ?", [classId, schoolId]);
+        if (!cls) return { authorized: false, status: 403, error: "Unauthorized: Class does not belong to your school" };
+
+        const [[term]] = await pool.execute("SELECT id FROM terms WHERE id = ? AND academic_year_id = ? AND school_id = ?", [termId, academicYearId, schoolId]);
+        if (!term) return { authorized: false, status: 403, error: "Unauthorized: Invalid academic year or term" };
+
+        const [[sub]] = await pool.execute("SELECT id FROM subjects WHERE id = ? AND school_id = ?", [subjectId, schoolId]);
+        if (!sub) return { authorized: false, status: 403, error: "Unauthorized: Invalid subject" };
+
+        const [[assignment]] = await pool.execute(
+            `SELECT id FROM teacher_subjects 
+             WHERE teacher_id = ? AND subject_id = ? AND class_id = ?
+               AND (academic_year_id = ? OR academic_year_id IS NULL)
+             LIMIT 1`,
+            [teacherId, subjectId, classId, academicYearId]
+        );
+
+        if (!assignment) {
+            return { authorized: false, status: 403, error: "Forbidden: You are not authorized to enter results for this class and subject" };
+        }
+
+        return { authorized: true };
+    }
+
+    return { authorized: false, status: 403, error: "Forbidden: Student and guardian accounts cannot enter results" };
+};
+
 // ─── POLICY ENDPOINTS ─────────────────────────────────────────────────────────
 
 /**
@@ -226,23 +279,31 @@ const createResult = async (req, res) => {
 
     const teacher_id = req.user.sub || req.user.id;
     const schoolId = (req.user && req.user.school_id) ? Number(req.user.school_id) : 1;
+    const role = req.user?.role || "user";
 
-    // Must be assigned to teach this class/subject
-    const isTeacherUser = (req.user.role === "staff" || req.user?.is_teacher || req.user?.school_position === "Teacher" || req.query.teaching === "1");
-    if (isTeacherUser) {
-        try {
-            const [[assigned]] = await pool.execute(
-                `SELECT id FROM teacher_subjects
-                 WHERE teacher_id = ? AND subject_id = ? AND class_id = ?
-                 LIMIT 1`,
-                [teacher_id, subject_id, class_id]
-            );
-            if (!assigned) {
-                return res.status(403).json({ error: "You are not assigned to teach this subject in this class" });
-            }
-        } catch (err) {
-            console.error("createResult teacher check:", err.message);
+    // Independently verify teacher authorization across school, class, term, and subject
+    const auth = await verifyTeacherResultAccess({
+        schoolId, role, teacherId: teacher_id,
+        classId: class_id, subjectId: subject_id,
+        academicYearId: academic_year_id, termId: term_id,
+    });
+    if (!auth.authorized) {
+        return res.status(auth.status).json({ error: auth.error });
+    }
+
+    // Strict 0-100 score bounds validation (rejects -1, 101 with 422)
+    try {
+        validateScoreInput(mid_term_score, "Mid-term score");
+        validateScoreInput(final_term_score, "Final-term score");
+        validateScoreInput(continuous_assessment_score, "Continuous assessment score");
+        validateScoreInput(test_mark, "Test mark");
+        validateScoreInput(exam_mark, "Exam mark");
+        validateScoreInput(assignment_mark, "Assignment mark");
+    } catch (vErr) {
+        if (vErr.statusCode === 422) {
+            return res.status(422).json({ error: vErr.message });
         }
+        throw vErr;
     }
 
     try {
@@ -353,6 +414,21 @@ const updateResult = async (req, res) => {
             if (!assigned) {
                 return res.status(403).json({ error: "You are not authorized to update this result" });
             }
+        }
+
+        // Strict 0-100 score bounds validation (rejects -1, 101 with 422)
+        try {
+            validateScoreInput(mid_term_score, "Mid-term score");
+            validateScoreInput(final_term_score, "Final-term score");
+            validateScoreInput(continuous_assessment_score, "Continuous assessment score");
+            validateScoreInput(test_mark, "Test mark");
+            validateScoreInput(exam_mark, "Exam mark");
+            validateScoreInput(assignment_mark, "Assignment mark");
+        } catch (vErr) {
+            if (vErr.statusCode === 422) {
+                return res.status(422).json({ error: vErr.message });
+            }
+            throw vErr;
         }
 
         const policy = await getSchoolPolicy(schoolId);
@@ -550,6 +626,224 @@ const getClassResults = async (req, res) => {
         );
         res.json(rows);
     } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+/**
+ * GET /api/results/roster
+ * Query: class_id, academic_year_id, term_id, subject_id
+ * Loads entire class roster for batch result entry with current assessment marks.
+ */
+const getClassRosterResults = async (req, res) => {
+    const { class_id, academic_year_id, term_id, subject_id } = req.query;
+    const fieldErr = requireFields(req.query, ["class_id", "academic_year_id", "term_id", "subject_id"]);
+    if (fieldErr) return res.status(400).json({ error: fieldErr });
+
+    const schoolId = (req.user && req.user.school_id) ? Number(req.user.school_id) : 1;
+    const role = req.user?.role || "user";
+    const teacherId = req.user?.sub || req.user?.id;
+
+    try {
+        const auth = await verifyTeacherResultAccess({
+            schoolId, role, teacherId,
+            classId: class_id, subjectId: subject_id,
+            academicYearId: academic_year_id, termId: term_id,
+        });
+        if (!auth.authorized) {
+            return res.status(auth.status).json({ error: auth.error });
+        }
+
+        const [[classInfo]] = await pool.execute(
+            `SELECT c.id, c.grade_level, c.stream,
+                    CONCAT(c.grade_level, IF(c.stream != '' AND c.stream IS NOT NULL, CONCAT(' ', c.stream), '')) AS class_name
+             FROM classes c
+             WHERE c.id = ? AND c.school_id = ?`,
+            [class_id, schoolId]
+        );
+        if (!classInfo) return res.status(404).json({ error: "Class not found" });
+
+        const [roster] = await pool.execute(
+            `SELECT s.id AS student_id, s.admission_number, s.first_name, s.last_name,
+                    r.id AS result_id, r.mid_term_score, r.final_term_score, r.continuous_assessment_score,
+                    r.final_mark, r.percentage, r.grade_code, r.grade_classification, r.remarks, r.teacher_comment
+             FROM students s
+             LEFT JOIN results r ON (
+                 r.student_id = s.id
+                 AND r.class_id = ?
+                 AND r.subject_id = ?
+                 AND r.term_id = ?
+                 AND r.academic_year_id = ?
+                 AND r.school_id = ?
+             )
+             WHERE s.school_id = ?
+               AND (s.class_id = ? OR (s.grade = ? AND (s.section = ? OR s.section = '')))
+               AND s.status = 'Active'
+             ORDER BY s.last_name, s.first_name`,
+            [
+                class_id, subject_id, term_id, academic_year_id, schoolId,
+                schoolId, class_id, classInfo.grade_level, classInfo.stream || ""
+            ]
+        );
+
+        const policy = await getSchoolPolicy(schoolId);
+
+        res.json({
+            class: classInfo,
+            total_students: roster.length,
+            policy,
+            roster,
+        });
+    } catch (err) {
+        console.error("getClassRosterResults error:", err.message);
+        res.status(500).json({ error: "Failed to load class roster results" });
+    }
+};
+
+/**
+ * POST /api/results/batch
+ * Body: { class_id, academic_year_id, term_id, subject_id, results: [ { student_id, mid_term_score, final_term_score, continuous_assessment_score, teacher_comment } ] }
+ * Validates bounds (0-100), independently verifies teacher authorization, updates/inserts class results, and recalculates positions.
+ */
+const saveBatchResults = async (req, res) => {
+    const { class_id, academic_year_id, term_id, subject_id, results } = req.body;
+    const fieldErr = requireFields(req.body, ["class_id", "academic_year_id", "term_id", "subject_id"]);
+    if (fieldErr) return res.status(400).json({ error: fieldErr });
+
+    if (!Array.isArray(results)) {
+        return res.status(400).json({ error: "results must be an array" });
+    }
+
+    const schoolId = (req.user && req.user.school_id) ? Number(req.user.school_id) : 1;
+    const role = req.user?.role || "user";
+    const teacherId = req.user?.sub || req.user?.id;
+
+    try {
+        const auth = await verifyTeacherResultAccess({
+            schoolId, role, teacherId,
+            classId: class_id, subjectId: subject_id,
+            academicYearId: academic_year_id, termId: term_id,
+        });
+        if (!auth.authorized) {
+            return res.status(auth.status).json({ error: auth.error });
+        }
+
+        // 1. Strict Validation of All Records First
+        for (let i = 0; i < results.length; i++) {
+            const r = results[i];
+            if (!r.student_id) {
+                return res.status(400).json({ error: `Item at index ${i} is missing student_id` });
+            }
+            try {
+                validateScoreInput(r.mid_term_score, "Mid-term score");
+                validateScoreInput(r.final_term_score, "Final-term score");
+                validateScoreInput(r.continuous_assessment_score, "Continuous assessment score");
+            } catch (vErr) {
+                if (vErr.statusCode === 422) {
+                    return res.status(422).json({ error: `Validation Error for student #${r.student_id}: ${vErr.message}` });
+                }
+                throw vErr;
+            }
+        }
+
+        const policy = await getSchoolPolicy(schoolId);
+        let processed = 0;
+
+        for (const item of results) {
+            const { student_id, mid_term_score, final_term_score, continuous_assessment_score, teacher_comment } = item;
+
+            const midScore = validateScoreInput(mid_term_score, "Mid-term score");
+            const finScore = validateScoreInput(final_term_score, "Final-term score");
+            const caScore = validateScoreInput(continuous_assessment_score, "Continuous assessment score");
+
+            // Check if student has entered marks
+            const hasAnyData = isScoreProvided(midScore) || isScoreProvided(finScore) || isScoreProvided(caScore) || (teacher_comment && teacher_comment.trim() !== "");
+            if (!hasAnyData) {
+                continue; // Skip blank untouched rows
+            }
+
+            const calc = calculateFinalMark({
+                midTermScore: midScore,
+                finalTermScore: finScore,
+                continuousAssessmentScore: caScore,
+                policy,
+            });
+
+            const legacyTotal = calc.finalMark !== null 
+                ? calc.finalMark 
+                : (Number(calc.midTermScore || 0) + Number(calc.finalTermScore || 0));
+            const legacyPercentage = calc.percentage !== null ? calc.percentage : 0;
+            const legacyGradeCode = calc.gradeCode !== null ? calc.gradeCode : 9;
+
+            const [[existing]] = await pool.execute(
+                `SELECT id, status FROM results
+                 WHERE student_id = ? AND subject_id = ? AND term_id = ? AND academic_year_id = ? AND school_id = ?
+                 LIMIT 1`,
+                [student_id, subject_id, term_id, academic_year_id, schoolId]
+            );
+
+            if (existing) {
+                if (existing.status === "APPROVED" && role === "staff") {
+                    continue; // Do not overwrite approved result without admin review
+                }
+                await pool.execute(
+                    `UPDATE results
+                     SET mid_term_score = ?, final_term_score = ?, continuous_assessment_score = ?,
+                         final_mark = ?, test_mark = ?, assignment_mark = ?, exam_mark = ?,
+                         total_marks = ?, percentage = ?, grade_code = ?, grade_classification = ?,
+                         remarks = ?, status = ?, assessment_policy_snapshot = ?,
+                         teacher_comment = COALESCE(?, teacher_comment),
+                         teacher_id = ?, class_id = ?, updated_at = CURRENT_TIMESTAMP
+                     WHERE id = ?`,
+                    [
+                        calc.midTermScore, calc.finalTermScore, calc.continuousAssessmentScore,
+                        calc.finalMark, calc.midTermScore || 0, calc.continuousAssessmentScore || 0, calc.finalTermScore || 0,
+                        legacyTotal, legacyPercentage, legacyGradeCode, calc.gradeClassification,
+                        calc.remarks, calc.status, JSON.stringify(calc.policySnapshot),
+                        teacher_comment || null, teacherId, class_id, existing.id
+                    ]
+                );
+            } else {
+                await pool.execute(
+                    `INSERT INTO results
+                     (school_id, student_id, subject_id, teacher_id, class_id, term_id, academic_year_id,
+                      mid_term_score, final_term_score, continuous_assessment_score, final_mark,
+                      test_mark, assignment_mark, exam_mark, total_marks, percentage,
+                      grade_code, grade_classification, remarks, status, assessment_policy_snapshot, teacher_comment)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                        schoolId, student_id, subject_id, teacherId, class_id, term_id, academic_year_id,
+                        calc.midTermScore, calc.finalTermScore, calc.continuousAssessmentScore, calc.finalMark,
+                        calc.midTermScore || 0, calc.continuousAssessmentScore || 0, calc.finalTermScore || 0,
+                        legacyTotal, legacyPercentage, legacyGradeCode, calc.gradeClassification,
+                        calc.remarks, calc.status, JSON.stringify(calc.policySnapshot), teacher_comment || null
+                    ]
+                );
+            }
+            processed++;
+        }
+
+        // Recalculate class positions for this subject and term
+        await recalculatePositions(subject_id, class_id, term_id, academic_year_id);
+
+        // Record audit log
+        try {
+            await pool.execute(
+                `INSERT INTO audit_log (actor_id, action, entity_type, entity_id, details)
+                 VALUES (?, ?, ?, ?, ?)`,
+                [
+                    teacherId, "BATCH_RESULTS_SAVED", "results", class_id,
+                    JSON.stringify({ class_id, subject_id, term_id, academic_year_id, count: processed })
+                ]
+            );
+        } catch { /* non-fatal */ }
+
+        res.status(200).json({
+            message: "All class results saved successfully",
+            count: processed,
+        });
+    } catch (err) {
+        console.error("saveBatchResults error:", err.message);
         res.status(500).json({ error: err.message });
     }
 };
@@ -771,5 +1065,6 @@ module.exports = {
     getResults, getResultById, createResult, updateResult, deleteResult,
     getStudentResults, getClassResults, generateTranscript, getResultsAnalytics,
     getAssessmentPolicy, updateAssessmentPolicy, calculatePreview,
+    getClassRosterResults, saveBatchResults,
     getECZGrade,
 };

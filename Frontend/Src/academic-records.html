@@ -4,11 +4,90 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Academic Records | Admin Assist</title>
+  <title>Academic Records & Results Entry | Admin Assist</title>
   <link rel="stylesheet" href="theme.css" />
   <link rel="stylesheet" href="navigation.css" />
   <link rel="stylesheet" href="slide-panels.css" />
   <link rel="stylesheet" href="aa-shared.css" />
+  <link rel="stylesheet" href="loader.css" />
+  <style>
+    .roster-input {
+      width: 100px;
+      padding: 7px 10px;
+      font-size: 13.5px;
+      border: 1.5px solid var(--aa-border, #d1d5db);
+      border-radius: 6px;
+      text-align: right;
+      font-weight: 500;
+      color: var(--aa-text, #111827);
+      background: var(--aa-surface, #ffffff);
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .roster-input:focus {
+      outline: none;
+      border-color: var(--aa-blue, #2563eb);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    .roster-input.is-invalid {
+      border-color: #ef4444 !important;
+      background-color: #fef2f2 !important;
+      color: #b91c1c !important;
+    }
+    .roster-mark-preview {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--aa-text, #111827);
+      text-align: right;
+      display: block;
+    }
+    .roster-grade-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--aa-surface-2, #f3f4f6);
+      color: var(--aa-text-muted, #4b5563);
+    }
+    .roster-grade-badge.grade-pass {
+      background: #dcfce7;
+      color: #15803d;
+    }
+    .roster-grade-badge.grade-fail {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+    .roster-grade-badge.grade-pending {
+      background: #fef3c7;
+      color: #b45309;
+    }
+    .roster-comment-input {
+      width: 100%;
+      min-width: 130px;
+      padding: 6px 8px;
+      font-size: 12.5px;
+      border: 1.5px solid var(--aa-border, #d1d5db);
+      border-radius: 6px;
+      color: var(--aa-text, #111827);
+      background: var(--aa-surface, #ffffff);
+    }
+    .validation-alert-banner {
+      display: none;
+      padding: 12px 16px;
+      border-radius: 8px;
+      background: #fee2e2;
+      border: 1px solid #fca5a5;
+      color: #991b1b;
+      font-size: 13.5px;
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+    .validation-alert-banner.is-visible {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+  </style>
 </head>
 
 <body data-page="academic-records">
@@ -18,134 +97,134 @@
     <header class="aa-page-header">
       <div>
         <p class="aa-kicker">Academics</p>
-        <h1>Academic Records</h1>
-        <p class="aa-subtitle">Record and manage student results using the ECZ grading scale.</p>
+        <h1>Academic Records &amp; Results Entry</h1>
+        <p class="aa-subtitle">Record and manage class results using the official ECZ secondary assessment scale.</p>
       </div>
       <div class="aa-header-actions">
         <a class="aa-btn aa-btn-secondary" href="student-transcript.html">View Transcripts</a>
-        <button class="aa-btn aa-btn-primary" id="addResultBtn" type="button">+ Add Result</button>
       </div>
     </header>
 
-    <section class="aa-filter-bar">
-      <div class="aa-filter-field">
-        <label for="filterClass">Class</label>
-        <select id="filterClass">
-          <option value="">All Classes</option>
-        </select>
+    <!-- ── Step-by-Step Context Selector (Exact Order: Class -> Year -> Term -> Subject) ── -->
+    <section class="aa-card" style="margin-bottom: 24px; padding: 20px 24px;">
+      <h2 style="font-size: 15px; font-weight: 700; margin-bottom: 14px; color: var(--aa-text, #111827);">
+        Select Academic Context
+      </h2>
+
+      <div class="aa-filter-bar" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; padding: 0; background: transparent; border: none;">
+        <!-- Step 1: Class First -->
+        <div class="aa-filter-field" style="flex: 1; min-width: 170px;">
+          <label for="selClass" style="font-weight: 600; font-size: 12.5px; display: block; margin-bottom: 6px;">
+            Step 1 — Class <span style="color:#ef4444;">*</span>
+          </label>
+          <select id="selClass" class="aa-select" style="width:100%;">
+            <option value="">Select Class…</option>
+          </select>
+        </div>
+
+        <!-- Step 2: Academic Year (auto-defaulted to current system year from DB) -->
+        <div class="aa-filter-field" style="flex: 1; min-width: 160px;">
+          <label for="selYear" style="font-weight: 600; font-size: 12.5px; display: block; margin-bottom: 6px;">
+            Step 2 — Academic Year <span style="color:#ef4444;">*</span>
+          </label>
+          <select id="selYear" class="aa-select" style="width:100%;" disabled>
+            <option value="">Select Year…</option>
+          </select>
+        </div>
+
+        <!-- Step 3: Term (dynamically loaded for selected academic year) -->
+        <div class="aa-filter-field" style="flex: 1; min-width: 160px;">
+          <label for="selTerm" style="font-weight: 600; font-size: 12.5px; display: block; margin-bottom: 6px;">
+            Step 3 — Term <span style="color:#ef4444;">*</span>
+          </label>
+          <select id="selTerm" class="aa-select" style="width:100%;" disabled>
+            <option value="">Select Term…</option>
+          </select>
+        </div>
+
+        <!-- Step 4: Subject (enabled only after Class+Year+Term; teacher-scoped) -->
+        <div class="aa-filter-field" style="flex: 1.2; min-width: 200px;">
+          <label for="selSubject" style="font-weight: 600; font-size: 12.5px; display: block; margin-bottom: 6px;">
+            Step 4 — Subject <span style="color:#ef4444;">*</span>
+          </label>
+          <select id="selSubject" class="aa-select" style="width:100%;" disabled>
+            <option value="">Select Subject…</option>
+          </select>
+        </div>
+
+        <!-- Step 5: Load Results Button -->
+        <div style="flex-shrink: 0;">
+          <button class="aa-btn aa-btn-primary" id="loadResultsBtn" type="button" disabled style="min-height: 38px; font-weight: 600;">
+            Load Results
+          </button>
+        </div>
       </div>
-      <div class="aa-filter-field">
-        <label for="filterSubject">Subject</label>
-        <select id="filterSubject">
-          <option value="">All Subjects</option>
-        </select>
+
+      <div id="contextTip" style="margin-top: 12px; font-size: 12.5px; color: var(--aa-text-muted, #6b7280);">
+        Select your assigned class above to begin entering or reviewing results.
       </div>
-      <div class="aa-filter-field">
-        <label for="filterTerm">Term</label>
-        <select id="filterTerm">
-          <option value="">All Terms</option>
-        </select>
-      </div>
-      <button class="aa-btn aa-btn-ghost" id="clearBtn" type="button">Clear</button>
     </section>
 
-    <section class="aa-card">
-      <div class="aa-card-header">
-        <h2>Results</h2>
-        <span class="aa-badge" id="countBadge">0 results</span>
-      </div>
+    <!-- Error/Validation Alert Banner -->
+    <div id="validationBanner" class="validation-alert-banner" role="alert">
+      <span style="font-size:18px;">⚠️</span>
+      <span id="validationBannerMsg">All marks must be between 0 and 100. Please correct the highlighted entries.</span>
+    </div>
 
-      <div class="aa-empty-state" id="emptyState" hidden>
-        <h3>No results recorded yet</h3>
-        <p>Click "Add Result" to enter the first student result.</p>
-        <button class="aa-btn aa-btn-primary" id="addResultBtnEmpty" type="button">+ Add Result</button>
+    <!-- ── Entire Class Roster Grid ── -->
+    <section class="aa-card" id="rosterSection">
+      <div class="aa-card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+          <h2 id="rosterHeading" style="margin:0;">Class Results Roster</h2>
+          <p id="rosterSubheading" style="margin:4px 0 0; font-size:13px; color:var(--aa-text-muted);">No class loaded yet.</p>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span class="aa-badge" id="rosterBadge">0 students</span>
+          <button class="aa-btn aa-btn-primary" id="saveAllResultsBtn" type="button" disabled style="background:#16a34a; border-color:#16a34a; color:#fff; font-weight:600;">
+            Save All Results
+          </button>
+        </div>
       </div>
 
       <div class="aa-table-wrap">
-        <table class="aa-table" id="resultsTable">
+        <table class="aa-table" id="rosterTable">
           <thead>
             <tr>
+              <th style="width:40px; text-align:center;">#</th>
               <th>Student</th>
-              <th>Adm No</th>
-              <th>Class</th>
-              <th>Subject</th>
-              <th>Mid-Term</th>
-              <th>Final Term</th>
-              <th>Final Mark</th>
-              <th>Grade</th>
-              <th>Status</th>
-              <th>Position</th>
-              <th>Actions</th>
+              <th>Admission No.</th>
+              <th style="width:130px; text-align:right;">Mid-Term (0–100)</th>
+              <th style="width:130px; text-align:right;">Final/End-Term (0–100)</th>
+              <th id="thCA" style="width:120px; text-align:right; display:none;">CA Score (0–100)</th>
+              <th style="width:110px; text-align:right;">Final Mark</th>
+              <th style="width:150px;">Grade</th>
+              <th style="width:200px;">Teacher Comment</th>
             </tr>
           </thead>
-          <tbody id="tableBody"></tbody>
+          <tbody id="rosterTbody">
+            <tr>
+              <td colspan="9" style="text-align:center; padding:40px 16px; color:var(--aa-text-muted);">
+                Please select your <strong>Class</strong>, <strong>Academic Year</strong>, <strong>Term</strong>, and <strong>Subject</strong> above, then click <strong>Load Results</strong>.
+              </td>
+            </tr>
+          </tbody>
         </table>
+      </div>
+
+      <!-- Footer Action & Policy Weighting Bar -->
+      <div id="rosterFooter" style="display:none; padding:16px 20px; border-top:1px solid var(--aa-border,#e5e7eb); justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; background:var(--aa-surface-2,#fafafa);">
+        <div id="policyInfoLabel" style="font-size:12.5px; color:var(--aa-text-muted);">
+          Weighting: Mid-Term 20% &bull; Final / End-Term 80% &bull; ECZ Secondary Scale
+        </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span id="saveStatusText" style="font-size:13px; font-weight:500; color:var(--aa-text-muted);"></span>
+          <button class="aa-btn aa-btn-primary" id="saveAllResultsBtnBottom" type="button" style="background:#16a34a; border-color:#16a34a; color:#fff; font-weight:600;">
+            Save All Results
+          </button>
+        </div>
       </div>
     </section>
   </main>
-
-  <!-- Add/Edit Result Modal -->
-  <div class="aa-modal-backdrop" id="resultModal" hidden>
-    <div class="aa-modal" role="dialog" aria-modal="true">
-      <div class="aa-modal-header">
-        <h2 id="modalTitle">Add Result</h2>
-        <button class="aa-modal-close" id="closeModalBtn" type="button" aria-label="Close">&times;</button>
-      </div>
-      <div class="aa-modal-body">
-        <input type="hidden" id="editingId" />
-        <div class="aa-form-grid">
-          <div class="aa-form-field">
-            <label for="fStudent">Student *</label>
-            <select id="fStudent" required>
-              <option value="">Select Student…</option>
-            </select>
-          </div>
-          <div class="aa-form-field">
-            <label for="fSubject">Subject *</label>
-            <select id="fSubject" required>
-              <option value="">Select Subject…</option>
-            </select>
-          </div>
-          <div class="aa-form-field">
-            <label for="fClass">Class *</label>
-            <select id="fClass" required>
-              <option value="">Select Class…</option>
-            </select>
-          </div>
-          <div class="aa-form-field">
-            <label for="fTerm">Term *</label>
-            <select id="fTerm" required>
-              <option value="">Select Term…</option>
-            </select>
-          </div>
-          <div class="aa-form-field">
-            <label for="fMidTerm">Mid-Term Test (max 100)</label>
-            <input type="number" id="fMidTerm" min="0" max="100" step="0.5" placeholder="e.g. 75" />
-          </div>
-          <div class="aa-form-field">
-            <label for="fFinalTerm">Final / End-of-Term Test (max 100)</label>
-            <input type="number" id="fFinalTerm" min="0" max="100" step="0.5" placeholder="e.g. 82" />
-          </div>
-          <div class="aa-form-field" id="fCAGroup" style="display:none">
-            <label for="fCAScore">Continuous Assessment / SBA (max 100)</label>
-            <input type="number" id="fCAScore" min="0" max="100" step="0.5" placeholder="Optional" />
-          </div>
-          <div class="aa-form-field aa-form-field-full">
-            <label>Calculated Assessment Summary</label>
-            <input type="text" id="fTotalPreview" readonly style="background:var(--aa-bg);font-weight:600" placeholder="Enter scores above" />
-          </div>
-          <div class="aa-form-field aa-form-field-full">
-            <label for="fComment">Teacher Comment (optional)</label>
-            <textarea id="fComment" placeholder="Optional remarks…"></textarea>
-          </div>
-        </div>
-      </div>
-      <div class="aa-modal-actions">
-        <button class="aa-btn aa-btn-ghost" id="cancelModalBtn" type="button">Cancel</button>
-        <button class="aa-btn aa-btn-primary" id="saveResultBtn" type="button">Save Result</button>
-      </div>
-    </div>
-  </div>
 
   <script src="loader.js"></script>
   <script src="auth.js"></script>

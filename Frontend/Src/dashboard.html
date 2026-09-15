@@ -489,19 +489,14 @@
           </div>
         </div>
 
-        <div class="dash-card">
+        <div class="dash-card" id="staffTodayTimetableCard">
           <div class="dash-card-header">
-            <h2 class="dash-card-title">My Recent Activity</h2>
-            <a href="notifications.html" class="dash-card-link">View all</a>
+            <h2 class="dash-card-title" style="font-weight: 500; font-size: 16px; color: var(--aa-text, #111827);">Today's Timetable</h2>
           </div>
-          <ul class="dash-notif-list" id="staffRecentActivityList">
-            <li class="dash-notif-item">
-              <div class="dash-notif-avatar" style="background:#EFF6FF;color:#2563EB">TCH</div>
-              <div class="dash-notif-body">
-                <div class="dash-notif-text"><strong>Teacher Activity</strong><br><span>Loading activity…</span></div>
-              </div>
-            </li>
-          </ul>
+          <div style="padding: 28px 24px; display: flex; flex-direction: column; align-items: flex-start; gap: 16px;">
+            <div id="staffTodayTimetableValue" style="font-size: 42px; font-weight: 700; line-height: 1; color: var(--aa-text, #111827);">0</div>
+            <a href="timetable-management.html?view=my" id="staffTodayTimetableLink" style="font-size: 14px; font-weight: normal; color: var(--aa-blue, #2563EB); text-decoration: none; cursor: pointer;">View schedule</a>
+          </div>
         </div>
       </div>
     </div>

@@ -33,6 +33,7 @@ async function loadDashboardStats() {
 
             const ttCount = data.todayClassesCount != null ? Number(data.todayClassesCount) : 0;
             _setText('staffStatTimetable', String(ttCount));
+            _setText('staffTodayTimetableValue', String(ttCount));
 
             _setText('staffStatAttendance', (data.todayAttendance?.rate != null ? data.todayAttendance.rate + '%' : '0%'));
 
@@ -194,6 +195,23 @@ function initTimetableModal() {
         linkBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             e.preventDefault();
+            openModal();
+        });
+    }
+
+    const todayLink = document.getElementById('staffTodayTimetableLink');
+    if (todayLink) {
+        todayLink.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            openModal();
+        });
+    }
+
+    const todayCard = document.getElementById('staffTodayTimetableCard');
+    if (todayCard) {
+        todayCard.addEventListener('click', (e) => {
+            if (e.target.tagName === 'A' || e.target.closest('a')) return;
             openModal();
         });
     }

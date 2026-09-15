@@ -43,7 +43,7 @@ const getEnrollmentReport = async (req, res) => {
        FROM   students st
        LEFT JOIN classes c ON c.id = st.class_id
        ${where}
-       ORDER BY c.grade_level, st.last_name`,
+       ORDER BY COALESCE(CAST(REGEXP_SUBSTR(c.grade_level, '[0-9]+') AS UNSIGNED), 999) ASC, c.grade_level ASC, c.stream ASC, st.last_name`,
             values
         );
 
@@ -112,7 +112,7 @@ const getAttendanceReport = async (req, res) => {
        LEFT JOIN classes          c  ON c.id  = st.class_id
        ${where}
        GROUP BY ar.student_id
-       ORDER BY c.grade_level, st.last_name`,
+       ORDER BY COALESCE(CAST(REGEXP_SUBSTR(c.grade_level, '[0-9]+') AS UNSIGNED), 999) ASC, c.grade_level ASC, c.stream ASC, st.last_name`,
             values
         );
 
@@ -180,7 +180,7 @@ const getAcademicReport = async (req, res) => {
        JOIN   subjects sub ON sub.id = r.subject_id
        JOIN   classes  c   ON c.id   = r.class_id
        ${where}
-       ORDER BY c.grade_level, sub.subject_name, r.class_position`,
+        ORDER BY COALESCE(CAST(REGEXP_SUBSTR(c.grade_level, '[0-9]+') AS UNSIGNED), 999) ASC, c.grade_level ASC, c.stream ASC, sub.subject_name, r.class_position`,
             values
         );
 

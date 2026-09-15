@@ -4,6 +4,7 @@ const {
     listStudents, getStudentById, getNextAdmissionNumber,
     createStudent, updateStudent, deleteStudent, createStudentAccount,
     toggleAccountStatus, archiveStudent, restoreStudent,
+    getSupportedCities,
 } = require("../controllers/studentController");
 
 const { authenticate, authorize } = require("../middleware/auth");
@@ -14,6 +15,9 @@ router.post("/",       authenticate, authorize("admin", "headmaster", "staff"), 
 
 // ─── Auto-generate Admission Number ──────────────────────────────────────────
 router.get("/next-admission-number", authenticate, getNextAdmissionNumber);
+
+// ─── Supported Cities Dataset (Public / Authenticated) ───────────────────────
+router.get("/cities", getSupportedCities);
 
 // ─── Any logged-in user ───────────────────────────────────────────────────────
 router.get("/",    authenticate, listStudents);

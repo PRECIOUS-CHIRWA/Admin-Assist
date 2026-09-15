@@ -133,6 +133,10 @@
         var loader = _ensurePageLoader();
         if (!loader) return;
 
+        if (document.body) {
+            document.body.classList.add('aa-page-loading');
+        }
+
         if (message) {
             var msgEl = loader.querySelector('#aa-loader-status-msg');
             if (msgEl) msgEl.textContent = message;
@@ -143,6 +147,9 @@
 
     function _hidePageLoader() {
         var loader = document.getElementById('aa-page-loader');
+        if (document.body) {
+            document.body.classList.remove('aa-page-loading');
+        }
         if (loader) {
             loader.classList.add('aa-loader-hidden');
             // Remove from accessibility tree after transition
@@ -285,6 +292,12 @@
         _ensureTopProgressBar();
         _ensurePageLoader();
         _setupNavigationListener();
+
+        try {
+            if (localStorage.getItem('accessToken') || localStorage.getItem('user')) {
+                if (document.body) document.body.classList.add('aa-page-loading');
+            }
+        } catch { /* ignore */ }
 
         // Start top progress during document parsing
         if (document.readyState === 'loading') {

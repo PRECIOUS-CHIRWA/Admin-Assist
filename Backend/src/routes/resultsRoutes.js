@@ -5,15 +5,19 @@ const {
     getResults, getResultById, createResult, updateResult, deleteResult,
     getStudentResults, getClassResults, generateTranscript, getResultsAnalytics,
     getAssessmentPolicy, updateAssessmentPolicy, calculatePreview,
+    getClassRosterResults, saveBatchResults,
 } = require("../controllers/resultsController");
 
 const { authenticate, authorize } = require("../middleware/auth");
 
 // ─── Named sub-routes MUST come before /:id to prevent Express matching
-// "student", "class", "transcript", "analytics", "policy" as the :id param ───
+// "student", "class", "transcript", "analytics", "policy", "roster", "batch" as the :id param ───
 router.get("/policy", authenticate, getAssessmentPolicy);
 router.put("/policy", authenticate, authorize("admin", "headmaster"), updateAssessmentPolicy);
 router.post("/calculate-preview", authenticate, calculatePreview);
+
+router.get("/roster", authenticate, getClassRosterResults);
+router.post("/batch", authenticate, authorize("admin", "headmaster", "staff"), saveBatchResults);
 
 router.get("/student/:studentId", authenticate, getStudentResults);
 router.get("/class/:classId", authenticate, getClassResults);

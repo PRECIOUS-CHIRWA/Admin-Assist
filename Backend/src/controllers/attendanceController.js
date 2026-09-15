@@ -200,7 +200,7 @@ const getClasses = async (req, res) => {
                         SELECT DISTINCT ts.class_id FROM teacher_subjects ts WHERE ts.teacher_id = ?
                     ))
              GROUP BY c.id
-             ORDER BY c.grade_level, c.stream`;
+             ORDER BY COALESCE(CAST(REGEXP_SUBSTR(c.grade_level, '[0-9]+') AS UNSIGNED), 999) ASC, c.grade_level ASC, c.stream ASC`;
             params = [schoolId, teacherId, teacherId];
         } else {
             sql = `SELECT c.id, c.grade_level, c.stream,
@@ -220,7 +220,7 @@ const getClasses = async (req, res) => {
              ) AND s.status = 'Active'
              WHERE  c.school_id = ?
              GROUP BY c.id
-             ORDER BY c.grade_level, c.stream`;
+             ORDER BY COALESCE(CAST(REGEXP_SUBSTR(c.grade_level, '[0-9]+') AS UNSIGNED), 999) ASC, c.grade_level ASC, c.stream ASC`;
             params = [schoolId];
         }
 
@@ -241,8 +241,9 @@ const getClasses = async (req, res) => {
  * Returns active subjects, restricted to subjects taught by the teacher when in teaching mode.
  */
 const getSubjects = async (req, res) => {
-    const { is_active = 1, classId, class_id } = req.query;
+    const { is_active = 1, classId, class_id, academic_year_id, academicYearId } = req.query;
     const targetClassId = classId || class_id;
+    const targetYearId = academic_year_id || academicYearId;
     const userId = req.user.sub || req.user.id;
     const isTeachingMode = (req.user.role === "staff" || req.query.teaching === "1" || req.user.is_teacher || req.user.school_position === "Teacher");
 
@@ -262,12 +263,17 @@ const getSubjects = async (req, res) => {
         if (isTeachingMode) {
             if (targetClassId) {
                 // Filter by teacher_subjects assignment strictly for this teacher and class
+                const yearFilter = targetYearId ? " AND (ts.academic_year_id = ? OR ts.academic_year_id IS NULL)" : "";
                 sql = `SELECT DISTINCT s.id, s.subject_code, s.subject_name, s.description, s.is_active
                        FROM   subjects s
-                       JOIN   teacher_subjects ts ON ts.subject_id = s.id AND ts.class_id = ? AND ts.teacher_id = ?
+                       JOIN   teacher_subjects ts ON ts.subject_id = s.id AND ts.class_id = ? AND ts.teacher_id = ?${yearFilter}
                        ${where}
                        ORDER BY s.subject_name`;
-                values.unshift(targetClassId, userId);
+                if (targetYearId) {
+                    values.unshift(targetClassId, userId, targetYearId);
+                } else {
+                    values.unshift(targetClassId, userId);
+                }
             } else {
                 // Return all subjects this teacher is assigned to teach across classes
                 sql = `SELECT DISTINCT s.id, s.subject_code, s.subject_name, s.description, s.is_active
@@ -284,12 +290,17 @@ const getSubjects = async (req, res) => {
                    ORDER BY s.subject_name`;
 
             if (targetClassId) {
+                const yearFilter = targetYearId ? " AND (ts.academic_year_id = ? OR ts.academic_year_id IS NULL)" : "";
                 sql = `SELECT DISTINCT s.id, s.subject_code, s.subject_name, s.description, s.is_active
                        FROM   subjects s
-                       LEFT JOIN teacher_subjects ts ON ts.subject_id = s.id AND ts.class_id = ?
+                       LEFT JOIN teacher_subjects ts ON ts.subject_id = s.id AND ts.class_id = ?${yearFilter}
                        ${where}
                        ORDER BY s.subject_name`;
-                values.unshift(targetClassId);
+                if (targetYearId) {
+                    values.unshift(targetClassId, targetYearId);
+                } else {
+                    values.unshift(targetClassId);
+                }
             }
         }
 

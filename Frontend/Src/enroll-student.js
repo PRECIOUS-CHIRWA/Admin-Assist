@@ -15,6 +15,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // 2. Live enrollment stats
   _loadEnrollmentStats();
 
+  // 2b. Supported Zambian cities dataset
+  _loadSupportedCities();
+
   // 3. Multi-step form
   initializeMultiStepForm();
 
@@ -170,6 +173,7 @@ function _validateStep(step) {
     _require("firstName", "First name is required.");
     _require("lastName", "Last name is required.");
     _require("dateOfBirth", "Date of birth is required.");
+    _require("district", "Please select a city.");
     _require("province", "Please select a province.");
     _requireRadio("gender", "err-gender", "Please select a gender.");
   }
@@ -320,6 +324,30 @@ async function _loadEnrollmentStats() {
       el.textContent = "0";
     });
     console.warn("_loadEnrollmentStats:", err.message);
+  }
+}
+
+/* ── Supported Cities dataset ─────────────────────────────────────────────── */
+async function _loadSupportedCities() {
+  const select = document.getElementById("district");
+  if (!select) return;
+  try {
+    const res = await apiFetch("/api/students/cities");
+    if (!res || !res.ok) return;
+    const data = await res.json();
+    const cities = data.cities || [];
+    if (!cities.length) return;
+    const curVal = select.value;
+    select.innerHTML = '<option value="">Select City</option>';
+    cities.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c;
+      if (c === curVal) opt.selected = true;
+      select.appendChild(opt);
+    });
+  } catch (e) {
+    // Retain HTML static fallback options
   }
 }
 
