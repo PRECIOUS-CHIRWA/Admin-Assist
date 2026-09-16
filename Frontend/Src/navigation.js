@@ -263,7 +263,7 @@
         'attendance-history.html': 'Attendance History',
         'attendance-summary.html': 'Attendance Summary',
         'attendance-reports.html': 'Attendance Reports',
-        'academic-records.html': 'Academic Results',
+        'academic-records.html': 'Academic Records',
         'subject-management.html': 'Classes & Academics',
         'student-transcript.html': 'Student Transcript',
         'reports-dashboard.html': 'Reports & Analytics',

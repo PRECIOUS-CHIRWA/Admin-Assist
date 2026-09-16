@@ -525,31 +525,97 @@
 
         <!-- RECENT LOGS -->
         <section class="settings-section" id="logs">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:10px;">
-            <div>
-              <h2 style="margin:0;">Recent Logs</h2>
-              <p class="settings-desc" style="margin:4px 0 0;">System audit activities, security events, and administrative actions.</p>
+          <!-- 1. Compact Recent Logs View (Max 5 for current week) -->
+          <div id="recentLogsContainer">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+              <div>
+                <h2 style="margin:0;">Recent Logs</h2>
+                <p class="settings-desc" style="margin:4px 0 0;">Showing up to 5 most recent activities for the current week.</p>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <button type="button" class="btn-secondary" id="refreshLogsBtn" style="padding:7px 14px; font-size:12.5px;">Refresh</button>
+                <button type="button" class="btn-primary" id="openAllLogsBtn" style="padding:7px 16px; font-size:12.5px;">View All Logs</button>
+              </div>
             </div>
-            <button type="button" class="btn btn-secondary" id="refreshLogsBtn" style="padding:6px 14px; font-size:12.5px;">Refresh Logs</button>
+
+            <div style="overflow-x:auto; margin-top:16px;">
+              <table class="aa-table" style="width:100%; border-collapse:collapse; font-size:13px;" id="settingsLogsTable">
+                <thead>
+                  <tr style="border-bottom:2px solid var(--aa-border); text-align:left;">
+                    <th style="padding:10px 12px; font-weight:600; color:var(--aa-text-muted); width:160px;">Timestamp</th>
+                    <th style="padding:10px 12px; font-weight:600; color:var(--aa-text-muted);">Activity</th>
+                    <th style="padding:10px 12px; font-weight:600; color:var(--aa-text-muted); width:160px;">Actor</th>
+                    <th style="padding:10px 12px; font-weight:600; color:var(--aa-text-muted); width:90px;">Role</th>
+                  </tr>
+                </thead>
+                <tbody id="settingsLogsBody">
+                  <tr>
+                    <td colspan="4" style="padding:24px; text-align:center; color:var(--aa-text-muted);">Loading recent logs…</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div style="margin-top:12px; font-size:12px; color:var(--aa-text-muted); display:flex; justify-content:space-between; align-items:center;">
+              <span>Showing current week's latest activity.</span>
+              <button type="button" id="openAllLogsLink" style="background:none; border:none; color:var(--aa-blue, #2563EB); font-size:12px; cursor:pointer; padding:0; text-decoration:underline;">View full log history →</button>
+            </div>
           </div>
 
-          <div style="overflow-x:auto; margin-top:16px;">
-            <table class="aa-table" style="width:100%; border-collapse:collapse; font-size:13px;" id="settingsLogsTable">
-              <thead>
-                <tr style="border-bottom:2px solid var(--aa-border); text-align:left;">
-                  <th style="padding:10px 12px; font-weight:600; color:var(--aa-text-muted);">Timestamp</th>
-                  <th style="padding:10px 12px; font-weight:600; color:var(--aa-text-muted);">Activity</th>
-                  <th style="padding:10px 12px; font-weight:600; color:var(--aa-text-muted);">Actor</th>
-                  <th style="padding:10px 12px; font-weight:600; color:var(--aa-text-muted);">Role</th>
-                  <th style="padding:10px 12px; font-weight:600; color:var(--aa-text-muted);">Details</th>
-                </tr>
-              </thead>
-              <tbody id="settingsLogsBody">
-                <tr>
-                  <td colspan="5" style="padding:24px; text-align:center; color:var(--aa-text-muted);">Loading recent logs…</td>
-                </tr>
-              </tbody>
-            </table>
+          <!-- 2. Full Logs View (Historical logs with filtering & pagination) -->
+          <div id="fullLogsContainer" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+              <div>
+                <h2 style="margin:0;">System Audit Logs</h2>
+                <p class="settings-desc" style="margin:4px 0 0;">Historical system audit trail with search, date filters, and role scoping.</p>
+              </div>
+              <button type="button" class="btn-secondary" id="backToRecentLogsBtn" style="padding:7px 14px; font-size:12.5px;">← Back to Recent Logs</button>
+            </div>
+
+            <!-- Filters -->
+            <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; padding:12px 14px; background:var(--aa-surface-2, #F8FAFC); border:1px solid var(--aa-border); border-radius:var(--aa-radius-md); margin-bottom:16px;">
+              <div style="flex:1; min-width:180px;">
+                <input type="text" id="allLogsSearchInput" placeholder="Search activity, actor, or entity…" style="width:100%; padding:7px 10px; font-size:12.5px; border:1px solid var(--aa-border); border-radius:var(--aa-radius-sm); background:var(--aa-surface);">
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <label for="allLogsFromDate" style="font-size:12px; color:var(--aa-text-muted);">From:</label>
+                <input type="date" id="allLogsFromDate" style="padding:6px 8px; font-size:12px; border:1px solid var(--aa-border); border-radius:var(--aa-radius-sm); background:var(--aa-surface);">
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <label for="allLogsToDate" style="font-size:12px; color:var(--aa-text-muted);">To:</label>
+                <input type="date" id="allLogsToDate" style="padding:6px 8px; font-size:12px; border:1px solid var(--aa-border); border-radius:var(--aa-radius-sm); background:var(--aa-surface);">
+              </div>
+              <button type="button" class="btn-primary" id="allLogsFilterBtn" style="padding:6px 14px; font-size:12px;">Filter</button>
+              <button type="button" class="btn-secondary" id="allLogsResetBtn" style="padding:6px 12px; font-size:12px;">Reset</button>
+            </div>
+
+            <div style="overflow-x:auto;">
+              <table class="aa-table" style="width:100%; border-collapse:collapse; font-size:13px;" id="fullLogsTable">
+                <thead>
+                  <tr style="border-bottom:2px solid var(--aa-border); text-align:left;">
+                    <th style="padding:10px 12px; font-weight:600; color:var(--aa-text-muted); width:160px;">Timestamp</th>
+                    <th style="padding:10px 12px; font-weight:600; color:var(--aa-text-muted);">Activity</th>
+                    <th style="padding:10px 12px; font-weight:600; color:var(--aa-text-muted); width:150px;">Actor</th>
+                    <th style="padding:10px 12px; font-weight:600; color:var(--aa-text-muted); width:90px;">Role</th>
+                    <th style="padding:10px 12px; font-weight:600; color:var(--aa-text-muted);">Details</th>
+                  </tr>
+                </thead>
+                <tbody id="fullLogsBody">
+                  <tr>
+                    <td colspan="5" style="padding:24px; text-align:center; color:var(--aa-text-muted);">Loading audit logs…</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:12px; border-top:1px solid var(--aa-border); flex-wrap:wrap; gap:10px;">
+              <span id="allLogsSummary" style="font-size:12.5px; color:var(--aa-text-muted);">Showing 0 of 0 logs</span>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <button type="button" class="btn-secondary" id="allLogsPrevBtn" style="padding:5px 12px; font-size:12px;" disabled>Previous</button>
+                <span id="allLogsPageIndicator" style="font-size:12px; font-weight:600; color:var(--aa-text);">Page 1 of 1</span>
+                <button type="button" class="btn-secondary" id="allLogsNextBtn" style="padding:5px 12px; font-size:12px;" disabled>Next</button>
+              </div>
+            </div>
           </div>
         </section>
 

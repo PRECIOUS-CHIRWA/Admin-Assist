@@ -326,7 +326,7 @@ const getSubjects = async (req, res) => {
 const getRegister = async (req, res) => {
     const class_id = req.query.class_id || req.query.classId;
     const term_id = req.query.term_id || req.query.termId;
-    const academic_year_id = req.query.academic_year_id || req.query.academicYearId || req.query.yearId;
+    let academic_year_id = req.query.academic_year_id || req.query.academicYearId || req.query.yearId;
     const attendance_date = req.query.date || req.query.attendance_date || req.query.attendanceDate;
     const period = req.query.period || "General";
     const subject_id = req.query.subject_id || req.query.subjectId || null;
@@ -334,6 +334,26 @@ const getRegister = async (req, res) => {
 
     if (!class_id) {
         return res.status(400).json({ error: "class_id parameter is required" });
+    }
+
+    // Automatically resolve to active academic year if not explicitly passed
+    if (!academic_year_id) {
+        try {
+            const [[currYear]] = await pool.execute(
+                "SELECT id FROM academic_years WHERE (school_id = ? OR school_id IS NULL) AND is_current = 1 LIMIT 1",
+                [schoolId]
+            );
+            academic_year_id = currYear?.id;
+            if (!academic_year_id && term_id) {
+                const [[termRow]] = await pool.execute(
+                    "SELECT academic_year_id FROM terms WHERE id = ? LIMIT 1",
+                    [term_id]
+                );
+                academic_year_id = termRow?.academic_year_id;
+            }
+        } catch (e) {
+            console.warn("getRegister auto year note:", e.message);
+        }
     }
 
     // Role guard: students cannot access registers
@@ -478,11 +498,28 @@ const createSession = async (req, res) => {
         notes = null,
     } = req.body;
 
-    const fieldErr = requireFields(req.body, ["class_id", "term_id", "academic_year_id", "attendance_date"]);
+    const fieldErr = requireFields(req.body, ["class_id", "term_id", "attendance_date"]);
     if (fieldErr) return res.status(400).json({ error: fieldErr });
 
     if (!isValidDateStr(attendance_date)) {
         return res.status(400).json({ error: "attendance_date must be a valid date in YYYY-MM-DD format" });
+    }
+
+    // Automatically resolve to active academic year if not provided
+    let targetYearId = academic_year_id;
+    if (!targetYearId) {
+        const [[activeYear]] = await pool.execute(
+            "SELECT id FROM academic_years WHERE (school_id = ? OR school_id IS NULL) AND is_current = 1 LIMIT 1",
+            [schoolId]
+        );
+        targetYearId = activeYear?.id;
+    }
+    if (!targetYearId && term_id) {
+        const [[termRow]] = await pool.execute(
+            "SELECT academic_year_id FROM terms WHERE id = ? LIMIT 1",
+            [term_id]
+        );
+        targetYearId = termRow?.academic_year_id;
     }
 
     try {
@@ -540,13 +577,36 @@ const createSession = async (req, res) => {
             return res.status(200).json({ message: "Existing session loaded for edit", session, isExisting: true });
         }
 
-        // Insert new session — include school_id
+        // Insert new session — include school_id and resolved active academic_year_id
         const [result] = await pool.execute(
             `INSERT INTO attendance_sessions
              (school_id, class_id, subject_id, teacher_id, term_id, academic_year_id, attendance_date, period, notes)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [schoolId, class_id, subject_id || null, teacher_id, term_id, academic_year_id, attendance_date, period, notes]
+            [schoolId, class_id, subject_id || null, teacher_id, term_id, targetYearId, attendance_date, period, notes]
         );
+
+        // Audit log for attendance submission
+        try {
+            const [[clsInfo]] = await pool.execute(
+                "SELECT CONCAT(grade_level, IF(stream != '' AND stream IS NOT NULL, CONCAT(' ', stream), '')) AS class_name FROM classes WHERE id = ? LIMIT 1",
+                [class_id]
+            );
+            await pool.execute(
+                `INSERT INTO audit_log (actor_id, action, entity_type, entity_id, details)
+                 VALUES (?, ?, ?, ?, ?)`,
+                [
+                    teacher_id, "ATTENDANCE_SUBMITTED", "attendance", result.insertId,
+                    JSON.stringify({
+                        class_id,
+                        class_name: clsInfo?.class_name || `Class #${class_id}`,
+                        attendance_date,
+                        period
+                    })
+                ]
+            );
+        } catch (auditErr) {
+            // non-fatal
+        }
 
         const [[session]] = await pool.execute(
             `SELECT s.*,

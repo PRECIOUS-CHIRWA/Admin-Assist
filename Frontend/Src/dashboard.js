@@ -76,10 +76,7 @@ async function loadDashboardStats() {
         _setText('adminStatAttendance', data.attendanceRate != null ? data.attendanceRate + '%' : '—');
         _setText('adminStatClasses', _fmt(data.totalClasses));
 
-        _setText('overviewPresent', _fmt(data.todayPresent));
-        _setText('overviewAbsent', _fmt(data.todayAbsent));
-        _setText('overviewLate', _fmt(data.todayLate));
-        _setText('overviewNew', _fmt(data.newAdmissions));
+
 
     } catch (err) {
         console.error('loadDashboardStats:', err);

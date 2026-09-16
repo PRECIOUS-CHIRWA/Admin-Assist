@@ -12,6 +12,7 @@
     let rosterStudents = [];
     let editingSessionId = null;
     let attendanceMode = 'teaching'; // Attendance is strictly a teaching responsibility for assigned classes
+    let activeAcademicYearId = null;
 
     // ─── DOM Initialization ───────────────────────────────────────────────────
 
@@ -63,22 +64,17 @@
 
             // NO "All Years". Select Year placeholder and auto-select active year
             populateSelect('filterYear', allYears, 'id', y => y.year_label, '— Select Year —');
+            const activeYear = allYears.find(y => y.is_current) || allYears[0];
+            activeAcademicYearId = activeYear ? activeYear.id : null;
+
             const filterYearSelect = document.getElementById('filterYear');
-            if (filterYearSelect && allYears.length > 0) {
-                const activeYear = allYears.find(y => y.is_current) || allYears[0];
-                filterYearSelect.value = activeYear.id;
+            if (filterYearSelect && activeAcademicYearId) {
+                filterYearSelect.value = activeAcademicYearId;
             }
 
-            populateSelect('sessionYear', allYears, 'id', y => y.year_label, '— Select Year —');
-
-            // Auto-select current academic year in modal if available
-            const current = allYears.find(y => y.is_current);
-            if (current) {
-                const yearSelect = document.getElementById('sessionYear');
-                if (yearSelect) {
-                    yearSelect.value = current.id;
-                    await loadTerms(current.id);
-                }
+            // Immediately load terms for the system's active academic year
+            if (activeAcademicYearId) {
+                await loadTerms(activeAcademicYearId);
             }
         } catch (err) {
             console.error('loadAcademicYears:', err);
@@ -93,7 +89,8 @@
      */
     async function loadTerms(yearId) {
         try {
-            const path = yearId ? `/api/attendance/terms?academicYearId=${yearId}` : '/api/attendance/terms';
+            const effectiveYearId = yearId || activeAcademicYearId;
+            const path = effectiveYearId ? `/api/attendance/terms?academicYearId=${effectiveYearId}` : '/api/attendance/terms';
             const res = await apiFetch(path);
             if (!res || !res.ok) throw new Error('Failed to fetch terms');
             allTerms = await res.json();
@@ -104,10 +101,7 @@
             // Populate sessionTerm in modal
             const termSelect = document.getElementById('sessionTerm');
             if (termSelect) {
-                if (!yearId) {
-                    termSelect.innerHTML = '<option value="">— Select Year First —</option>';
-                    termSelect.disabled = true;
-                } else if (!allTerms.length) {
+                if (!allTerms.length) {
                     termSelect.innerHTML = '<option value="">No terms available for this academic year</option>';
                     termSelect.disabled = true;
                 } else {
@@ -149,9 +143,11 @@
      * Retrieves applicable subjects for the selected class taught by this teacher.
      * @param {string|number} [classId] - optional class ID filter
      */
-    async function loadSubjects(classId) {
+    async function loadSubjects(classId, yearId) {
         try {
-            const path = classId ? `/api/attendance/subjects?classId=${classId}&teaching=1` : '/api/attendance/subjects?teaching=1';
+            const yId = yearId || activeAcademicYearId;
+            const yParam = yId ? `&academic_year_id=${yId}` : '';
+            const path = classId ? `/api/attendance/subjects?classId=${classId}&teaching=1${yParam}` : `/api/attendance/subjects?teaching=1${yParam}`;
             const res = await apiFetch(path);
             if (!res || !res.ok) return;
             allSubjects = await res.json();
@@ -196,15 +192,23 @@
      * Sends selected filters to backend and loads the student roster.
      */
     async function loadRoster() {
-        const yearId = document.getElementById('sessionYear').value;
+        const yearId = activeAcademicYearId;
         const termId = document.getElementById('sessionTerm').value;
         const classId = document.getElementById('sessionClass').value;
         const date = document.getElementById('sessionDate').value;
         const period = document.getElementById('sessionPeriod').value || 'General';
         const subjectId = document.getElementById('sessionSubject').value || '';
 
-        if (!yearId || !termId || !classId || !date) {
-            showError('Please select Academic Year, Term, Class, and Date.');
+        if (!classId) {
+            showError('Please select a Class.');
+            return;
+        }
+        if (!termId) {
+            showError('Please select a School Term.');
+            return;
+        }
+        if (!date) {
+            showError('Please select an Attendance Date.');
             return;
         }
 
@@ -305,14 +309,14 @@
      * Validates and submits attendance session and individual student records.
      */
     async function submitAttendance() {
-        const yearId = document.getElementById('sessionYear').value;
+        const yearId = activeAcademicYearId;
         const termId = document.getElementById('sessionTerm').value;
         const classId = document.getElementById('sessionClass').value;
         const date = document.getElementById('sessionDate').value;
         const period = document.getElementById('sessionPeriod').value || 'General';
         const subjectId = document.getElementById('sessionSubject').value || null;
 
-        if (!yearId || !termId || !classId || !date) {
+        if (!classId || !termId || !date) {
             showError('Missing required session metadata.');
             return;
         }
@@ -580,20 +584,21 @@
             editingSessionId = session.id;
 
             // Pre-populate modal fields
-            const yearSelect = document.getElementById('sessionYear');
             const termSelect = document.getElementById('sessionTerm');
             const classSelect = document.getElementById('sessionClass');
             const dateInput = document.getElementById('sessionDate');
             const periodInput = document.getElementById('sessionPeriod');
             const subjectSelect = document.getElementById('sessionSubject');
 
-            if (yearSelect) yearSelect.value = session.academic_year_id;
-            await loadTerms(session.academic_year_id);
+            if (session.academic_year_id) {
+                activeAcademicYearId = session.academic_year_id;
+            }
+            await loadTerms(activeAcademicYearId);
             if (termSelect) termSelect.value = session.term_id;
             if (classSelect) classSelect.value = session.class_id;
             if (dateInput) dateInput.value = session.attendance_date ? session.attendance_date.split('T')[0] : '';
             if (periodInput) periodInput.value = session.period || 'General';
-            await loadSubjects(session.class_id);
+            await loadSubjects(session.class_id, activeAcademicYearId);
             if (subjectSelect) subjectSelect.value = session.subject_id || '';
 
             loadClassInfo(session.class_id);
@@ -639,7 +644,6 @@
         editingSessionId = null;
         rosterStudents = [];
 
-        const yearSelect = document.getElementById('sessionYear');
         const termSelect = document.getElementById('sessionTerm');
         const classSelect = document.getElementById('sessionClass');
         const dateInput = document.getElementById('sessionDate');
@@ -657,11 +661,8 @@
         if (banner) banner.hidden = true;
         if (editBanner) editBanner.hidden = true;
 
-        // Reset year select to current year
-        const currentYear = allYears.find(y => y.is_current);
-        if (currentYear && yearSelect) {
-            yearSelect.value = currentYear.id;
-            loadTerms(currentYear.id);
+        if (activeAcademicYearId) {
+            loadTerms(activeAcademicYearId);
         }
 
         showStep(1);
@@ -720,17 +721,11 @@
         const closeViewBtn = document.getElementById('closeViewModalBtn');
         if (closeViewBtn) closeViewBtn.addEventListener('click', () => ModalManager.close('viewSessionModal'));
 
-        // Cascade listeners inside modal
-        const yearSelect = document.getElementById('sessionYear');
-        if (yearSelect) {
-            yearSelect.addEventListener('change', (e) => loadTerms(e.target.value));
-        }
-
         const classSelect = document.getElementById('sessionClass');
         if (classSelect) {
             classSelect.addEventListener('change', (e) => {
                 loadClassInfo(e.target.value);
-                loadSubjects(e.target.value);
+                loadSubjects(e.target.value, activeAcademicYearId);
             });
         }
 

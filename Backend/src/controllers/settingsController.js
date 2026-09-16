@@ -152,6 +152,8 @@ const updateSettings = async (req, res) => {
     }
 };
 
+const { buildHumanReadableDescription } = require("./dashboardController");
+
 /**
  * Sanitizes any sensitive keys from log detail objects or strings.
  * Guarantees passwords, hashes, tokens, secrets, and credentials are never exposed.
@@ -204,13 +206,22 @@ function formatLogAction(action, entityType) {
 
 /**
  * GET /api/settings/logs
- * Returns role- and school-scoped audit logs with all credentials sanitized.
+ * Query params:
+ *   - mode: "week" (default: max 5 logs for current week) or "all" (full historical logs)
+ *   - page: integer (default 1, for mode="all")
+ *   - limit: integer (default 20, max 100, for mode="all")
+ *   - fromDate: YYYY-MM-DD
+ *   - toDate: YYYY-MM-DD
+ *   - search: text search across actions and actors
+ *
+ * Returns role- and school-scoped audit logs with all credentials sanitized and human-readable descriptions.
  */
 const getRecentLogs = async (req, res) => {
     try {
         const schoolId = (req.user && req.user.school_id) ? Number(req.user.school_id) : 1;
         const role = req.user?.role || "user";
         const userId = req.user?.sub || req.user?.id;
+        const mode = (req.query.mode || "week").toLowerCase();
 
         // Check if audit_log table exists
         const [tables] = await pool.execute(
@@ -218,56 +229,99 @@ const getRecentLogs = async (req, res) => {
         ).catch(() => [[]]);
 
         if (!tables.length) {
-            return res.json({ logs: [] });
+            return res.json({ logs: [], total: 0, mode });
         }
 
-        let query = "";
-        let params = [];
+        const whereClauses = [];
+        const params = [];
 
+        // 1. Role-aware school and user scoping
         if (role === "admin" || role === "headmaster") {
-            query = `
-                SELECT al.id, al.action, al.entity_type, al.entity_id, al.details, al.created_at,
-                       u.name AS actor_name, u.email AS actor_email, u.role AS actor_role
-                FROM audit_log al
-                LEFT JOIN users u ON u.id = al.actor_id
-                WHERE (u.school_id = ? OR u.school_id IS NULL OR al.actor_id IS NULL)
-                ORDER BY al.created_at DESC
-                LIMIT 50
-            `;
-            params = [schoolId];
+            whereClauses.push("(u.school_id = ? OR u.school_id IS NULL OR al.actor_id IS NULL)");
+            params.push(schoolId);
         } else if (role === "staff") {
-            query = `
-                SELECT al.id, al.action, al.entity_type, al.entity_id, al.details, al.created_at,
-                       u.name AS actor_name, u.email AS actor_email, u.role AS actor_role
-                FROM audit_log al
-                LEFT JOIN users u ON u.id = al.actor_id
-                WHERE al.actor_id = ?
-                ORDER BY al.created_at DESC
-                LIMIT 50
-            `;
-            params = [userId];
+            whereClauses.push("al.actor_id = ?");
+            params.push(userId);
         } else {
-            // Student / Parent
-            query = `
-                SELECT al.id, al.action, al.entity_type, al.entity_id, al.details, al.created_at,
-                       u.name AS actor_name, u.email AS actor_email, u.role AS actor_role
-                FROM audit_log al
-                LEFT JOIN users u ON u.id = al.actor_id
-                WHERE al.actor_id = ?
-                ORDER BY al.created_at DESC
-                LIMIT 25
-            `;
-            params = [userId];
+            whereClauses.push("al.actor_id = ?");
+            params.push(userId);
         }
 
-        const [rows] = await pool.execute(query, params);
+        // 2. Week vs All filtering
+        if (mode === "week") {
+            // Monday-Sunday of current week
+            whereClauses.push("YEARWEEK(al.created_at, 1) = YEARWEEK(CURDATE(), 1)");
+        } else {
+            // Optional date filters
+            if (req.query.fromDate) {
+                whereClauses.push("al.created_at >= ?");
+                params.push(`${req.query.fromDate} 00:00:00`);
+            }
+            if (req.query.toDate) {
+                whereClauses.push("al.created_at <= ?");
+                params.push(`${req.query.toDate} 23:59:59`);
+            }
+            if (req.query.search) {
+                whereClauses.push("(al.action LIKE ? OR u.name LIKE ? OR al.entity_type LIKE ?)");
+                const term = `%${req.query.search.trim()}%`;
+                params.push(term, term, term);
+            }
+        }
 
-        const logs = rows.map(r => {
+        const whereSql = whereClauses.length ? `WHERE ${whereClauses.join(" AND ")}` : "";
+
+        // Determine limits
+        let limit = 5;
+        let offset = 0;
+        let page = 1;
+        let total = 0;
+
+        if (mode === "all") {
+            page = Math.max(1, parseInt(req.query.page, 10) || 1);
+            limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+            offset = (page - 1) * limit;
+
+            // Total count query
+            const countQuery = `
+                SELECT COUNT(*) AS total
+                FROM audit_log al
+                LEFT JOIN users u ON u.id = al.actor_id
+                ${whereSql}
+            `;
+            const [[countResult]] = await pool.execute(countQuery, params);
+            total = Number(countResult?.total) || 0;
+        }
+
+        const query = `
+            SELECT al.id, al.action, al.entity_type, al.entity_id, al.details, al.created_at,
+                   u.name AS actor_name, u.email AS actor_email, u.role AS actor_role
+            FROM audit_log al
+            LEFT JOIN users u ON u.id = al.actor_id
+            ${whereSql}
+            ORDER BY al.created_at DESC
+            LIMIT ? OFFSET ?
+        `;
+
+        const queryParams = [...params, limit, offset];
+        const [rows] = await pool.query(query, queryParams);
+
+        if (mode === "week") {
+            total = rows.length;
+        }
+
+        const logs = await Promise.all(rows.map(async r => {
             const sanitized = sanitizeDetails(r.details);
+            let humanDesc = "";
+            try {
+                humanDesc = await buildHumanReadableDescription(r);
+            } catch (e) {
+                humanDesc = formatLogAction(r.action, r.entity_type);
+            }
             return {
                 id: r.id,
                 action: r.action,
-                action_display: formatLogAction(r.action, r.entity_type),
+                action_display: humanDesc,
+                description: humanDesc,
                 entity_type: r.entity_type,
                 entity_id: r.entity_id,
                 actor_name: r.actor_name || "System",
@@ -276,9 +330,16 @@ const getRecentLogs = async (req, res) => {
                 details: sanitized,
                 created_at: r.created_at
             };
-        });
+        }));
 
-        res.json({ logs });
+        res.json({
+            logs,
+            total,
+            page: mode === "all" ? page : 1,
+            limit: mode === "all" ? limit : 5,
+            totalPages: mode === "all" ? Math.ceil(total / limit) : 1,
+            mode
+        });
     } catch (err) {
         console.error("getRecentLogs error:", err.message);
         res.status(500).json({ error: "Could not retrieve audit logs" });

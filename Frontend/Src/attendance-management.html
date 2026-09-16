@@ -107,24 +107,25 @@
         <p class="aa-modal-step-label">Step 1 — Select Class &amp; Date</p>
         <div class="aa-form-grid">
 
+          <!-- Step 1: Select Class → Term → Subject → Date -->
           <div class="aa-form-field">
-            <label for="sessionYear">Academic Year <abbr title="required">*</abbr></label>
-            <select id="sessionYear" required>
-              <option value="">— Select Year —</option>
+            <label for="sessionClass">Grade / Class <abbr title="required">*</abbr></label>
+            <select id="sessionClass" required>
+              <option value="">— Select Class —</option>
             </select>
           </div>
 
           <div class="aa-form-field">
             <label for="sessionTerm">School Term <abbr title="required">*</abbr></label>
             <select id="sessionTerm" required>
-              <option value="">— Select Year First —</option>
+              <option value="">— Select Term —</option>
             </select>
           </div>
 
           <div class="aa-form-field">
-            <label for="sessionClass">Grade / Class <abbr title="required">*</abbr></label>
-            <select id="sessionClass" required>
-              <option value="">— Select Class —</option>
+            <label for="sessionSubject">Subject <span style="font-weight:400;color:var(--aa-text-muted)">(optional)</span></label>
+            <select id="sessionSubject">
+              <option value="">General Roll Call</option>
             </select>
           </div>
 
@@ -136,13 +137,6 @@
           <div class="aa-form-field">
             <label for="sessionPeriod">Period</label>
             <input type="text" id="sessionPeriod" placeholder="e.g. Period 1, General" value="General" />
-          </div>
-
-          <div class="aa-form-field">
-            <label for="sessionSubject">Subject <span style="font-weight:400;color:var(--aa-text-muted)">(optional)</span></label>
-            <select id="sessionSubject">
-              <option value="">General Roll Call</option>
-            </select>
           </div>
 
         </div>

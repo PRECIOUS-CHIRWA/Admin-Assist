@@ -387,7 +387,7 @@ const getRecentActivity = async (req, res) => {
 
         const [rows] = await pool.execute(query, params);
 
-        const activities = rows.map((row) => ({
+        const activities = await Promise.all(rows.map(async (row) => ({
             id: row.id,
             action: row.action,
             entityType: row.entity_type,
@@ -396,8 +396,8 @@ const getRecentActivity = async (req, res) => {
             actorName: row.actorName || "System",
             actorRole: row.actorRole || "User",
             createdAt: row.created_at,
-            description: _buildDescription(row),
-        }));
+            description: await buildHumanReadableDescription(row),
+        })));
 
         res.json(activities);
     } catch (err) {
@@ -406,20 +406,138 @@ const getRecentActivity = async (req, res) => {
     }
 };
 
-function _buildDescription(row) {
-    const entity = row.entity_type || "Record";
-    switch (row.action) {
-        case "CREATE": return `${entity} created`;
-        case "UPDATE": return `${entity} updated`;
-        case "DELETE": return `${entity} deleted`;
-        case "LOGIN": return `Logged in`;
-        case "LOGOUT": return `Logged out`;
-        case "ASSIGN": return `${entity} assigned`;
-        case "REVOKE": return `${entity} revoked`;
-        case "SUSPEND": return `${entity} suspended`;
-        case "RESTORE": return `${entity} restored`;
-        default: return `${entity} ${String(row.action).toLowerCase()}`;
+/**
+ * Generates human-readable descriptions for audit log records.
+ * Avoids exposing raw technical IDs like 'user create_teacher' or 'create_student'.
+ */
+async function buildHumanReadableDescription(row) {
+    let details = {};
+    if (row.details) {
+        if (typeof row.details === "object") {
+            details = row.details;
+        } else if (typeof row.details === "string") {
+            try {
+                details = JSON.parse(row.details);
+            } catch {
+                details = {};
+            }
+        }
     }
+
+    const action = String(row.action || "").toUpperCase();
+    const entityType = String(row.entity_type || "").toLowerCase();
+
+    // 1. TEACHER & STAFF ACCOUNT CREATION / UPDATES
+    if (action === "CREATE_TEACHER" || (entityType === "user" && action.includes("TEACHER"))) {
+        const teacherName = details.name || details.fullName || details.teacherName;
+        if (teacherName) {
+            return `Account created for ${teacherName}`;
+        }
+        if (row.entity_id) {
+            const [[u]] = await pool.execute("SELECT name FROM users WHERE id = ? LIMIT 1", [row.entity_id]).catch(() => [[null]]);
+            if (u?.name) return `Account created for ${u.name}`;
+        }
+        return `Teacher account created`;
+    }
+
+    // 2. STUDENT ACCOUNT CREATION
+    if (action === "CREATE_STUDENT_ACCOUNT" || action === "STUDENT_ACCOUNT_CREATED") {
+        const studentName = details.studentName || details.name || details.fullName;
+        if (studentName) {
+            return `Student account created for ${studentName}`;
+        }
+        if (row.entity_id) {
+            const [[s]] = await pool.execute("SELECT CONCAT(first_name, ' ', last_name) as name FROM students WHERE id = ? LIMIT 1", [row.entity_id]).catch(() => [[null]]);
+            if (s?.name) return `Student account created for ${s.name}`;
+        }
+        return `Student account created`;
+    }
+
+    // 3. STUDENT ENROLLMENT / RECORD CREATION
+    if (action === "CREATE_STUDENT" || action === "ENROLL_STUDENT" || (entityType === "student" && (action === "CREATE" || action.includes("ENROLL")))) {
+        const studentName = details.name || details.studentName || (details.firstName && details.lastName ? `${details.firstName} ${details.lastName}` : null);
+        if (studentName) {
+            return `Student enrolled: ${studentName}`;
+        }
+        if (row.entity_id) {
+            const [[s]] = await pool.execute("SELECT CONCAT(first_name, ' ', last_name) as name FROM students WHERE id = ? LIMIT 1", [row.entity_id]).catch(() => [[null]]);
+            if (s?.name) return `Student enrolled: ${s.name}`;
+        }
+        return `Student enrolled`;
+    }
+
+    // 4. STUDENT RECORD UPDATES / DEACTIVATIONS
+    if (entityType === "student" && (action === "UPDATE" || action.includes("UPDATE"))) {
+        const studentName = details.name || details.studentName || (details.firstName && details.lastName ? `${details.firstName} ${details.lastName}` : null);
+        if (studentName) return `Student record updated for ${studentName}`;
+        return `Student record updated`;
+    }
+
+    // 5. RESULTS SUBMISSIONS & UPDATES
+    if (action.includes("RESULT") || entityType === "results" || entityType === "result") {
+        let className = details.class_name;
+        if (!className && details.class_id) {
+            const [[c]] = await pool.execute("SELECT CONCAT(grade_level, IF(stream != '', CONCAT(' ', stream), '')) as name FROM classes WHERE id = ? LIMIT 1", [details.class_id]).catch(() => [[null]]);
+            className = c?.name;
+        }
+        let subjectName = details.subject_name;
+        if (!subjectName && details.subject_id) {
+            const [[sub]] = await pool.execute("SELECT subject_name FROM subjects WHERE id = ? LIMIT 1", [details.subject_id]).catch(() => [[null]]);
+            subjectName = sub?.subject_name;
+        }
+        if (className && subjectName) {
+            return `Results updated for ${className} — ${subjectName}`;
+        }
+        if (className) {
+            return `Results updated for ${className}`;
+        }
+        return `Academic results updated`;
+    }
+
+    // 6. ATTENDANCE SUBMISSIONS
+    if (action.includes("ATTENDANCE") || entityType === "attendance") {
+        let className = details.class_name;
+        if (!className && details.class_id) {
+            const [[c]] = await pool.execute("SELECT CONCAT(grade_level, IF(stream != '', CONCAT(' ', stream), '')) as name FROM classes WHERE id = ? LIMIT 1", [details.class_id]).catch(() => [[null]]);
+            className = c?.name;
+        }
+        if (className) {
+            return `Attendance submitted for ${className}`;
+        }
+        return `Attendance submitted`;
+    }
+
+    // 7. TIMETABLE
+    if (action.includes("TIMETABLE") || entityType === "timetable" || entityType === "timetables") {
+        let className = details.class_name;
+        if (!className && details.class_id) {
+            const [[c]] = await pool.execute("SELECT CONCAT(grade_level, IF(stream != '', CONCAT(' ', stream), '')) as name FROM classes WHERE id = ? LIMIT 1", [details.class_id]).catch(() => [[null]]);
+            className = c?.name;
+        }
+        if (className) {
+            return `Timetable updated for ${className}`;
+        }
+        return `Timetable updated`;
+    }
+
+    // 8. SETTINGS
+    if (action.includes("SETTING") || entityType === "settings" || entityType === "school_settings") {
+        return `School settings updated`;
+    }
+
+    // 9. AUTH
+    if (action === "LOGIN") return `Signed in`;
+    if (action === "LOGOUT") return `Signed out`;
+
+    // 10. CLEAN FALLBACK: Clean up any raw technical string
+    const cleanAction = action
+        .toLowerCase()
+        .replace(/^user\s+/, "")
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, c => c.toUpperCase());
+    const cleanEntity = entityType.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+    return `${cleanAction} (${cleanEntity})`;
 }
 
 /**
@@ -468,4 +586,4 @@ const getEnrollmentStats = async (req, res) => {
     }
 };
 
-module.exports = { getDashboardStats, getRecentActivity, getEnrollmentStats };
+module.exports = { getDashboardStats, getRecentActivity, getEnrollmentStats, buildHumanReadableDescription };

@@ -88,20 +88,23 @@
             .replace(/'/g, "&#039;");
     }
 
-    /* ── RECENT LOGS TAB ──────────────────────────────────── */
+    /* ── RECENT & FULL LOGS ────────────────────────────────── */
+    var _allLogsCurrentPage = 1;
+    var _allLogsTotalPages = 1;
+
     async function loadRecentLogs() {
         var tbody = document.getElementById("settingsLogsBody");
         if (!tbody) return;
-        tbody.innerHTML = '<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--aa-text-muted);">Loading recent logs…</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--aa-text-muted);">Loading recent logs…</td></tr>';
 
         try {
-            var res = await apiFetch("/api/settings/logs");
+            var res = await apiFetch("/api/settings/logs?mode=week");
             if (!res || !res.ok) throw new Error("Unable to load activity logs");
             var data = await res.json();
             var logs = data.logs || [];
 
             if (!logs.length) {
-                tbody.innerHTML = '<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--aa-text-muted);">No recent logs recorded.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--aa-text-muted);">No activity recorded this week.</td></tr>';
                 return;
             }
 
@@ -112,7 +115,78 @@
 
                 var actorStr = log.actor_name || "System";
                 var roleBadge = '<span class="aa-badge" style="font-size:11px;text-transform:capitalize;">' + _esc(log.actor_role || "system") + '</span>';
-                var actionStr = _esc(log.action_display || log.action || "Activity");
+                var actionStr = _esc(log.action_display || log.description || log.action || "Activity");
+
+                return '<tr style="border-bottom: 1px solid var(--aa-border);">' +
+                    '<td style="padding: 10px 12px; white-space: nowrap; color: var(--aa-text-muted); font-size: 12px;">' + timeStr + '</td>' +
+                    '<td style="padding: 10px 12px; font-weight: 600; color: var(--aa-text);">' + actionStr + '</td>' +
+                    '<td style="padding: 10px 12px; color: var(--aa-text);">' + _esc(actorStr) + '</td>' +
+                    '<td style="padding: 10px 12px;">' + roleBadge + '</td>' +
+                    '</tr>';
+            }).join("");
+        } catch (err) {
+            console.warn("loadRecentLogs:", err.message);
+            tbody.innerHTML = '<tr><td colspan="4" style="padding:24px;text-align:center;color:#ef4444;">Failed to load logs: ' + _esc(err.message) + '</td></tr>';
+        }
+    }
+
+    async function loadAllLogs(page) {
+        page = Math.max(1, parseInt(page, 10) || 1);
+        _allLogsCurrentPage = page;
+
+        var tbody = document.getElementById("fullLogsBody");
+        var summaryEl = document.getElementById("allLogsSummary");
+        var pageIndicator = document.getElementById("allLogsPageIndicator");
+        var prevBtn = document.getElementById("allLogsPrevBtn");
+        var nextBtn = document.getElementById("allLogsNextBtn");
+
+        if (!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--aa-text-muted);">Loading audit logs…</td></tr>';
+
+        var search = _val("allLogsSearchInput").trim();
+        var fromDate = _val("allLogsFromDate");
+        var toDate = _val("allLogsToDate");
+
+        var query = new URLSearchParams({
+            mode: "all",
+            page: String(page),
+            limit: "20"
+        });
+        if (search) query.append("search", search);
+        if (fromDate) query.append("fromDate", fromDate);
+        if (toDate) query.append("toDate", toDate);
+
+        try {
+            var res = await apiFetch("/api/settings/logs?" + query.toString());
+            if (!res || !res.ok) throw new Error("Unable to load audit logs");
+            var data = await res.json();
+            var logs = data.logs || [];
+            var total = data.total || 0;
+            _allLogsTotalPages = Math.max(1, data.totalPages || 1);
+
+            if (pageIndicator) pageIndicator.textContent = "Page " + _allLogsCurrentPage + " of " + _allLogsTotalPages;
+            if (prevBtn) prevBtn.disabled = _allLogsCurrentPage <= 1;
+            if (nextBtn) nextBtn.disabled = _allLogsCurrentPage >= _allLogsTotalPages;
+
+            if (summaryEl) {
+                var start = total === 0 ? 0 : (_allLogsCurrentPage - 1) * 20 + 1;
+                var end = Math.min(total, _allLogsCurrentPage * 20);
+                summaryEl.textContent = "Showing " + start + " to " + end + " of " + total + " logs";
+            }
+
+            if (!logs.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--aa-text-muted);">No logs match your filter criteria.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = logs.map(function (log) {
+                var timeStr = log.created_at ? new Date(log.created_at).toLocaleString("en-GB", {
+                    day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
+                }) : "—";
+
+                var actorStr = log.actor_name || "System";
+                var roleBadge = '<span class="aa-badge" style="font-size:11px;text-transform:capitalize;">' + _esc(log.actor_role || "system") + '</span>';
+                var actionStr = _esc(log.action_display || log.description || log.action || "Activity");
 
                 var detailsStr = "";
                 if (log.details) {
@@ -136,11 +210,11 @@
                     '<td style="padding: 10px 12px; font-weight: 600; color: var(--aa-text);">' + actionStr + '</td>' +
                     '<td style="padding: 10px 12px; color: var(--aa-text);">' + _esc(actorStr) + '</td>' +
                     '<td style="padding: 10px 12px;">' + roleBadge + '</td>' +
-                    '<td style="padding: 10px 12px; color: var(--aa-text-muted); font-size: 12px; max-width: 320px; word-break: break-word;">' + _esc(detailsStr) + '</td>' +
+                    '<td style="padding: 10px 12px; color: var(--aa-text-muted); font-size: 12px; max-width: 300px; word-break: break-word;">' + _esc(detailsStr) + '</td>' +
                     '</tr>';
             }).join("");
         } catch (err) {
-            console.warn("loadRecentLogs:", err.message);
+            console.warn("loadAllLogs:", err.message);
             tbody.innerHTML = '<tr><td colspan="5" style="padding:24px;text-align:center;color:#ef4444;">Failed to load logs: ' + _esc(err.message) + '</td></tr>';
         }
     }
@@ -424,9 +498,69 @@
         var saveNotifBtn = document.getElementById("saveNotifBtn");
         if (saveNotifBtn) saveNotifBtn.addEventListener("click", saveNotifications);
 
-        // Recent Logs refresh
+        // Recent Logs & Full Logs controls
         var refreshLogsBtn = document.getElementById("refreshLogsBtn");
         if (refreshLogsBtn) refreshLogsBtn.addEventListener("click", loadRecentLogs);
+
+        var recentLogsContainer = document.getElementById("recentLogsContainer");
+        var fullLogsContainer = document.getElementById("fullLogsContainer");
+
+        function showFullLogs() {
+            if (recentLogsContainer) recentLogsContainer.style.display = "none";
+            if (fullLogsContainer) fullLogsContainer.style.display = "block";
+            loadAllLogs(1);
+        }
+        var openAllLogsBtn = document.getElementById("openAllLogsBtn");
+        if (openAllLogsBtn) openAllLogsBtn.addEventListener("click", showFullLogs);
+
+        var openAllLogsLink = document.getElementById("openAllLogsLink");
+        if (openAllLogsLink) openAllLogsLink.addEventListener("click", showFullLogs);
+
+        var backToRecentLogsBtn = document.getElementById("backToRecentLogsBtn");
+        if (backToRecentLogsBtn) {
+            backToRecentLogsBtn.addEventListener("click", function () {
+                if (fullLogsContainer) fullLogsContainer.style.display = "none";
+                if (recentLogsContainer) recentLogsContainer.style.display = "block";
+                loadRecentLogs();
+            });
+        }
+
+        var allLogsFilterBtn = document.getElementById("allLogsFilterBtn");
+        if (allLogsFilterBtn) allLogsFilterBtn.addEventListener("click", function () { loadAllLogs(1); });
+
+        var allLogsResetBtn = document.getElementById("allLogsResetBtn");
+        if (allLogsResetBtn) {
+            allLogsResetBtn.addEventListener("click", function () {
+                _set("allLogsSearchInput", "");
+                _set("allLogsFromDate", "");
+                _set("allLogsToDate", "");
+                loadAllLogs(1);
+            });
+        }
+
+        var allLogsSearchInput = document.getElementById("allLogsSearchInput");
+        if (allLogsSearchInput) {
+            allLogsSearchInput.addEventListener("keydown", function (e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    loadAllLogs(1);
+                }
+            });
+        }
+
+        var allLogsPrevBtn = document.getElementById("allLogsPrevBtn");
+        if (allLogsPrevBtn) {
+            allLogsPrevBtn.addEventListener("click", function () {
+                if (_allLogsCurrentPage > 1) loadAllLogs(_allLogsCurrentPage - 1);
+            });
+        }
+
+        var allLogsNextBtn = document.getElementById("allLogsNextBtn");
+        if (allLogsNextBtn) {
+            allLogsNextBtn.addEventListener("click", function () {
+                if (_allLogsCurrentPage < _allLogsTotalPages) loadAllLogs(_allLogsCurrentPage + 1);
+            });
+        }
 
         // Discard buttons — reload from cache
         document.querySelectorAll(".btn-secondary[data-discard]").forEach(function (btn) {

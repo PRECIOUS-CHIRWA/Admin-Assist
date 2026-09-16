@@ -320,11 +320,12 @@
                 _failsafeTimeout = null;
             }
 
-            // Smooth minimum display threshold to avoid jarring flash
-            setTimeout(function () {
-                _hidePageLoader();
-                _doneProgress();
-            }, 250);
+            if (document.body) {
+                document.body.classList.remove('aa-page-loading');
+            }
+
+            _hidePageLoader();
+            _doneProgress();
         }
 
         // Wait for the DOM to finish parsing, THEN wait for any real
