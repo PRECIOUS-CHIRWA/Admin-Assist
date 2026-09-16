@@ -47,6 +47,9 @@
             this.classList.add("is-active");
             var section = document.getElementById(target);
             if (section) section.classList.add("is-active");
+            if (target === "logs") {
+                loadRecentLogs();
+            }
         });
     });
 
@@ -74,6 +77,72 @@
     function _set(id, v) {
         var el = document.getElementById(id);
         if (el && v != null) el.value = v;
+    }
+    function _esc(str) {
+        if (!str) return "";
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    /* ── RECENT LOGS TAB ──────────────────────────────────── */
+    async function loadRecentLogs() {
+        var tbody = document.getElementById("settingsLogsBody");
+        if (!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--aa-text-muted);">Loading recent logs…</td></tr>';
+
+        try {
+            var res = await apiFetch("/api/settings/logs");
+            if (!res || !res.ok) throw new Error("Unable to load activity logs");
+            var data = await res.json();
+            var logs = data.logs || [];
+
+            if (!logs.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--aa-text-muted);">No recent logs recorded.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = logs.map(function (log) {
+                var timeStr = log.created_at ? new Date(log.created_at).toLocaleString("en-GB", {
+                    day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
+                }) : "—";
+
+                var actorStr = log.actor_name || "System";
+                var roleBadge = '<span class="aa-badge" style="font-size:11px;text-transform:capitalize;">' + _esc(log.actor_role || "system") + '</span>';
+                var actionStr = _esc(log.action_display || log.action || "Activity");
+
+                var detailsStr = "";
+                if (log.details) {
+                    if (typeof log.details === "object") {
+                        try {
+                            detailsStr = Object.entries(log.details)
+                                .slice(0, 3)
+                                .map(function (pair) { return pair[0] + ": " + pair[1]; })
+                                .join(", ");
+                        } catch (e) {
+                            detailsStr = JSON.stringify(log.details);
+                        }
+                    } else {
+                        detailsStr = String(log.details);
+                    }
+                }
+                if (!detailsStr) detailsStr = "—";
+
+                return '<tr style="border-bottom: 1px solid var(--aa-border);">' +
+                    '<td style="padding: 10px 12px; white-space: nowrap; color: var(--aa-text-muted); font-size: 12px;">' + timeStr + '</td>' +
+                    '<td style="padding: 10px 12px; font-weight: 600; color: var(--aa-text);">' + actionStr + '</td>' +
+                    '<td style="padding: 10px 12px; color: var(--aa-text);">' + _esc(actorStr) + '</td>' +
+                    '<td style="padding: 10px 12px;">' + roleBadge + '</td>' +
+                    '<td style="padding: 10px 12px; color: var(--aa-text-muted); font-size: 12px; max-width: 320px; word-break: break-word;">' + _esc(detailsStr) + '</td>' +
+                    '</tr>';
+            }).join("");
+        } catch (err) {
+            console.warn("loadRecentLogs:", err.message);
+            tbody.innerHTML = '<tr><td colspan="5" style="padding:24px;text-align:center;color:#ef4444;">Failed to load logs: ' + _esc(err.message) + '</td></tr>';
+        }
     }
 
     /* ── PROFILE TAB ──────────────────────────────────────── */
@@ -354,6 +423,10 @@
         // Notifications
         var saveNotifBtn = document.getElementById("saveNotifBtn");
         if (saveNotifBtn) saveNotifBtn.addEventListener("click", saveNotifications);
+
+        // Recent Logs refresh
+        var refreshLogsBtn = document.getElementById("refreshLogsBtn");
+        if (refreshLogsBtn) refreshLogsBtn.addEventListener("click", loadRecentLogs);
 
         // Discard buttons — reload from cache
         document.querySelectorAll(".btn-secondary[data-discard]").forEach(function (btn) {

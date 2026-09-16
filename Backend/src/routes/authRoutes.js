@@ -21,6 +21,13 @@ const strictAuthLimiter = rateLimit({
 // ─── Public ───────────────────────────────────────────────────────────────────
 router.post("/signup", signup);
 router.post("/login", strictAuthLimiter, login);
+router.get("/login", (req, res) => {
+    res.status(405).json({
+        success: false,
+        error: "Method Not Allowed",
+        message: "GET /api/auth/login is not supported. Authentication requires POST /api/auth/login with JSON body containing email and password."
+    });
+});
 router.post("/forgot-password", strictAuthLimiter, forgotPassword);
 router.post("/reset-password", strictAuthLimiter, resetPassword);
 

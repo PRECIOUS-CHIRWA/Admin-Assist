@@ -300,6 +300,7 @@
         <button class="settings-nav-item" data-target="appearance" type="button" id="appearanceNavBtn">🎨 Appearance</button>
         <button class="settings-nav-item" data-target="system" type="button" id="systemNavBtn">🖥️ System</button>
         <button class="settings-nav-item" data-target="notifications" type="button" id="notificationsNavBtn">🔔 Notifications</button>
+        <button class="settings-nav-item" data-target="logs" type="button" id="logsNavBtn">📋 Recent Logs</button>
       </nav>
 
       <!-- Settings Content -->
@@ -519,6 +520,36 @@
           </div>
           <div class="settings-actions">
             <button class="btn-primary" type="button" id="saveNotifBtn">Save Notification Preferences</button>
+          </div>
+        </section>
+
+        <!-- RECENT LOGS -->
+        <section class="settings-section" id="logs">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:10px;">
+            <div>
+              <h2 style="margin:0;">Recent Logs</h2>
+              <p class="settings-desc" style="margin:4px 0 0;">System audit activities, security events, and administrative actions.</p>
+            </div>
+            <button type="button" class="btn btn-secondary" id="refreshLogsBtn" style="padding:6px 14px; font-size:12.5px;">Refresh Logs</button>
+          </div>
+
+          <div style="overflow-x:auto; margin-top:16px;">
+            <table class="aa-table" style="width:100%; border-collapse:collapse; font-size:13px;" id="settingsLogsTable">
+              <thead>
+                <tr style="border-bottom:2px solid var(--aa-border); text-align:left;">
+                  <th style="padding:10px 12px; font-weight:600; color:var(--aa-text-muted);">Timestamp</th>
+                  <th style="padding:10px 12px; font-weight:600; color:var(--aa-text-muted);">Activity</th>
+                  <th style="padding:10px 12px; font-weight:600; color:var(--aa-text-muted);">Actor</th>
+                  <th style="padding:10px 12px; font-weight:600; color:var(--aa-text-muted);">Role</th>
+                  <th style="padding:10px 12px; font-weight:600; color:var(--aa-text-muted);">Details</th>
+                </tr>
+              </thead>
+              <tbody id="settingsLogsBody">
+                <tr>
+                  <td colspan="5" style="padding:24px; text-align:center; color:var(--aa-text-muted);">Loading recent logs…</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </section>
 

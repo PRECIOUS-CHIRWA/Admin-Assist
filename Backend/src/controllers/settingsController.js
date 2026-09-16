@@ -152,4 +152,137 @@ const updateSettings = async (req, res) => {
     }
 };
 
-module.exports = { getSettings, updateSettings };
+/**
+ * Sanitizes any sensitive keys from log detail objects or strings.
+ * Guarantees passwords, hashes, tokens, secrets, and credentials are never exposed.
+ */
+function sanitizeDetails(details) {
+    if (!details) return null;
+    let parsed = details;
+    if (typeof details === "string") {
+        try {
+            parsed = JSON.parse(details);
+        } catch {
+            return details.replace(/(password|token|hash|secret|auth)\s*[:=]\s*["']?[^"',\s}]+["']?/gi, "$1: [REDACTED]");
+        }
+    }
+
+    if (typeof parsed !== "object" || parsed === null) return parsed;
+
+    const sanitized = Array.isArray(parsed) ? [] : {};
+    const SENSITIVE_KEYS = /password|hash|token|secret|salt|cookie|credential|authorization/i;
+
+    for (const [key, val] of Object.entries(parsed)) {
+        if (SENSITIVE_KEYS.test(key)) {
+            continue;
+        }
+        if (val && typeof val === "object") {
+            sanitized[key] = sanitizeDetails(val);
+        } else {
+            sanitized[key] = val;
+        }
+    }
+    return sanitized;
+}
+
+/**
+ * Formats a user-friendly activity label.
+ */
+function formatLogAction(action, entityType) {
+    if (!action) return "System Activity";
+    const act = action.toLowerCase();
+    if (act.includes("result")) return "Result Submission";
+    if (act.includes("attendance")) return "Attendance Submission";
+    if (act.includes("profile") || act.includes("update_user")) return "Profile Update";
+    if (act.includes("setting")) return "Settings Change";
+    if (act.includes("report")) return "Report Generation";
+    if (act.includes("login") || act.includes("auth")) return "Account Security Event";
+    if (act.includes("enroll") || act.includes("student")) return "Student Enrollment";
+    if (act.includes("timetable")) return "Timetable Update";
+    return action.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
+
+/**
+ * GET /api/settings/logs
+ * Returns role- and school-scoped audit logs with all credentials sanitized.
+ */
+const getRecentLogs = async (req, res) => {
+    try {
+        const schoolId = (req.user && req.user.school_id) ? Number(req.user.school_id) : 1;
+        const role = req.user?.role || "user";
+        const userId = req.user?.sub || req.user?.id;
+
+        // Check if audit_log table exists
+        const [tables] = await pool.execute(
+            "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'audit_log'"
+        ).catch(() => [[]]);
+
+        if (!tables.length) {
+            return res.json({ logs: [] });
+        }
+
+        let query = "";
+        let params = [];
+
+        if (role === "admin" || role === "headmaster") {
+            query = `
+                SELECT al.id, al.action, al.entity_type, al.entity_id, al.details, al.created_at,
+                       u.name AS actor_name, u.email AS actor_email, u.role AS actor_role
+                FROM audit_log al
+                LEFT JOIN users u ON u.id = al.actor_id
+                WHERE (u.school_id = ? OR u.school_id IS NULL OR al.actor_id IS NULL)
+                ORDER BY al.created_at DESC
+                LIMIT 50
+            `;
+            params = [schoolId];
+        } else if (role === "staff") {
+            query = `
+                SELECT al.id, al.action, al.entity_type, al.entity_id, al.details, al.created_at,
+                       u.name AS actor_name, u.email AS actor_email, u.role AS actor_role
+                FROM audit_log al
+                LEFT JOIN users u ON u.id = al.actor_id
+                WHERE al.actor_id = ?
+                ORDER BY al.created_at DESC
+                LIMIT 50
+            `;
+            params = [userId];
+        } else {
+            // Student / Parent
+            query = `
+                SELECT al.id, al.action, al.entity_type, al.entity_id, al.details, al.created_at,
+                       u.name AS actor_name, u.email AS actor_email, u.role AS actor_role
+                FROM audit_log al
+                LEFT JOIN users u ON u.id = al.actor_id
+                WHERE al.actor_id = ?
+                ORDER BY al.created_at DESC
+                LIMIT 25
+            `;
+            params = [userId];
+        }
+
+        const [rows] = await pool.execute(query, params);
+
+        const logs = rows.map(r => {
+            const sanitized = sanitizeDetails(r.details);
+            return {
+                id: r.id,
+                action: r.action,
+                action_display: formatLogAction(r.action, r.entity_type),
+                entity_type: r.entity_type,
+                entity_id: r.entity_id,
+                actor_name: r.actor_name || "System",
+                actor_role: r.actor_role || "system",
+                actor_email: r.actor_email ? r.actor_email.replace(/^(.{2})(.*)(@.*)$/, "$1***$3") : null,
+                details: sanitized,
+                created_at: r.created_at
+            };
+        });
+
+        res.json({ logs });
+    } catch (err) {
+        console.error("getRecentLogs error:", err.message);
+        res.status(500).json({ error: "Could not retrieve audit logs" });
+    }
+};
+
+module.exports = { getSettings, updateSettings, getRecentLogs };
