@@ -145,12 +145,31 @@
         loader.classList.remove('aa-loader-hidden');
     }
 
+    function _showLoginLoader(message) {
+        var loader = _ensurePageLoader();
+        if (!loader) return;
+
+        if (document.body) {
+            document.body.classList.add('aa-page-loading');
+            document.body.classList.add('aa-login-active');
+        }
+        loader.classList.add('aa-login-active');
+
+        var msg = message || 'Entering Admin Assist…';
+        var msgEl = loader.querySelector('#aa-loader-status-msg');
+        if (msgEl) msgEl.textContent = msg;
+
+        loader.classList.remove('aa-loader-hidden');
+    }
+
     function _hidePageLoader() {
         var loader = document.getElementById('aa-page-loader');
         if (document.body) {
             document.body.classList.remove('aa-page-loading');
+            document.body.classList.remove('aa-login-active');
         }
         if (loader) {
+            loader.classList.remove('aa-login-active');
             loader.classList.add('aa-loader-hidden');
             // Remove from accessibility tree after transition
             setTimeout(function () {
@@ -382,6 +401,7 @@
         set: _setProgress,
         done: _doneProgress,
         showPageLoader: _showPageLoader,
+        showLoginLoader: _showLoginLoader,
         hidePageLoader: _hidePageLoader,
         showCardLoader: _showCardLoader,
         hideCardLoader: _hideCardLoader,

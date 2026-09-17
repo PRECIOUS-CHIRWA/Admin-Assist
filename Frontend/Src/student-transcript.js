@@ -177,7 +177,8 @@
             currentData = data;
             renderTranscript(data, studentId);
         } catch (err) {
-            alert(err.message || 'Failed to load transcript.');
+            if (window.AANotify) window.AANotify.error(err.message || 'Failed to load transcript.');
+            else alert(err.message || 'Failed to load transcript.');
         }
     }
 
@@ -299,7 +300,8 @@
 
     function downloadPDF(data) {
         if (!window.jspdf) {
-            alert('PDF library not loaded. Please check your internet connection.');
+            if (window.AANotify) window.AANotify.warning('PDF library not loaded. Please check your internet connection.');
+            else alert('PDF library not loaded. Please check your internet connection.');
             return;
         }
 

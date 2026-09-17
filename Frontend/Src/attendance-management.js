@@ -791,7 +791,9 @@
     }
 
     function showError(msg) {
-        if (typeof ModalManager !== 'undefined' && ModalManager.toast) {
+        if (window.AANotify && window.AANotify.error) {
+            window.AANotify.error(msg);
+        } else if (typeof ModalManager !== 'undefined' && ModalManager.toast) {
             ModalManager.toast(msg, 'error');
         } else {
             console.error('Error:', msg);
@@ -799,10 +801,20 @@
     }
 
     function showSuccess(msg) {
-        if (typeof ModalManager !== 'undefined' && ModalManager.toast) {
+        if (window.AANotify && window.AANotify.success) {
+            window.AANotify.success(msg);
+        } else if (typeof ModalManager !== 'undefined' && ModalManager.toast) {
             ModalManager.toast(msg, 'success');
         } else {
             console.log('Success:', msg);
+        }
+    }
+
+    function showValidation(msg) {
+        if (window.AANotify && window.AANotify.validation) {
+            window.AANotify.validation(msg);
+        } else {
+            showError(msg);
         }
     }
 

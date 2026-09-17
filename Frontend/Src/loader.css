@@ -87,6 +87,20 @@ body.aa-page-loading main {
     user-select: none;
 }
 
+/* ─── Login Transition: Blur / Opaque Entire Background (Login Only) ─── */
+body.aa-login-active #aa-page-loader,
+#aa-page-loader.aa-login-active {
+    background: rgba(8, 15, 29, 0.94);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+body.aa-login-active .login-container {
+    filter: blur(8px);
+    opacity: 0.15;
+    transition: filter 0.25s ease, opacity 0.25s ease;
+}
+
 #aa-page-loader.aa-loader-hidden {
     opacity: 0;
     visibility: hidden;

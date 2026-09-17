@@ -272,3 +272,133 @@ function bindLogout(buttonId = "logoutBtn") {
         }
     });
 }
+
+// ============================================================================
+// Centralized Admin Assist Notification & Response System (AANotify)
+// Standardizes success, validation, auth, and error messaging across all pages.
+// ============================================================================
+(function () {
+    const ICONS = {
+        success: "✓",
+        error: "✕",
+        warning: "⚠",
+        validation: "⚠",
+        info: "ℹ"
+    };
+
+    function ensureContainer() {
+        let c = document.getElementById("aa-toast-container");
+        if (!c) {
+            c = document.getElementById("toast-container");
+        }
+        if (!c) {
+            c = document.createElement("div");
+            c.id = "aa-toast-container";
+            document.body.appendChild(c);
+        }
+        return c;
+    }
+
+    function show(message, type = "info", duration = 4500) {
+        if (!message) return null;
+        const container = ensureContainer();
+        const toast = document.createElement("div");
+        toast.className = `aa-toast aa-toast-${type}`;
+
+        const iconSpan = document.createElement("span");
+        iconSpan.className = "aa-toast-icon";
+        iconSpan.textContent = ICONS[type] || "ℹ";
+
+        const msgSpan = document.createElement("span");
+        msgSpan.className = "aa-toast-msg";
+        msgSpan.textContent = String(message);
+
+        const closeBtn = document.createElement("button");
+        closeBtn.type = "button";
+        closeBtn.className = "aa-toast-close";
+        closeBtn.setAttribute("aria-label", "Dismiss");
+        closeBtn.innerHTML = "&times;";
+
+        function dismiss() {
+            if (!toast.parentNode) return;
+            toast.classList.add("aa-toast-out");
+            setTimeout(() => {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 220);
+        }
+
+        closeBtn.addEventListener("click", dismiss);
+        toast.appendChild(iconSpan);
+        toast.appendChild(msgSpan);
+        toast.appendChild(closeBtn);
+
+        container.appendChild(toast);
+
+        if (duration > 0) {
+            setTimeout(dismiss, duration);
+        }
+        return toast;
+    }
+
+    function success(msg, duration) { return show(msg, "success", duration); }
+    function error(msg, duration) { return show(msg, "error", duration); }
+    function warning(msg, duration) { return show(msg, "warning", duration); }
+    function validation(msg, duration) { return show(msg, "validation", duration); }
+    function info(msg, duration) { return show(msg, "info", duration); }
+
+    /**
+     * Standardized API response interpreter.
+     * Maps HTTP status codes to polished, friendly notifications without technical dumps.
+     */
+    function handleApiResponse(res, data = {}, fallbackSuccessMsg = "Saved successfully!") {
+        if (!res) {
+            return error("Something went wrong while communicating with the server. Please try again.");
+        }
+
+        if (res.ok) {
+            const msg = fallbackSuccessMsg || data.message || "Operation completed successfully!";
+            return success(msg);
+        }
+
+        const status = res.status;
+        const serverErrorMsg = data.error || data.message;
+
+        if (status === 422) {
+            const cleanMsg = serverErrorMsg || "Please check the entered values and try again.";
+            return validation(cleanMsg);
+        }
+
+        if (status === 401) {
+            return error("Your session has expired. Please log in again.");
+        }
+
+        if (status === 403) {
+            return error("You do not have permission to perform this action.");
+        }
+
+        if (status === 404) {
+            return error("The requested record could not be found.");
+        }
+
+        if (status === 409) {
+            return error(serverErrorMsg || "This record already exists or conflicts with existing data.");
+        }
+
+        if (status >= 500) {
+            console.error("Server error diagnostic:", serverErrorMsg || res.statusText);
+            return error("Something went wrong while communicating with the server. Please try again.");
+        }
+
+        return error(serverErrorMsg || "Unable to complete request. Please try again.");
+    }
+
+    window.AANotify = {
+        show,
+        success,
+        error,
+        warning,
+        validation,
+        info,
+        handleApiResponse
+    };
+})();

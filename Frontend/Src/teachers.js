@@ -526,9 +526,14 @@
     function _setText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
     function _esc(v) { return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
     function _toast(msg, type) {
-        const c = document.getElementById('toast-container'); if (!c) return;
+        if (window.AANotify && window.AANotify.show) {
+            window.AANotify.show(msg, type);
+            return;
+        }
+        const c = document.getElementById('aa-toast-container') || document.getElementById('toast-container');
+        if (!c) return;
         const el = document.createElement('div');
-        el.className = 'toast toast-' + (type || 'info');
+        el.className = 'aa-toast aa-toast-' + (type || 'info');
         el.textContent = msg;
         c.appendChild(el);
         setTimeout(function () { el.remove(); }, 4000);

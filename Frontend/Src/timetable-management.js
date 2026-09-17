@@ -32,7 +32,8 @@
         // RBAC protection: Admin / Headmaster only
         const user = getUser();
         if (user && user.role !== 'admin' && user.role !== 'headmaster') {
-            alert('Access restricted. Timetable management is reserved for school administrators.');
+            if (window.AANotify) window.AANotify.warning('Access restricted. Timetable management is reserved for school administrators.');
+            else alert('Access restricted. Timetable management is reserved for school administrators.');
             window.location.replace('dashboard.html');
             return;
         }
@@ -503,9 +504,11 @@
             if (!res || !res.ok) throw new Error('Failed to delete timetable entry');
             _hideModal('deleteConfirmModal');
             deleteTargetId = null;
+            if (window.AANotify) window.AANotify.success('Timetable entry deleted successfully.');
             await loadTimetable();
         } catch (err) {
-            alert('Delete failed: ' + err.message);
+            if (window.AANotify) window.AANotify.error('Delete failed: ' + (err.message || 'Unable to delete timetable entry.'));
+            else alert('Delete failed: ' + err.message);
         } finally {
             confirmBtn.disabled = false;
             confirmBtn.textContent = 'Delete Entry';

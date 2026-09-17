@@ -237,8 +237,15 @@ const getRecentLogs = async (req, res) => {
 
         // 1. Role-aware school and user scoping
         if (role === "admin" || role === "headmaster") {
-            whereClauses.push("(u.school_id = ? OR u.school_id IS NULL OR al.actor_id IS NULL)");
-            params.push(schoolId);
+            if (mode === "week") {
+                // Compact preview belongs to the authenticated Admin
+                whereClauses.push("al.actor_id = ? AND (u.school_id = ? OR u.school_id IS NULL)");
+                params.push(userId, schoolId);
+            } else {
+                // View All Logs: authorized school-level administrative history
+                whereClauses.push("(u.school_id = ? OR u.school_id IS NULL OR al.actor_id IS NULL)");
+                params.push(schoolId);
+            }
         } else if (role === "staff") {
             whereClauses.push("al.actor_id = ?");
             params.push(userId);

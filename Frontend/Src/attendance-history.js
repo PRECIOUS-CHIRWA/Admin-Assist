@@ -91,7 +91,10 @@
           </table>
         </div>`;
             document.getElementById("detailModal").hidden = false;
-        } catch { alert("Unable to load session details."); }
+        } catch {
+            if (window.AANotify) window.AANotify.error("Unable to load session details.");
+            else alert("Unable to load session details.");
+        }
     }
 
     function bindEvents() {

@@ -110,7 +110,8 @@
 
     async function downloadPDF(endpoint, filename, config) {
         if (!window.jspdf) {
-            alert('PDF library not loaded. Check your internet connection.');
+            if (window.AANotify) window.AANotify.warning('PDF library not loaded. Check your internet connection.');
+            else alert('PDF library not loaded. Check your internet connection.');
             return;
         }
         showStatus('Generating PDF…', 'info');
@@ -639,7 +640,11 @@
     }
 
     function downloadTranscriptPDF(data) {
-        if (!window.jspdf) { alert('PDF library not loaded.'); return; }
+        if (!window.jspdf) {
+            if (window.AANotify) window.AANotify.warning('PDF library not loaded.');
+            else alert('PDF library not loaded.');
+            return;
+        }
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
         const pageW = doc.internal.pageSize.getWidth();

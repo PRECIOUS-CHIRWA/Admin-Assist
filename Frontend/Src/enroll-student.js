@@ -293,14 +293,22 @@ async function _submitEnrollment() {
     const admNo = data.admissionNumber || data.admission_number ||
       data.student?.admission_number || payload.admission_number;
 
-    // Show success overlay
+    // Show success toast & overlay
+    if (window.AANotify) {
+      window.AANotify.success("Student enrolled successfully!");
+    }
     const overlay = document.getElementById("successOverlay");
     const admLabel = document.getElementById("successAdmNumber");
     if (admLabel) admLabel.textContent = admNo || "—";
     if (overlay) overlay.classList.remove("is-hidden");
 
   } catch (err) {
-    alert("Enrollment failed: " + err.message);
+    const errorMsg = "Enrollment failed: " + (err.message || "Please review the form entries.");
+    if (window.AANotify) {
+      window.AANotify.error(errorMsg);
+    } else {
+      alert(errorMsg);
+    }
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = "Submit Enrollment";

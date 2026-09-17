@@ -64,12 +64,11 @@
                     loginBtn.textContent = "Signing in…";
                 }
 
-                // Show global loader over blurred background
-                if (window.AALoader) {
+                // Show login-specific loader with full blur/opaque background
+                if (window.AALoader && window.AALoader.showLoginLoader) {
+                    window.AALoader.showLoginLoader("Authenticating…");
+                } else if (window.AALoader) {
                     window.AALoader.showPageLoader("Authenticating…");
-                }
-                if (document.body) {
-                    document.body.classList.add("aa-page-loading");
                 }
 
                 try {
@@ -93,6 +92,10 @@
                     // Store access token and user profile
                     localStorage.setItem("accessToken", data.accessToken);
                     localStorage.setItem("user", JSON.stringify(data.user));
+
+                    if (window.AALoader && window.AALoader.showLoginLoader) {
+                        window.AALoader.showLoginLoader("Entering Admin Assist…");
+                    }
 
                     // Remember Me handling
                     if (rememberCheckbox && rememberCheckbox.checked) {

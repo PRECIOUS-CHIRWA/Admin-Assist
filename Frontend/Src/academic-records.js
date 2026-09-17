@@ -253,7 +253,9 @@
         const subjectId = selSubject.value;
 
         if (!classId || !yearId || !termId || !subjectId) {
-            alert('Please select Class, Academic Year, Term, and Subject first.');
+            const msg = 'Please select Class, Academic Year, Term, and Subject first.';
+            showValidationError(msg);
+            if (window.AANotify) window.AANotify.validation(msg);
             return;
         }
 
@@ -266,7 +268,7 @@
 
             if (!res || !res.ok) {
                 const errData = await res.json().catch(() => ({}));
-                throw new Error(errData.error || `Server returned HTTP ${res.status}`);
+                throw new Error(errData.error || (res.status === 404 ? 'No roster records found for the selected class.' : `Unable to load roster (HTTP ${res.status})`));
             }
 
             const data = await res.json();
@@ -279,7 +281,9 @@
 
         } catch (err) {
             console.error('loadClassRoster error:', err);
-            alert('Failed to load class roster: ' + err.message);
+            const userMsg = err.message || 'Failed to load class roster. Please try again.';
+            showValidationError(userMsg);
+            if (window.AANotify) window.AANotify.error(userMsg);
             resetRosterTable();
         } finally {
             if (window.AALoader) window.AALoader.hidePageLoader();
@@ -504,7 +508,9 @@
         // 1. Check for any validation errors in the DOM
         const invalidInputs = rosterTbody.querySelectorAll('.roster-input.is-invalid');
         if (invalidInputs.length > 0) {
-            showValidationError('Please fix all invalid scores before saving. All marks must be between 0 and 100.');
+            const valMsg = 'Please fix all invalid scores before saving. All marks must be between 0 and 100.';
+            showValidationError(valMsg);
+            if (window.AANotify) window.AANotify.validation(valMsg);
             invalidInputs[0].focus();
             return;
         }
@@ -514,8 +520,32 @@
         const termId = selTerm.value;
         const subjectId = selSubject.value;
 
-        if (!classId || !yearId || !termId || !subjectId) {
-            alert('Please select Class, Academic Year, Term, and Subject.');
+        if (!classId) {
+            const msg = 'Please select a class.';
+            showValidationError(msg);
+            if (window.AANotify) window.AANotify.validation(msg);
+            selClass.focus();
+            return;
+        }
+        if (!yearId) {
+            const msg = 'Please select an academic year.';
+            showValidationError(msg);
+            if (window.AANotify) window.AANotify.validation(msg);
+            selYear.focus();
+            return;
+        }
+        if (!termId) {
+            const msg = 'Please select a term.';
+            showValidationError(msg);
+            if (window.AANotify) window.AANotify.validation(msg);
+            selTerm.focus();
+            return;
+        }
+        if (!subjectId) {
+            const msg = 'Please select a subject.';
+            showValidationError(msg);
+            if (window.AANotify) window.AANotify.validation(msg);
+            selSubject.focus();
             return;
         }
 
@@ -537,17 +567,23 @@
 
             // Bounds check
             if (midVal !== null && (isNaN(midVal) || midVal < 0 || midVal > 100)) {
-                showValidationError(`Student #${studentId}: Mid-term score (${midVal}) must be between 0 and 100.`);
+                const msg = `Student #${studentId}: Mid-term score (${midVal}) must be between 0 and 100.`;
+                showValidationError(msg);
+                if (window.AANotify) window.AANotify.validation(msg);
                 if (midInput) midInput.focus();
                 return;
             }
             if (finVal !== null && (isNaN(finVal) || finVal < 0 || finVal > 100)) {
-                showValidationError(`Student #${studentId}: Final score (${finVal}) must be between 0 and 100.`);
+                const msg = `Student #${studentId}: Final score (${finVal}) must be between 0 and 100.`;
+                showValidationError(msg);
+                if (window.AANotify) window.AANotify.validation(msg);
                 if (finInput) finInput.focus();
                 return;
             }
             if (caVal !== null && (isNaN(caVal) || caVal < 0 || caVal > 100)) {
-                showValidationError(`Student #${studentId}: CA score (${caVal}) must be between 0 and 100.`);
+                const msg = `Student #${studentId}: CA score (${caVal}) must be between 0 and 100.`;
+                showValidationError(msg);
+                if (window.AANotify) window.AANotify.validation(msg);
                 if (caInput) caInput.focus();
                 return;
             }
@@ -562,7 +598,9 @@
         }
 
         if (!resultsPayload.length) {
-            alert('No student records found to save.');
+            const msg = 'No student records found to save.';
+            showValidationError(msg);
+            if (window.AANotify) window.AANotify.validation(msg);
             return;
         }
 
@@ -587,23 +625,32 @@
             const data = await res.json().catch(() => ({}));
 
             if (!res.ok) {
-                throw new Error(data.error || `Server error: HTTP ${res.status}`);
+                const errMsg = data.error || (res.status === 422 ? 'Please enter a valid mark between 0 and 100.' : `Unable to save results (HTTP ${res.status})`);
+                throw new Error(errMsg);
             }
+
+            const processedCount = data.count != null ? data.count : resultsPayload.length;
+            const successMsg = `Class results saved successfully! (${processedCount} records processed)`;
 
             // Success feedback
             if (saveStatusText) {
-                saveStatusText.textContent = `✓ Saved ${data.count || resultsPayload.length} results successfully!`;
+                saveStatusText.textContent = `✓ ${successMsg}`;
                 saveStatusText.style.color = '#15803d';
             }
-            alert(`Class results saved successfully! (${data.count || resultsPayload.length} records processed)`);
+            if (window.AANotify) {
+                window.AANotify.success(successMsg);
+            }
 
             // Reload roster to reflect updated calculated values from backend
             await loadClassRoster();
 
         } catch (err) {
             console.error('saveAllResults error:', err);
-            showValidationError('Failed to save results: ' + err.message);
-            alert('Error saving results: ' + err.message);
+            const userMsg = err.message || 'Failed to save results. Please check entered values and try again.';
+            showValidationError(userMsg);
+            if (window.AANotify) {
+                window.AANotify.error(userMsg);
+            }
         } finally {
             saveBtn.disabled = false;
             if (saveBtnBottom) saveBtnBottom.disabled = false;

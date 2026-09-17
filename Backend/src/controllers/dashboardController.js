@@ -353,10 +353,10 @@ const getRecentActivity = async (req, res) => {
                             u.name AS actorName, u.role AS actorRole
                      FROM audit_log al
                      LEFT JOIN users u ON u.id = al.actor_id
-                     WHERE u.school_id = ?
+                     WHERE al.actor_id = ? AND (u.school_id = ? OR u.school_id IS NULL)
                      ORDER BY al.created_at DESC
                      LIMIT 10`;
-            params = [schoolId];
+            params = [userId, schoolId];
         } else if (role === "staff") {
             query = `SELECT al.id, al.action, al.entity_type, al.entity_id, al.details, al.created_at,
                             u.name AS actorName, u.role AS actorRole

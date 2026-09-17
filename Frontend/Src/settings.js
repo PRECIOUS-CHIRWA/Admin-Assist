@@ -55,17 +55,19 @@
 
     /* ── Helpers ──────────────────────────────────────────── */
     function _toast(msg, type) {
-        var c = document.getElementById("toast-container");
+        if (window.AANotify && window.AANotify.show) {
+            window.AANotify.show(msg, type);
+            return;
+        }
+        var c = document.getElementById("aa-toast-container") || document.getElementById("toast-container");
         if (!c) {
             c = document.createElement("div");
-            c.id = "toast-container";
-            Object.assign(c.style, { position: "fixed", bottom: "24px", right: "24px", zIndex: 9999, display: "flex", flexDirection: "column", gap: "8px" });
+            c.id = "aa-toast-container";
             document.body.appendChild(c);
         }
         var el = document.createElement("div");
-        el.style.cssText = "padding:12px 18px;border-radius:8px;font-size:13px;font-weight:500;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.2);max-width:320px;";
-        el.style.background = type === "error" ? "#ef4444" : type === "success" ? "#10b981" : "#1B2A4A";
-        el.textContent = msg;
+        el.className = "aa-toast aa-toast-" + (type || "info");
+        el.innerHTML = '<span class="aa-toast-msg">' + _esc(msg) + '</span>';
         c.appendChild(el);
         setTimeout(function () { el.remove(); }, 4000);
     }

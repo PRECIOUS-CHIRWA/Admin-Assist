@@ -237,7 +237,11 @@
         const code = document.getElementById('fCode').value.trim().toUpperCase();
         const name = document.getElementById('fName').value.trim();
         const desc = document.getElementById('fDesc').value.trim();
-        if (!code || !name) return alert('Subject code and name are required.');
+        if (!code || !name) {
+            if (window.AANotify) window.AANotify.validation('Subject code and name are required.');
+            else alert('Subject code and name are required.');
+            return;
+        }
 
         const btn = document.getElementById('saveSubjectBtn');
         btn.disabled = true; btn.textContent = 'Saving…';
@@ -248,8 +252,12 @@
             });
             if (!res || !res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Failed to save subject'); }
             _hideModal('subjectModal');
+            if (window.AANotify) window.AANotify.success(id ? 'Subject updated successfully.' : 'Subject created successfully.');
             await loadSubjects();
-        } catch (err) { alert(err.message || 'Failed to save subject.'); }
+        } catch (err) {
+            if (window.AANotify) window.AANotify.error(err.message || 'Failed to save subject.');
+            else alert(err.message || 'Failed to save subject.');
+        }
         finally { btn.disabled = false; btn.textContent = 'Save Subject'; }
     }
 
@@ -263,7 +271,10 @@
             });
             if (!res || !res.ok) throw new Error('Update failed');
             await loadSubjects();
-        } catch { alert('Failed to update subject.'); }
+        } catch {
+            if (window.AANotify) window.AANotify.error('Failed to update subject status.');
+            else alert('Failed to update subject.');
+        }
     }
 
     /* ─── Teacher Assignments ───────────────────────────────────────────────── */
@@ -373,7 +384,11 @@
             if (currentClassRecord && currentClassRecord.class) {
                 await loadClassRecord(currentClassRecord.class.id);
             }
-        } catch { alert('Unable to remove assignment.'); }
+            if (window.AANotify) window.AANotify.success('Assignment removed successfully.');
+        } catch {
+            if (window.AANotify) window.AANotify.error('Unable to remove assignment.');
+            else alert('Unable to remove assignment.');
+        }
     }
 
     /* ─── Modal Helpers ───────────────────────────────────────────────────────── */
@@ -538,7 +553,8 @@
             renderClassRecord(data);
         } catch (err) {
             console.error('loadClassRecord:', err);
-            alert('Failed to load class record: ' + err.message);
+            if (window.AANotify) window.AANotify.error('Failed to load class record: ' + (err.message || 'Unable to load class record'));
+            else alert('Failed to load class record: ' + err.message);
         }
     }
 
@@ -713,9 +729,11 @@
             });
             if (!res || !res.ok) throw new Error('Failed to assign class teacher');
             closeClassTeacherModal();
+            if (window.AANotify) window.AANotify.success('Class teacher assigned successfully.');
             await loadClassRecord(classId);
         } catch (err) {
-            alert('Failed to assign class teacher: ' + err.message);
+            if (window.AANotify) window.AANotify.error('Failed to assign class teacher: ' + (err.message || 'Unable to assign teacher'));
+            else alert('Failed to assign class teacher: ' + err.message);
         } finally {
             saveBtn.disabled = false;
             saveBtn.textContent = 'Save Class Teacher';
@@ -729,7 +747,8 @@
         const focus = customVal || selectVal || 'General Secondary Core';
 
         if (!focus) {
-            alert('Please specify a core focus label.');
+            if (window.AANotify) window.AANotify.validation('Please specify a core focus label.');
+            else alert('Please specify a core focus label.');
             return;
         }
 
@@ -744,9 +763,11 @@
             });
             if (!res || !res.ok) throw new Error('Failed to update core focus');
             closeFocusModal();
+            if (window.AANotify) window.AANotify.success('Core focus updated successfully.');
             await loadClassRecord(classId);
         } catch (err) {
-            alert('Failed to save focus: ' + err.message);
+            if (window.AANotify) window.AANotify.error('Failed to save focus: ' + (err.message || 'Unable to save focus'));
+            else alert('Failed to save focus: ' + err.message);
         } finally {
             saveBtn.disabled = false;
             saveBtn.textContent = 'Save Focus';
