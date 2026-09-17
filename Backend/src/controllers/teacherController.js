@@ -45,20 +45,20 @@ const _writeAuditLog = async (actorId, action, entityType, entityId, details) =>
 // ─── GET /api/teachers ────────────────────────────────────────────────────────
 const listTeachers = async (req, res) => {
     try {
-        const page   = Math.max(1, parseInt(req.query.page  || "1", 10));
-        const limit  = Math.min(100, Math.max(1, parseInt(req.query.limit || "10", 10)));
+        const page = Math.max(1, parseInt(req.query.page || "1", 10));
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || "10", 10)));
         const offset = (page - 1) * limit;
         const search = req.query.search ? `%${req.query.search}%` : null;
         const status = req.query.status; // "active" | "inactive" | ""
 
         const conditions = ["(u.role IN ('staff', 'headmaster') OR (u.role = 'admin' AND (u.school_position IS NULL OR u.school_position != 'Student')))"];
-        const params     = [];
+        const params = [];
 
         if (search) {
             conditions.push("(u.name LIKE ? OR u.email LIKE ?)");
             params.push(search, search);
         }
-        if (status === "active")   { conditions.push("u.is_active = 1"); }
+        if (status === "active") { conditions.push("u.is_active = 1"); }
         if (status === "inactive") { conditions.push("u.is_active = 0"); }
 
         const where = "WHERE " + conditions.join(" AND ");
@@ -164,8 +164,8 @@ const createTeacher = async (req, res) => {
         );
         if (existing) return res.status(409).json({ error: "Email already registered" });
 
-        const tempPassword   = _generateTempPassword();
-        const passwordHash   = await _hashPassword(tempPassword);
+        const tempPassword = _generateTempPassword();
+        const passwordHash = await _hashPassword(tempPassword);
 
         const [result] = await pool.execute(
             "INSERT INTO users (name, email, password_hash, role, school_position, department, is_active) VALUES (?, ?, ?, ?, ?, ?, 1)",
@@ -224,8 +224,7 @@ const createTeacher = async (req, res) => {
 
         res.status(201).json({
             message: "Teacher account created successfully",
-            teacher: { id: newId, name, email, role, school_position, department },
-            tempPassword, // returned so admin can note it; email also sent
+            teacher: { id: newId, name, email, role, school_position, department }
         });
     } catch (err) {
         console.error("createTeacher error:", err.message);
@@ -248,7 +247,7 @@ const updateTeacher = async (req, res) => {
         const fields = [];
         const values = [];
 
-        if (name)  { fields.push("name = ?");  values.push(name.trim()); }
+        if (name) { fields.push("name = ?"); values.push(name.trim()); }
         if (email) { fields.push("email = ?"); values.push(email.trim().toLowerCase()); }
         if (role && ["staff", "headmaster", "admin"].includes(role)) {
             fields.push("role = ?"); values.push(role);
