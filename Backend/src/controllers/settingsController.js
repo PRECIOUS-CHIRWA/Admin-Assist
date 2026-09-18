@@ -8,6 +8,7 @@
 "use strict";
 
 const pool = require("../config/db");
+const { validatePolicyWeights, DEFAULT_POLICY } = require("../services/assessmentCalculationService");
 
 const DEFAULTS = {
     school_name:          "Admin Assist School",
@@ -28,6 +29,12 @@ const DEFAULTS = {
     notify_on_results:    1,
     notify_on_announcements: 1,
     max_login_attempts:   5,
+    assessment_model:     "MID_TERM_FINAL",
+    mid_term_weight:      20.0,
+    final_term_weight:    80.0,
+    continuous_assessment_enabled: 0,
+    continuous_assessment_weight: 0.0,
+    grading_scheme:       "ADMIN_ASSIST_ECZ",
 };
 
 /**
@@ -57,6 +64,12 @@ const ensureSettingsTable = async () => {
                 notify_on_results       TINYINT(1)           DEFAULT 1,
                 notify_on_announcements TINYINT(1)           DEFAULT 1,
                 max_login_attempts      TINYINT UNSIGNED     DEFAULT 5,
+                assessment_model        VARCHAR(50)          DEFAULT 'MID_TERM_FINAL',
+                mid_term_weight         DECIMAL(5,2)         DEFAULT 20.00,
+                final_term_weight       DECIMAL(5,2)         DEFAULT 80.00,
+                continuous_assessment_enabled TINYINT(1)     DEFAULT 0,
+                continuous_assessment_weight  DECIMAL(5,2)   DEFAULT 0.00,
+                grading_scheme          VARCHAR(50)          DEFAULT 'ADMIN_ASSIST_ECZ',
                 updated_at              TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 PRIMARY KEY (id),
                 UNIQUE KEY uq_school_id (school_id)
@@ -115,7 +128,22 @@ const updateSettings = async (req, res) => {
         "logo_url", "timezone", "date_format", "max_students_per_class", "grading_system",
         "notify_on_enrollment", "notify_on_attendance", "notify_on_results", "notify_on_announcements",
         "max_login_attempts",
+        "assessment_model", "mid_term_weight", "final_term_weight", "continuous_assessment_enabled",
+        "continuous_assessment_weight", "grading_scheme",
     ];
+
+    if (req.body.mid_term_weight !== undefined || req.body.final_term_weight !== undefined || req.body.continuous_assessment_enabled !== undefined) {
+        try {
+            validatePolicyWeights({
+                mid_term_weight: req.body.mid_term_weight,
+                final_term_weight: req.body.final_term_weight,
+                continuous_assessment_enabled: req.body.continuous_assessment_enabled,
+                continuous_assessment_weight: req.body.continuous_assessment_weight,
+            });
+        } catch (valErr) {
+            return res.status(400).json({ error: valErr.message });
+        }
+    }
 
     const fields = [];
     const values = [];

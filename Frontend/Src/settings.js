@@ -291,6 +291,91 @@
     /* ── GENERAL TAB ──────────────────────────────────────── */
     var _cachedSettings = null;
 
+    /* ── ECZ ASSESSMENT POLICY CONTROLS ──────────────────── */
+    function _updatePolicyUi(isCustom) {
+        var modelSelect = document.getElementById("assessmentModelSelect");
+        var caField = document.getElementById("caWeightField");
+        var midInput = document.getElementById("midTermWeight");
+        var finInput = document.getElementById("finalTermWeight");
+        var caInput = document.getElementById("continuousAssessmentWeight");
+
+        if (!modelSelect || !midInput || !finInput) return;
+
+        if (isCustom) {
+            if (caField) caField.style.display = "block";
+            midInput.disabled = false;
+            finInput.disabled = false;
+            if (caInput) caInput.disabled = false;
+        } else {
+            if (caField) caField.style.display = "none";
+            midInput.value = 20;
+            finInput.value = 80;
+            if (caInput) caInput.value = 0;
+            midInput.disabled = true;
+            finInput.disabled = true;
+            if (caInput) caInput.disabled = true;
+        }
+        _calculatePolicySum();
+    }
+
+    function _calculatePolicySum() {
+        var modelSelect = document.getElementById("assessmentModelSelect");
+        var badge = document.getElementById("policyWeightSumBadge");
+        var hint = document.getElementById("weightValidationHint");
+        var midInput = document.getElementById("midTermWeight");
+        var finInput = document.getElementById("finalTermWeight");
+        var caInput = document.getElementById("continuousAssessmentWeight");
+
+        var isCustom = modelSelect && modelSelect.value === "custom_ca";
+        var mid = parseFloat(midInput ? midInput.value : 0) || 0;
+        var fin = parseFloat(finInput ? finInput.value : 0) || 0;
+        var ca = isCustom ? (parseFloat(caInput ? caInput.value : 0) || 0) : 0;
+
+        var total = Math.round((mid + fin + ca) * 100) / 100;
+
+        if (!isCustom) {
+            if (badge) {
+                badge.textContent = "Total: 100% ✓";
+                badge.style.background = "rgba(16, 185, 129, 0.12)";
+                badge.style.color = "#059669";
+                badge.style.borderColor = "rgba(16, 185, 129, 0.3)";
+            }
+            if (hint) {
+                hint.textContent = "National standard model active: 20% Mid-Term + 80% Final Exam = 100%.";
+                hint.style.color = "var(--aa-text-muted)";
+            }
+            return { isValid: true, total: 100, mid: 20, fin: 80, ca: 0 };
+        }
+
+        var isValid = Math.abs(total - 100) < 0.01 && mid >= 0 && fin >= 0 && ca >= 0;
+
+        if (badge) {
+            if (isValid) {
+                badge.textContent = "Total: " + total + "% ✓";
+                badge.style.background = "rgba(16, 185, 129, 0.12)";
+                badge.style.color = "#059669";
+                badge.style.borderColor = "rgba(16, 185, 129, 0.3)";
+            } else {
+                badge.textContent = "Total: " + total + "% (Must equal 100%)";
+                badge.style.background = "rgba(239, 68, 68, 0.12)";
+                badge.style.color = "#dc2626";
+                badge.style.borderColor = "rgba(239, 68, 68, 0.3)";
+            }
+        }
+
+        if (hint) {
+            if (isValid) {
+                hint.textContent = "✓ Custom assessment weights sum to exactly 100% (" + mid + "% Mid-Term + " + fin + "% Final + " + ca + "% CA).";
+                hint.style.color = "#059669";
+            } else {
+                hint.textContent = "⚠️ Assessment weights must sum to exactly 100%. Current sum: " + total + "%.";
+                hint.style.color = "#dc2626";
+            }
+        }
+
+        return { isValid: isValid, total: total, mid: mid, fin: fin, ca: ca };
+    }
+
     async function loadSettings() {
         try {
             var res = await apiFetch("/api/settings");
@@ -318,6 +403,28 @@
             if (resCheck) resCheck.checked = s.notify_on_results === 1 || s.notify_on_results === true;
             if (annCheck) annCheck.checked = s.notify_on_announcements === 1 || s.notify_on_announcements === true;
 
+            // Load Assessment Policy
+            var modelSelect = document.getElementById("assessmentModelSelect");
+            var midInput = document.getElementById("midTermWeight");
+            var finInput = document.getElementById("finalTermWeight");
+            var caInput = document.getElementById("continuousAssessmentWeight");
+
+            var caEnabled = s.continuous_assessment_enabled === 1 || s.continuous_assessment_enabled === true || s.assessment_model === "MID_TERM_FINAL_SBA";
+
+            if (modelSelect) {
+                modelSelect.value = caEnabled ? "custom_ca" : "national_standard";
+            }
+            if (midInput) {
+                midInput.value = s.mid_term_weight != null ? s.mid_term_weight : 20;
+            }
+            if (finInput) {
+                finInput.value = s.final_term_weight != null ? s.final_term_weight : 80;
+            }
+            if (caInput) {
+                caInput.value = s.continuous_assessment_weight != null ? s.continuous_assessment_weight : 0;
+            }
+            _updatePolicyUi(caEnabled);
+
             if (s.school_name) {
                 localStorage.setItem("aa_school_name", s.school_name);
                 window.dispatchEvent(new CustomEvent("aa-settings-updated", {
@@ -334,14 +441,29 @@
         if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
         try {
             var schoolName = _val("schoolName").trim();
+
+            var policySum = _calculatePolicySum();
+            if (!policySum.isValid) {
+                _toast("Assessment weights must sum to exactly 100%. Current sum: " + policySum.total + "%.", "warning");
+                if (btn) { btn.disabled = false; btn.textContent = "Save Changes"; }
+                return;
+            }
+
+            var isCustomPolicy = document.getElementById("assessmentModelSelect") && document.getElementById("assessmentModelSelect").value === "custom_ca";
+
             var payload = {
-                school_name:         schoolName || undefined,
-                academic_year_label: _val("academicYear").trim() || undefined,
-                department:          _val("schoolDept").trim() || undefined,
-                country:             _val("country").trim() || undefined,
-                phone:               _val("phoneNumber").trim() || undefined,
-                address:             _val("schoolAddress").trim() || undefined,
-                timezone:            _val("timezone") || undefined,
+                school_name:                   schoolName || undefined,
+                academic_year_label:           _val("academicYear").trim() || undefined,
+                department:                    _val("schoolDept").trim() || undefined,
+                country:                       _val("country").trim() || undefined,
+                phone:                         _val("phoneNumber").trim() || undefined,
+                address:                       _val("schoolAddress").trim() || undefined,
+                timezone:                      _val("timezone") || undefined,
+                assessment_model:              isCustomPolicy ? "MID_TERM_FINAL_SBA" : "MID_TERM_FINAL",
+                mid_term_weight:               policySum.mid,
+                final_term_weight:             policySum.fin,
+                continuous_assessment_enabled: isCustomPolicy ? 1 : 0,
+                continuous_assessment_weight:  isCustomPolicy ? policySum.ca : 0,
             };
             // Remove undefined keys
             Object.keys(payload).forEach(function (k) { if (payload[k] === undefined) delete payload[k]; });
@@ -351,6 +473,19 @@
                 throw new Error(d.error || "Save failed");
             }
 
+            // Also keep /api/results/policy synchronized
+            await apiFetch("/api/results/policy", {
+                method: "PUT",
+                body: JSON.stringify({
+                    assessment_model:              isCustomPolicy ? "MID_TERM_FINAL_SBA" : "MID_TERM_FINAL",
+                    mid_term_weight:               policySum.mid,
+                    final_term_weight:             policySum.fin,
+                    continuous_assessment_enabled: isCustomPolicy ? 1 : 0,
+                    continuous_assessment_weight:  isCustomPolicy ? policySum.ca : 0,
+                    grading_scheme:                "ADMIN_ASSIST_ECZ",
+                })
+            }).catch(function () {});
+
             if (schoolName) {
                 localStorage.setItem("aa_school_name", schoolName);
                 window.dispatchEvent(new CustomEvent("aa-settings-updated", {
@@ -358,7 +493,7 @@
                 }));
             }
 
-            _toast("General settings saved.", "success");
+            _toast("General settings and assessment policy saved successfully.", "success");
         } catch (err) {
             _toast(err.message || "Could not save settings.", "error");
         } finally {
@@ -571,6 +706,20 @@
                 if (panel === "general" || panel === "notifications") loadSettings();
                 if (panel === "profile") loadProfile();
             });
+        });
+
+        // ECZ Assessment Policy event bindings
+        var modelSelect = document.getElementById("assessmentModelSelect");
+        if (modelSelect) {
+            modelSelect.addEventListener("change", function () {
+                _updatePolicyUi(this.value === "custom_ca");
+            });
+        }
+        ["midTermWeight", "finalTermWeight", "continuousAssessmentWeight"].forEach(function (id) {
+            var inp = document.getElementById(id);
+            if (inp) {
+                inp.addEventListener("input", _calculatePolicySum);
+            }
         });
     });
 

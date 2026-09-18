@@ -321,15 +321,48 @@
               <input type="text" id="academicYear" placeholder="e.g. 2026">
             </div>
           </div>
-          <div class="settings-group">
-            <div class="form-field">
-              <label for="schoolName">School Name</label>
-              <input type="text" id="schoolName" placeholder="e.g. Greenfields Secondary School">
+
+          <!-- ECZ Assessment Weighting Policy -->
+          <div class="policy-card" style="background: var(--aa-surface-2, #f8fafc); border: 1.5px solid var(--aa-border, #e2e8f0); border-radius: var(--aa-radius-md, 8px); padding: 20px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 12px; flex-wrap: wrap;">
+              <div>
+                <label style="display: block; font-weight: 700; font-size: 14px; color: var(--aa-text, #0f172a); margin-bottom: 4px;">
+                  ECZ Assessment Weighting Policy
+                </label>
+                <p style="margin: 0; font-size: 13px; color: var(--aa-text-muted, #64748b); line-height: 1.4;">
+                  Choose between the national standard (20% Mid-Term Test / 80% Final Examination) or custom Continuous Assessment weights.
+                </p>
+              </div>
+              <span id="policyWeightSumBadge" class="aa-badge" style="font-weight: 700; font-size: 12px; padding: 4px 12px; border-radius: 9999px; background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.3); white-space: nowrap;">
+                Total: 100% ✓
+              </span>
             </div>
-            <div class="form-field">
-              <label for="academicYear">Academic Year</label>
-              <input type="text" id="academicYear" placeholder="e.g. 2024/2025">
+
+            <div class="form-field" style="margin-bottom: 16px;">
+              <label for="assessmentModelSelect" style="font-size: 13px; font-weight: 600;">Policy Model</label>
+              <select id="assessmentModelSelect" style="width: 100%;">
+                <option value="national_standard">National Standard (20% Mid-Term Test / 80% Final Examination)</option>
+                <option value="custom_ca">Custom Continuous Assessment (CA / SBA) Weights</option>
+              </select>
             </div>
+
+            <div id="customWeightsGrid" class="settings-group" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-bottom: 10px;">
+              <div class="form-field">
+                <label for="midTermWeight" style="font-size: 12px; font-weight: 600;">Mid-Term Test (%)</label>
+                <input type="number" id="midTermWeight" min="0" max="100" step="1" value="20" placeholder="20">
+              </div>
+              <div class="form-field">
+                <label for="finalTermWeight" style="font-size: 12px; font-weight: 600;">Final Exam (%)</label>
+                <input type="number" id="finalTermWeight" min="0" max="100" step="1" value="80" placeholder="80">
+              </div>
+              <div class="form-field" id="caWeightField" style="display: none;">
+                <label for="continuousAssessmentWeight" style="font-size: 12px; font-weight: 600;">Continuous Assessment (%)</label>
+                <input type="number" id="continuousAssessmentWeight" min="0" max="100" step="1" value="0" placeholder="0">
+              </div>
+            </div>
+            <small id="weightValidationHint" style="display: block; font-size: 12px; color: var(--aa-text-muted, #64748b);">
+              National standard model active: 20% Mid-Term + 80% Final Exam = 100%.
+            </small>
           </div>
           <div class="settings-group">
             <div class="form-field">
