@@ -43,11 +43,12 @@ async function main() {
     const [existing] = await pool.execute("SELECT id FROM users WHERE email = ? LIMIT 1", [email.trim().toLowerCase()]);
     if (existing.length > 0) { console.error(`Email '${email}' already exists (id: ${existing[0].id}).`); process.exit(1); }
     const passwordHash = await hashPassword(password);
+    const position = role === "headmaster" ? "Headmaster" : (role === "admin" ? "Administrator" : (role === "staff" ? "Teacher" : "User"));
     const [result] = await pool.execute(
-        "INSERT INTO users (name, email, password_hash, role, is_active) VALUES (?, ?, ?, ?, 1)",
-        [name.trim(), email.trim().toLowerCase(), passwordHash, role]
+        "INSERT INTO users (school_id, name, email, password_hash, role, school_position, is_active, email_verified) VALUES (1, ?, ?, ?, ?, ?, 1, 1)",
+        [name.trim(), email.trim().toLowerCase(), passwordHash, role, position]
     );
-    console.log(`\n✅ ${role} account created!\n   ID:    ${result.insertId}\n   Name:  ${name}\n   Email: ${email}\n   Role:  ${role}\n`);
+    console.log(`\n✅ ${role} account created!\n   ID:       ${result.insertId}\n   Name:     ${name}\n   Email:    ${email}\n   Role:     ${role}\n   Position: ${position}\n`);
     await pool.end();
     process.exit(0);
 }
